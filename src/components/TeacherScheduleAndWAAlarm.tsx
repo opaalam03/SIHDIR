@@ -25,6 +25,7 @@ import {
   getDayScheduleConfig
 } from "../services/whatsappFonnteService";
 import { Comprehensive15WitaReportModal } from "./Comprehensive15WitaReportModal";
+import { TeacherSubjectGradebookModal } from "./TeacherSubjectGradebookModal";
 
 interface TeacherScheduleAndWAAlarmProps {
   teacherName: string; // Profile name or username
@@ -94,6 +95,7 @@ export function TeacherScheduleAndWAAlarm({
   const [periodSendFeedback, setPeriodSendFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [copiedPeriodText, setCopiedPeriodText] = useState<boolean>(false);
   const [is15ReportModalOpen, setIs15ReportModalOpen] = useState<boolean>(false);
+  const [selectedGradebookSchedule, setSelectedGradebookSchedule] = useState<MatchedScheduleItem | null>(null);
 
   const activePeriodReport = React.useMemo(() => {
     return buildTeacherPeriodReport(selectedPeriodId);
@@ -343,11 +345,13 @@ export function TeacherScheduleAndWAAlarm({
               return (
                 <div 
                   key={item.id || idx}
-                  className={`p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between gap-3 ${
+                  onClick={() => setSelectedGradebookSchedule(item)}
+                  className={`p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between gap-3 cursor-pointer group hover:border-indigo-400 hover:shadow-lg hover:scale-[1.01] ${
                     isTodaySchedule
-                      ? "bg-gradient-to-br from-indigo-50/50 to-white border-indigo-200 shadow-sm"
+                      ? "bg-gradient-to-br from-indigo-50/60 to-white border-indigo-200 shadow-sm"
                       : "bg-white border-slate-200 hover:border-slate-300"
                   }`}
+                  title="Klik untuk membuka daftar siswa & buku penilaian jam efektif kelas ini"
                 >
                   {isTodaySchedule && (
                     <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[9px] font-black uppercase px-2.5 py-0.5 rounded-bl-xl shadow-2xs">
@@ -369,9 +373,12 @@ export function TeacherScheduleAndWAAlarm({
                           [{item.teacherCode || item.teacherId.toUpperCase()}]
                         </span>
                       )}
+                      <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                        Buku Nilai Siswa
+                      </span>
                     </div>
 
-                    <h4 className="text-sm font-extrabold text-slate-900 line-clamp-2 leading-snug">
+                    <h4 className="text-sm font-extrabold text-slate-900 line-clamp-2 leading-snug group-hover:text-indigo-600 transition-colors">
                       {item.subject}
                     </h4>
 
@@ -380,23 +387,37 @@ export function TeacherScheduleAndWAAlarm({
                         <Users className="h-3.5 w-3.5 text-emerald-500" />
                         Kelas: <strong className="text-slate-900 font-extrabold">{item.className}</strong>
                       </span>
-                      <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
-                        {item.durationHours || 2} JP
+                      <span className="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                        {item.durationHours || 2} JP Efektif
                       </span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium truncate max-w-[170px]" title={item.teacherName}>
-                      Guru: <strong>{item.teacherName}</strong>
-                    </span>
-                    {isTodaySchedule ? (
-                      <span className="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Terkoneksi
+                  <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500 font-medium truncate max-w-[170px]" title={item.teacherName}>
+                        Guru: <strong>{item.teacherName}</strong>
                       </span>
-                    ) : (
-                      <span className="text-slate-400 font-semibold shrink-0">Terschedule</span>
-                    )}
+                      {isTodaySchedule ? (
+                        <span className="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Terkoneksi
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 font-semibold shrink-0">Terschedule</span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGradebookSchedule(item);
+                      }}
+                      className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-black text-xs py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95 border border-indigo-400/30"
+                    >
+                      <BookOpen className="h-3.5 w-3.5 text-indigo-200" />
+                      <span>Buka Penilaian & Buku Nilai Siswa</span>
+                    </button>
                   </div>
                 </div>
               );
@@ -806,6 +827,14 @@ export function TeacherScheduleAndWAAlarm({
       <Comprehensive15WitaReportModal
         isOpen={is15ReportModalOpen}
         onClose={() => setIs15ReportModalOpen(false)}
+      />
+
+      {/* Modal Buku Penilaian Mandiri Guru Mapel (Jam Efektif, Mingguan, Bulanan, Semester & Cetak PDF) */}
+      <TeacherSubjectGradebookModal
+        isOpen={Boolean(selectedGradebookSchedule)}
+        onClose={() => setSelectedGradebookSchedule(null)}
+        schedule={selectedGradebookSchedule}
+        teacherName={teacherName}
       />
     </div>
   );
