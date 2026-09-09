@@ -5,6 +5,8 @@ import { MOCK_STUDENTS } from "../mockData";
 import { getTeacherPerwalianClass } from "../utils/scheduleHelper";
 import { WALI_KELAS_LIST, getWaliKelasForClass } from "../data/waliKelasData";
 import { IndividualStudentReportModal, StudentReportItem } from "./IndividualStudentReportModal";
+import { Comprehensive15WitaReportModal } from "./Comprehensive15WitaReportModal";
+import { Clock, Megaphone } from "lucide-react";
 
 interface WaliKelasWorkspaceProps {
   username?: string;
@@ -28,9 +30,9 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
     if (clean.includes("saiful")) return "XI TKR B";
     if (clean.includes("arham")) return "XI TKR A";
     if (clean.includes("wahyu")) return "XI TSM A";
-    if (clean.includes("triana")) return "XI TSM B";
+    if (clean.includes("eva") || clean.includes("syahtriana") || clean.includes("evasyatriana")) return "XI DPIB";
+    if (clean.includes("daniel") || (clean.includes("triana") && !clean.includes("eva") && !clean.includes("syah"))) return "XI TSM B";
     if (clean.includes("isnawati")) return "XI TAV";
-    if (clean.includes("eva")) return "XI DPIB";
     if (clean.includes("muslimin")) return "XI DKV";
     if (clean.includes("syamsul")) return "XII TSM";
     if (clean.includes("nyoman") || clean.includes("suliawati")) return "XII TAV";
@@ -48,6 +50,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
   // Modal State for Individual Student Report
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedReportStudent, setSelectedReportStudent] = useState<StudentReportItem | null>(null);
+  const [comprehensiveModalOpen, setComprehensiveModalOpen] = useState(false);
 
   // Sync selected class when username changes
   useEffect(() => {
@@ -163,6 +166,50 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
           >
             <MessageSquare className="h-4 w-4" />
             <span>Laporan WA Ortu</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setComprehensiveModalOpen(true)}
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-4 py-3 rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-amber-300/40"
+          >
+            <Clock className="h-4 w-4 text-slate-950" />
+            <span>Rekap 15.00 WITA</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Banner Siaran Rekapitulasi Presensi Terperinci 15.00 WITA */}
+      <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 border border-emerald-500/30 rounded-3xl p-4 sm:p-5 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-md">
+        <div className="flex items-start gap-3">
+          <div className="p-3 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-400/30 shrink-0">
+            <Megaphone className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="bg-emerald-500/30 text-emerald-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-400/30">
+                Pukul 15.00 WITA
+              </span>
+              <span className="text-xs font-bold text-amber-300">
+                Transparansi Presensi — Menghindari Dusta di Antara Kita
+              </span>
+            </div>
+            <h3 className="text-sm sm:text-base font-black text-white">
+              Rekapitulasi Presensi Terperinci Seluruh Sekolah (Siswa, Guru & Staf TU)
+            </h3>
+            <p className="text-xs text-emerald-100/80 max-w-3xl">
+              Tepat pukul 15.00 WITA saat KBM ditutup, rekap kehadiran siswa per kelas, dewan guru yang bertugas & jurnalnya, serta staf Tata Usaha terekap tuntas dan disiarkan ke Saluran / Grup WhatsApp Sekolah.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+          <button
+            type="button"
+            onClick={() => setComprehensiveModalOpen(true)}
+            className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          >
+            <Clock className="h-4 w-4" />
+            <span>Buka Rekap 15.00 WITA</span>
           </button>
         </div>
       </div>
@@ -400,6 +447,12 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
         student={selectedReportStudent}
         className={selectedClass}
         waliKelasName={assignedWaliName}
+      />
+
+      {/* Modal Rekapitulasi Presensi Terpadu 15.00 WITA */}
+      <Comprehensive15WitaReportModal
+        isOpen={comprehensiveModalOpen}
+        onClose={() => setComprehensiveModalOpen(false)}
       />
     </div>
   );

@@ -1,13 +1,12 @@
-/**
- * DATA MASTER GURU WALI & BIMBINGAN SISWA
- * SMKN 2 KONAWE PELAJARAN 2026 / 2027
- * Berdasarkan Lampiran 1 SK Kepala SMKN 2 Konawe Nomor: 521.3/ /800/VII/2026
- */
+// Master Data Guru Wali & Murid Bimbingan
+// Berdasarkan SK Resmi: KEPUTUSAN KEPALA SMKN 2 KONAWE
+// NOMOR: 521.3/ /800/VII/2026 - TENTANG DAFTAR NAMA GURU WALI SMKN 2 KONAWE PELAJARAN 2026 / 2027
 
 export interface BimbinganMuridItem {
   id: string;
   nama: string;
   kelas: string;
+  catatan?: string;
   keterangan?: string;
 }
 
@@ -17,6 +16,8 @@ export interface GuruWaliMasterItem {
   namaGuru: string;
   muridList: BimbinganMuridItem[];
 }
+
+export const DATA_VERSION_GURU_WALI = "2026-2027-sk-final";
 
 export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
   {
@@ -61,13 +62,13 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
   {
     id: "gw-3",
     no: 3,
-    namaGuru: "I Putu Juniyasa, S.Pd.Mat",
+    namaGuru: "I PUTU JUNIASA, S.Pd Mat",
     muridList: [
       { id: "m-3-1", nama: "Radit Aditya", kelas: "X TKR A", keterangan: "TDK NAIK" },
       { id: "m-3-2", nama: "Rehan Jaenuri", kelas: "XI TKR A" },
       { id: "m-3-3", nama: "RIFKY FEBRIYANTO", kelas: "XI TKR A" },
       { id: "m-3-4", nama: "RISKI ARDIANA", kelas: "X TKR A", keterangan: "TDK NAIK" },
-      { id: "m-3-5", nama: "RONAL SETIAWAN", kelas: "XI TKR A" },
+      { id: "m-3-5", nama: "RONAL SETIAWAN", kelas: "X TKR A", keterangan: "TDK NAIK" },
       { id: "m-3-6", nama: "USAMAH ABDURRAHMAN", kelas: "XI TKR A" },
       { id: "m-3-7", nama: "VERI SUDANA", kelas: "XI TKR A" },
       { id: "m-3-8", nama: "ABDURAFI ASRIFIN", kelas: "XI TKR B" },
@@ -75,10 +76,7 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-3-10", nama: "Adi Guna", kelas: "XI TKR B" },
       { id: "m-3-11", nama: "ALOISIUS REVANT GONSALES", kelas: "XI TKR B" },
       { id: "m-3-12", nama: "Arfiqun Al Faturrahman", kelas: "XI TKR B" },
-      { id: "m-3-13", nama: "BAYU", kelas: "XI TKR B" },
-      { id: "m-3-14", nama: "DIPA PRATAMA", kelas: "XI TKR B" },
-      { id: "m-3-15", nama: "FAIZ NUR AFRIANZAH", kelas: "XI TKR B" },
-      { id: "m-3-16", nama: "FERDIANSYAH", kelas: "XI TKR B" }
+      { id: "m-3-13", nama: "BAYU", kelas: "XI TKR B" }
     ]
   },
   {
@@ -86,18 +84,21 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 4,
     namaGuru: "AINAL LAREMBA, S.Ag",
     muridList: [
-      { id: "m-4-1", nama: "GEDE AGUS PRAYOGA", kelas: "XI TKR B" },
-      { id: "m-4-2", nama: "HESSA ADRIANSYAH", kelas: "XI TKR B" },
-      { id: "m-4-3", nama: "I WAYAN WARDANA", kelas: "XI TKR B" },
-      { id: "m-4-4", nama: "ILHAM NUR FAJAR", kelas: "XI TKR B" },
-      { id: "m-4-5", nama: "JARNO MUHAMMAD ARIFIN", kelas: "XI TKR B" },
-      { id: "m-4-6", nama: "MADE KEFIN", kelas: "XI TKR B" },
-      { id: "m-4-7", nama: "Maximus Wiadnyana", kelas: "XI TKR B" },
-      { id: "m-4-8", nama: "MUH RESKY ANUGRAH", kelas: "XI TKR B" },
-      { id: "m-4-9", nama: "Muh. Adibintang", kelas: "XI TKR B" },
-      { id: "m-4-10", nama: "MUH. FADJRIANSYAH", kelas: "XI TKR B" },
-      { id: "m-4-11", nama: "Muh. Fatur Rahman", kelas: "XI TKR B" },
-      { id: "m-4-12", nama: "MUH. FIKAL EFFENDY", kelas: "XI TKR B" }
+      { id: "m-4-1", nama: "DIPA PRATAMA", kelas: "XI TKR B" },
+      { id: "m-4-2", nama: "FAIZ NUR AFRIANZAH", kelas: "XI TKR B" },
+      { id: "m-4-3", nama: "FERDIANSYAH", kelas: "XI TKR B" },
+      { id: "m-4-4", nama: "GEDE AGUS PRAYOGA", kelas: "XI TKR B" },
+      { id: "m-4-5", nama: "HESSA ADRIANSYAH", kelas: "XI TKR B" },
+      { id: "m-4-6", nama: "I WAYAN WARDANA", kelas: "XI TKR B" },
+      { id: "m-4-7", nama: "ILHAM NUR FAJAR", kelas: "XI TKR B" },
+      { id: "m-4-8", nama: "JARNO MUHAMMAD ARIFIN", kelas: "XI TKR B" },
+      { id: "m-4-9", nama: "MADE KEFIN", kelas: "XI TKR B" },
+      { id: "m-4-10", nama: "Maximus Wiadnyana", kelas: "XI TKR B" },
+      { id: "m-4-11", nama: "MUH RESKY ANUGRAH", kelas: "XI TKR B" },
+      { id: "m-4-12", nama: "Muh. Adibintang", kelas: "XI TKR B" },
+      { id: "m-4-13", nama: "MUH. FADJRIANSYAH", kelas: "XI TKR B" },
+      { id: "m-4-14", nama: "Muh. Fatur Rahman", kelas: "XI TKR B" },
+      { id: "m-4-15", nama: "MUH. FIKAL EFFENDY", kelas: "XI TKR B" }
     ]
   },
   {
@@ -114,7 +115,7 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-5-7", nama: "Rolansyah", kelas: "XI TKR B" },
       { id: "m-5-8", nama: "UJANG DIDI SURYADI", kelas: "XI TKR B" },
       { id: "m-5-9", nama: "YUSRIANTO", kelas: "XI TKR B" },
-      { id: "m-5-10", nama: "A. ZULKIFLI", kelas: "XI TKR B" },
+      { id: "m-5-10", nama: "A. ZULKIFLI", kelas: "XI TSM A" },
       { id: "m-5-11", nama: "Adil Saputra", kelas: "XI TSM A" },
       { id: "m-5-12", nama: "ADILLA AL FATH", kelas: "XI TSM A" }
     ]
@@ -155,8 +156,7 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-7-10", nama: "REIN AZHAR", kelas: "XI TSM A" },
       { id: "m-7-11", nama: "SABARUDDIN", kelas: "XI TSM A" },
       { id: "m-7-12", nama: "SANDY SEPRIANSYAH", kelas: "XI TSM A" },
-      { id: "m-7-13", nama: "SULTAMA FADLI RAMADHAN", kelas: "XI TSM A" },
-      { id: "m-7-14", nama: "TEGUH PRASETIO", kelas: "XI TSM A" }
+      { id: "m-7-13", nama: "SULTAMA FADLI RAMADHAN", kelas: "XI TSM A" }
     ]
   },
   {
@@ -164,19 +164,20 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 8,
     namaGuru: "NUNU SOSILOWATI PODADA, S.Pd , M.Pd",
     muridList: [
-      { id: "m-8-1", nama: "ALFAREL BINTANG PRATAMA", kelas: "XI TSM A" },
-      { id: "m-8-2", nama: "ADI BAGAS SAPUTRA", kelas: "X TSM B", keterangan: "TDK NAIK" },
-      { id: "m-8-3", nama: "AHMAD FADLAN", kelas: "X TSM B", keterangan: "TDK NAIK" },
-      { id: "m-8-4", nama: "ALFANDI", kelas: "XI TSM B" },
-      { id: "m-8-5", nama: "Andi Baso Fikri", kelas: "XI TSM B" },
-      { id: "m-8-6", nama: "ANDIKA SAPUTRA", kelas: "XI TSM B" },
-      { id: "m-8-7", nama: "Asran Asis", kelas: "XI TSM B" },
-      { id: "m-8-8", nama: "BILAL AL ZIQRI", kelas: "XI TSM B" },
-      { id: "m-8-9", nama: "DANI SAPUTRA", kelas: "XI TSM B" },
-      { id: "m-8-10", nama: "FADIL SAPUTRA", kelas: "XI TSM B" },
-      { id: "m-8-11", nama: "FILIPUS PIKCA", kelas: "XI TSM B" },
-      { id: "m-8-12", nama: "GUSTI ASTA PRASATYA", kelas: "XI TSM B" },
-      { id: "m-8-13", nama: "IMRAN", kelas: "XI TSM B" }
+      { id: "m-8-1", nama: "TEGUH PRASETIO", kelas: "XI TSM A" },
+      { id: "m-8-2", nama: "ALFAREL BINTANG PRATAMA", kelas: "XI TSM A" },
+      { id: "m-8-3", nama: "ADI BAGAS SAPUTRA", kelas: "X TSM B", keterangan: "TDK NAIK" },
+      { id: "m-8-4", nama: "AHMAD FADLAN", kelas: "X TSM B", keterangan: "TDK NAIK" },
+      { id: "m-8-5", nama: "ALFANDI", kelas: "XI TSM B" },
+      { id: "m-8-6", nama: "Andi Baso Fikri", kelas: "XI TSM B" },
+      { id: "m-8-7", nama: "ANDIKA SAPUTRA", kelas: "XI TSM B" },
+      { id: "m-8-8", nama: "Asran Asis", kelas: "XI TSM B" },
+      { id: "m-8-9", nama: "BILAL AL ZIQRI", kelas: "XI TSM B" },
+      { id: "m-8-10", nama: "DANI SAPUTRA", kelas: "XI TSM B" },
+      { id: "m-8-11", nama: "FADIL SAPUTRA", kelas: "XI TSM B" },
+      { id: "m-8-12", nama: "FILIPUS PIKCA", kelas: "XI TSM B" },
+      { id: "m-8-13", nama: "GUSTI ASTA PRASATYA", kelas: "XI TSM B" },
+      { id: "m-8-14", nama: "IMRAN", kelas: "XI TSM B" }
     ]
   },
   {
@@ -190,14 +191,13 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-9-4", nama: "MUH. FARHAN JUNIAWAN", kelas: "XI TSM B" },
       { id: "m-9-5", nama: "MUHAMMAD NUR IQSAL", kelas: "XI TSM B" },
       { id: "m-9-6", nama: "RADIT REZA SAPUTRA", kelas: "XI TSM B" },
-      { id: "m-9-7", nama: "Rahmatullah", kelas: "XI TSM B" },
-      { id: "m-9-8", nama: "Rangga", kelas: "X TSM B", keterangan: "TDK NAIK" },
+      { id: "m-9-7", nama: "Rahmatullah", kelas: "X TSM B", keterangan: "TDK NAIK" },
+      { id: "m-9-8", nama: "Rangga", kelas: "XI TSM B" },
       { id: "m-9-9", nama: "RESKI ADITIA SAPUTRA", kelas: "XI TSM B" },
       { id: "m-9-10", nama: "SAEFUL HUDA", kelas: "XI TSM B" },
       { id: "m-9-11", nama: "SILFARO RAMADHAN", kelas: "XI TSM B" },
       { id: "m-9-12", nama: "Syahril", kelas: "XI TSM B" },
-      { id: "m-9-13", nama: "Tirta Ramadan", kelas: "XI TSM B" },
-      { id: "m-9-14", nama: "ABYSYARAN", kelas: "XI TSM B" }
+      { id: "m-9-13", nama: "Tirta Ramadan", kelas: "XI TSM B" }
     ]
   },
   {
@@ -205,20 +205,15 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 10,
     namaGuru: "NYOMAN SULIAWATI, S.Pd.M.Pd",
     muridList: [
-      { id: "m-10-1", nama: "AFDHAL FIRAS LAKI LIMA", kelas: "XI TAV" },
-      { id: "m-10-2", nama: "ALDIANSYAH GANI", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-3", nama: "ASKAR", kelas: "XI TAV" },
-      { id: "m-10-4", nama: "KELANA TEGUH RAHARJA", kelas: "XI TAV" },
-      { id: "m-10-5", nama: "Ketut Aria Rediawan", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-6", nama: "REHAN", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-7", nama: "RIAS RAHMAT", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-8", nama: "YESIANA", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-9", nama: "Abd. Rahman Sindaliwu", kelas: "X TAV", keterangan: "TDK NAIK" },
-      { id: "m-10-10", nama: "HAFIS IBRAHIM", kelas: "XI TKR B" },
-      { id: "m-10-11", nama: "HARDIKA", kelas: "XI DPIB" },
-      { id: "m-10-12", nama: "MUHAMMAD RAFLI MARAMIS", kelas: "XI DPIB" },
-      { id: "m-10-13", nama: "SERIN", kelas: "XI DPIB" },
-      { id: "m-10-14", nama: "TYAS PUTRI PRAMESTI", kelas: "XI DPIB" }
+      { id: "m-10-1", nama: "ABYSYARAN", kelas: "XI TAV" },
+      { id: "m-10-2", nama: "Fajar Saputra Zainal", kelas: "X TSM" },
+      { id: "m-10-3", nama: "Rifky Berkah", kelas: "XI TKR A" },
+      { id: "m-10-4", nama: "Abd. Rahman Sindaliwu", kelas: "XI TKR B" },
+      { id: "m-10-5", nama: "HAFIS IBRAHIM", kelas: "XI DPIB" },
+      { id: "m-10-6", nama: "HARDIKA", kelas: "XI DPIB" },
+      { id: "m-10-7", nama: "MUHAMMAD RAFLI MARAMIS", kelas: "XI DPIB" },
+      { id: "m-10-8", nama: "SERIN", kelas: "XI DPIB" },
+      { id: "m-10-9", nama: "TYAS PUTRI PRAMESTI", kelas: "XI DPIB" }
     ]
   },
   {
@@ -226,15 +221,19 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 11,
     namaGuru: "EVASYATRIANA, S,SI",
     muridList: [
-      { id: "m-11-1", nama: "MUHAMAD SIDIQ", kelas: "XI DPIB" },
-      { id: "m-11-2", nama: "MUHAMMAD REVAN AL-FAHQREZI", kelas: "X DKV", keterangan: "TDK NAIK" },
-      { id: "m-11-3", nama: "REVA OLIVVATUL SAIDA", kelas: "XI DKV" },
-      { id: "m-11-4", nama: "ROBIATUL ADAWIYAH", kelas: "X DKV", keterangan: "TDK NAIK" },
+      { id: "m-11-1", nama: "MUHAMAD SIDIQ", kelas: "X DKV", keterangan: "TDK NAIK" },
+      { id: "m-11-2", nama: "MUHAMMAD REVAN AL-FAHQREZI", kelas: "XI DKV" },
+      { id: "m-11-3", nama: "REVA OLIVVATUL SAIDA", kelas: "X DKV", keterangan: "TDK NAIK" },
+      { id: "m-11-4", nama: "ROBIATUL ADAWIYAH", kelas: "XI DKV" },
       { id: "m-11-5", nama: "SYAHRUL RAMADHAN", kelas: "XI DKV" },
-      { id: "m-11-6", nama: "ABD. GOPUR", kelas: "XI DKV" },
+      { id: "m-11-6", nama: "ABD. GOPUR", kelas: "XII TKR A" },
       { id: "m-11-7", nama: "Ade Putra Jasman", kelas: "XII TKR A" },
       { id: "m-11-8", nama: "ADITYA SAPUTRA", kelas: "XII TKR A" },
-      { id: "m-11-9", nama: "AGIL DENSULTON", kelas: "XII TKR A" }
+      { id: "m-11-9", nama: "AGIL DENSULTON", kelas: "XI TKR A", keterangan: "TDK NAIK" },
+      { id: "m-11-10", nama: "AKBAR. S", kelas: "XII TKR A" },
+      { id: "m-11-11", nama: "ARFAEL PRATAMA", kelas: "XII TKR A" },
+      { id: "m-11-12", nama: "AUSTIARANDA", kelas: "XI TKR A", keterangan: "TDK NAIK" },
+      { id: "m-11-13", nama: "CHOKY HENDRIAWAN", kelas: "XII TKR A" }
     ]
   },
   {
@@ -242,24 +241,20 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 12,
     namaGuru: "SALMAH, S.PdI",
     muridList: [
-      { id: "m-12-1", nama: "AKBAR. S", kelas: "XI TKR A", keterangan: "TDK NAIK" },
-      { id: "m-12-2", nama: "ARFAEL PRATAMA", kelas: "XII TKR A" },
-      { id: "m-12-3", nama: "AUSTIARANDA", kelas: "XII TKR A" },
-      { id: "m-12-4", nama: "CHOKY HENDRIAWAN", kelas: "XI TKR A", keterangan: "TDK NAIK" },
-      { id: "m-12-5", nama: "DANY SAPUTRA", kelas: "XII TKR A" },
-      { id: "m-12-6", nama: "FADLI ANDI PRASETYO", kelas: "XII TKR A" },
-      { id: "m-12-7", nama: "FENDI JULIANSYAH", kelas: "XII TKR A" },
-      { id: "m-12-8", nama: "FIRNANDA SATRIO WICAKSONO", kelas: "XII TKR A" },
-      { id: "m-12-9", nama: "Genta Neo Actara", kelas: "XII TKR A" },
-      { id: "m-12-10", nama: "Ilham Akbar", kelas: "XI TKR A", keterangan: "TDK NAIK" },
-      { id: "m-12-11", nama: "IRFAN FEBRIAN", kelas: "XI TKR A", keterangan: "TDK NAIK" },
-      { id: "m-12-12", nama: "Kadek Adisetiawan", kelas: "XII TKR A" },
-      { id: "m-12-13", nama: "MADE ARDIKA WIRAWAN", kelas: "XII TKR A" },
-      { id: "m-12-14", nama: "MUH. ALIF", kelas: "XI TKR A", keterangan: "TDK NAIK" },
-      { id: "m-12-15", nama: "MUH. ASRUL", kelas: "XII TKR A" },
-      { id: "m-12-16", nama: "MUH. ILHAM IZMUL IZAM", kelas: "XII TKR A" },
-      { id: "m-12-17", nama: "MUH. RIFKI", kelas: "XII TKR A" },
-      { id: "m-12-18", nama: "MUHAMMAD RIZKY FEBRIANSYAH", kelas: "XII TKR A" }
+      { id: "m-12-1", nama: "DANY SAPUTRA", kelas: "XII TKR A" },
+      { id: "m-12-2", nama: "FADLI ANDI PRASETYO", kelas: "XII TKR A" },
+      { id: "m-12-3", nama: "FENDI JULIANSYAH", kelas: "XII TKR A" },
+      { id: "m-12-4", nama: "FIRNANDA SATRIO WICAKSONO", kelas: "XII TKR A" },
+      { id: "m-12-5", nama: "Genta Neo Actara", kelas: "XII TKR A" },
+      { id: "m-12-6", nama: "Ilham Akbar", kelas: "XI TKR A", keterangan: "TDK NAIK" },
+      { id: "m-12-7", nama: "IRFAN FEBRIAN", kelas: "XI TKR A", keterangan: "TDK NAIK" },
+      { id: "m-12-8", nama: "Kadek Adisetiawan", kelas: "XII TKR A" },
+      { id: "m-12-9", nama: "MADE ARDIKA WIRAWAN", kelas: "XII TKR A" },
+      { id: "m-12-10", nama: "MUH. ALIF", kelas: "XI TKR A", keterangan: "TDK NAIK" },
+      { id: "m-12-11", nama: "MUH. ASRUL", kelas: "XII TKR A" },
+      { id: "m-12-12", nama: "MUH. ILHAM IZMUL IZAM", kelas: "XII TKR A" },
+      { id: "m-12-13", nama: "MUH. RIFKI", kelas: "XII TKR A" },
+      { id: "m-12-14", nama: "MUHAMMAD RIZKY FEBRIANSYAH", kelas: "XII TKR A" }
     ]
   },
   {
@@ -319,9 +314,9 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-15-8", nama: "PUTU RIZKY OKTAPIAN", kelas: "XII TKR B" },
       { id: "m-15-9", nama: "RAFI DWI NURAJI", kelas: "XII TKR B" },
       { id: "m-15-10", nama: "RAHMADDANI", kelas: "XII TKR B" },
-      { id: "m-15-11", nama: "REPAN MARIO ARDIANSYAH", kelas: "XI TKR B", keterangan: "TDK NAIK" },
+      { id: "m-15-11", nama: "REPAN MARIO ARDIANSYAH", kelas: "XII TKR B" },
       { id: "m-15-12", nama: "SAKTI TRITAMA RANDAWULA'A KADIR", kelas: "XII TKR B" },
-      { id: "m-15-13", nama: "SATRIADI", kelas: "XII TKR B" },
+      { id: "m-15-13", nama: "SATRIADI", kelas: "XI TKR B", keterangan: "TDK NAIK" },
       { id: "m-15-14", nama: "SUDRAJAT MURDANI", kelas: "XII TKR B" }
     ]
   },
@@ -331,18 +326,18 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     namaGuru: "MUHAMMAD MAIMANA, ST",
     muridList: [
       { id: "m-16-1", nama: "Triwira Nata Wijaya", kelas: "XII TKR B" },
-      { id: "m-16-2", nama: "VAREL", kelas: "XII TSM A" },
-      { id: "m-16-3", nama: "WHILY BHIRA MALDHANI", kelas: "XII TSM A" },
+      { id: "m-16-2", nama: "VAREL", kelas: "XII TKR B" },
+      { id: "m-16-3", nama: "WHILY BHIRA MALDHANI", kelas: "XII TKR B" },
       { id: "m-16-4", nama: "DIKAL", kelas: "XII TSM A" },
       { id: "m-16-5", nama: "DIMAS APRIANSYAH", kelas: "XII TSM A" },
       { id: "m-16-6", nama: "ELVANUS", kelas: "XII TSM A" },
       { id: "m-16-7", nama: "FAHRI RAMADHAN", kelas: "XII TSM A" },
-      { id: "m-16-8", nama: "Fausan Irmawan", kelas: "XI TSM A", keterangan: "TDK NAIK" },
-      { id: "m-16-9", nama: "FERDY", kelas: "XI TSM A", keterangan: "TDK NAIK" },
-      { id: "m-16-10", nama: "GUNARTO", kelas: "XI TSM A" },
-      { id: "m-16-11", nama: "GUNTUR", kelas: "XII TSM A" },
-      { id: "m-16-12", nama: "IBRAHIM", kelas: "XII TSM A" },
-      { id: "m-16-13", nama: "IBRAHIM. S", kelas: "XII TSM A" }
+      { id: "m-16-8", nama: "Fausan Irmawan", kelas: "XII TSM A" },
+      { id: "m-16-9", nama: "FERDY", kelas: "XII TSM A" },
+      { id: "m-16-10", nama: "GUNARTO", kelas: "XII TSM A" },
+      { id: "m-16-11", nama: "GUNTUR", kelas: "XI TSM A", keterangan: "TDK NAIK" },
+      { id: "m-16-12", nama: "IBRAHIM", kelas: "XI TSM A", keterangan: "TDK NAIK" },
+      { id: "m-16-13", nama: "IBRAHIM", kelas: "XI TSM A", keterangan: "TDK NAIK" }
     ]
   },
   {
@@ -352,18 +347,18 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     muridList: [
       { id: "m-17-1", nama: "JELY HINO", kelas: "XII TSM A" },
       { id: "m-17-2", nama: "KADEK BAYU SANDI", kelas: "XII TSM A" },
-      { id: "m-17-3", nama: "KADEK PAJAR", kelas: "XI TSM A", keterangan: "TDK NAIK" },
+      { id: "m-17-3", nama: "KADEK PAJAR", kelas: "XII TSM A" },
       { id: "m-17-4", nama: "KADEK TATASAN JAYA", kelas: "XII TSM A" },
       { id: "m-17-5", nama: "KOMANG SURYA", kelas: "XII TSM A" },
-      { id: "m-17-6", nama: "LINTANG", kelas: "XII TSM A" },
+      { id: "m-17-6", nama: "LINTANG", kelas: "XI TSM A", keterangan: "TDK NAIK" },
       { id: "m-17-7", nama: "MUH. AFDAL USMAN", kelas: "XII TSM A" },
       { id: "m-17-8", nama: "Muh. Alif Alfiansyah", kelas: "XII TSM A" },
       { id: "m-17-9", nama: "Muh. Raden Fauzhan Farid", kelas: "XII TSM A" },
       { id: "m-17-10", nama: "Muh. Ridwan", kelas: "XII TSM A" },
       { id: "m-17-11", nama: "Nanda Aripa Hakim", kelas: "XII TSM A" },
       { id: "m-17-12", nama: "NYOMAN AGUS SUJANA", kelas: "XII TSM A" },
-      { id: "m-17-13", nama: "PUTU HERI PRATAMA", kelas: "XI TSM A", keterangan: "TDK NAIK" },
-      { id: "m-17-14", nama: "Rafky Ibnu Hidayah", kelas: "XI TSM A", keterangan: "TDK NAIK" }
+      { id: "m-17-13", nama: "PUTU HERI PRATAMA", kelas: "XII TSM A" },
+      { id: "m-17-14", nama: "Rafky Ibnu Hidayah", kelas: "XII TSM A" }
     ]
   },
   {
@@ -371,16 +366,16 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 18,
     namaGuru: "SAIFUL ARIFIN , S.Pd",
     muridList: [
-      { id: "m-18-1", nama: "RAFLI ADRIYANSAH", kelas: "XII TAV" },
-      { id: "m-18-2", nama: "RANGGA PRAMONO", kelas: "XII TAV" },
-      { id: "m-18-3", nama: "SEKAR SAPUTRA", kelas: "XII TAV" },
-      { id: "m-18-4", nama: "WAHYU ADRIANSYAH", kelas: "XII TAV" },
+      { id: "m-18-1", nama: "RAFLI ADRIYANSAH", kelas: "XII TSM A" },
+      { id: "m-18-2", nama: "RANGGA PRAMONO", kelas: "XII TSM A" },
+      { id: "m-18-3", nama: "SEKAR SAPUTRA", kelas: "XI TSM A", keterangan: "TDK NAIK" },
+      { id: "m-18-4", nama: "WAHYU ADRIANSYAH", kelas: "XI TSM A", keterangan: "TDK NAIK" },
       { id: "m-18-5", nama: "ABDUL FADLI", kelas: "XII TAV" },
-      { id: "m-18-6", nama: "ANTONIAS", kelas: "XI TAV", keterangan: "TDK NAIK" },
+      { id: "m-18-6", nama: "ANTONIAS", kelas: "XII TAV" },
       { id: "m-18-7", nama: "DWI SURAJAB", kelas: "XII TAV" },
       { id: "m-18-8", nama: "Fatma Yani", kelas: "XII TAV" },
       { id: "m-18-9", nama: "GALIH ADI PRATAMA", kelas: "XII TAV" },
-      { id: "m-18-10", nama: "GEDE ARDIKA SUDANA YASA", kelas: "XII TAV" }
+      { id: "m-18-10", nama: "GEDE ARDIKA SUDANA YASA", kelas: "XI TAV", keterangan: "TDK NAIK" }
     ]
   },
   {
@@ -394,9 +389,9 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-19-4", nama: "MUH. FADHIL ADITYA", kelas: "XII TAV" },
       { id: "m-19-5", nama: "MUH. REZKI RAMADHAN", kelas: "XII TAV" },
       { id: "m-19-6", nama: "NOTO TRIATMOJO", kelas: "XII TAV" },
-      { id: "m-19-7", nama: "PAISAL", kelas: "XII DPIB" },
-      { id: "m-19-8", nama: "SYAHLAN", kelas: "XII DPIB" },
-      { id: "m-19-9", nama: "WAHYU", kelas: "XII DPIB" },
+      { id: "m-19-7", nama: "PAISAL", kelas: "XII TAV" },
+      { id: "m-19-8", nama: "SYAHLAN", kelas: "XII TAV" },
+      { id: "m-19-9", nama: "WAHYU", kelas: "XII TAV" },
       { id: "m-19-10", nama: "Ade Agus Wila Kusuma", kelas: "XII DPIB" },
       { id: "m-19-11", nama: "AKBAR", kelas: "XII DPIB" },
       { id: "m-19-12", nama: "Aris", kelas: "XII DPIB" },
@@ -427,8 +422,8 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 21,
     namaGuru: "ANGRAENI DAMANIK, S.Pd",
     muridList: [
-      { id: "m-21-1", nama: "ABD. AZIZ", kelas: "XII DPIB" },
-      { id: "m-21-2", nama: "AIMAN", kelas: "XII DPIB" },
+      { id: "m-21-1", nama: "ABD. AZIZ", kelas: "X TKR A" },
+      { id: "m-21-2", nama: "AIMAN", kelas: "X TKR A" },
       { id: "m-21-3", nama: "ALEXA AL MUBARAK", kelas: "X TKR A" },
       { id: "m-21-4", nama: "ALFIN SEPRIANTO", kelas: "X TKR A" },
       { id: "m-21-5", nama: "ANAK AGUNG MADE ARTHA GINA", kelas: "X TKR A" },
@@ -474,8 +469,7 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-24-3", nama: "NIKODEMUS SEPTIANTO", kelas: "X TKR A" },
       { id: "m-24-4", nama: "NYOMAN SUGIE HARTHA", kelas: "X TKR A" },
       { id: "m-24-5", nama: "REZAL HERFIANSYAH", kelas: "X TKR A" },
-      { id: "m-24-6", nama: "SAHRUL", kelas: "X TKR A" },
-      { id: "m-24-7", nama: "AGHNAN SUGIAR AZHARY", kelas: "X TKR A" }
+      { id: "m-24-6", nama: "SAHRUL", kelas: "X TKR A" }
     ]
   },
   {
@@ -483,13 +477,14 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 25,
     namaGuru: "ADRIAN SAPUTRA, S.Pd",
     muridList: [
-      { id: "m-25-1", nama: "AKSAH NURPRANANSAH", kelas: "X TKR A" },
-      { id: "m-25-2", nama: "ALFIAN SYAHRUL M.", kelas: "X TKR A" },
-      { id: "m-25-3", nama: "ALVIN SABATINO", kelas: "X TKR A" },
-      { id: "m-25-4", nama: "ANDI MUHAMMAD HAEKAL", kelas: "X TKR A" },
-      { id: "m-25-5", nama: "BASO SABRIN", kelas: "X TKR A" },
-      { id: "m-25-6", nama: "FAIZ ALWAN FAHYAAD", kelas: "X TKR A" },
-      { id: "m-25-7", nama: "FRANANDA KURNIA ALFAROBI", kelas: "X TKR A" }
+      { id: "m-25-1", nama: "AGHNAN SUGIAR AZHARY", kelas: "X TKR B" },
+      { id: "m-25-2", nama: "AKSAH NURPRANANSAH", kelas: "X TKR B" },
+      { id: "m-25-3", nama: "ALFIAN SYAHRUL M.", kelas: "X TKR B" },
+      { id: "m-25-4", nama: "ALVIN SABATINO", kelas: "X TKR B" },
+      { id: "m-25-5", nama: "ANDI MUHAMMAD HAEKAL", kelas: "X TKR B" },
+      { id: "m-25-6", nama: "BASO SABRIN", kelas: "X TKR B" },
+      { id: "m-25-7", nama: "FAIZ ALWAN FAHYAAD", kelas: "X TKR B" },
+      { id: "m-25-8", nama: "FRANANDA KURNIA ALFAROBI", kelas: "X TKR B" }
     ]
   },
   {
@@ -497,13 +492,13 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 26,
     namaGuru: "CICI MURNI, S.Pd",
     muridList: [
-      { id: "m-26-1", nama: "ISMAIL", kelas: "X TKR A" },
-      { id: "m-26-2", nama: "KADEK DWI SUPRIYANTO", kelas: "X TKR A" },
-      { id: "m-26-3", nama: "KETUT JULIANTO", kelas: "X TKR A" },
-      { id: "m-26-4", nama: "KIANDRA ADI PRASTYA", kelas: "X TKR A" },
-      { id: "m-26-5", nama: "MADE INDRA SAPUTRA", kelas: "X TKR A" },
-      { id: "m-26-6", nama: "MUH. ALDI", kelas: "X TKR A" },
-      { id: "m-26-7", nama: "MUH. DWI APRILIANO", kelas: "X TKR A" }
+      { id: "m-26-1", nama: "ISMAIL", kelas: "X TKR B" },
+      { id: "m-26-2", nama: "KADEK DWI SUPRIYANTO", kelas: "X TKR B" },
+      { id: "m-26-3", nama: "KETUT JULIANTO", kelas: "X TKR B" },
+      { id: "m-26-4", nama: "KIANDRA ADI PRASTYA", kelas: "X TKR B" },
+      { id: "m-26-5", nama: "MADE INDRA SAPUTRA", kelas: "X TKR B" },
+      { id: "m-26-6", nama: "MUH. ALDI", kelas: "X TKR B" },
+      { id: "m-26-7", nama: "MUH. DWI APRILIANO", kelas: "X TKR B" }
     ]
   },
   {
@@ -511,13 +506,13 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 27,
     namaGuru: "IZZAT WAHYU SALDI, S.Pd",
     muridList: [
-      { id: "m-27-1", nama: "MUH. FORLAND", kelas: "X TKR A" },
-      { id: "m-27-2", nama: "MUH. PUTRA ALRIFKI", kelas: "X TKR A" },
-      { id: "m-27-3", nama: "MUH. RENALDI P", kelas: "X TKR A" },
-      { id: "m-27-4", nama: "MUH. SAFII ADITYA", kelas: "X TKR A" },
-      { id: "m-27-5", nama: "MUHAMAD NISWAR", kelas: "X TKR A" },
-      { id: "m-27-6", nama: "MUHAMMAD NUR ALAM MATTOREANG", kelas: "X TKR A" },
-      { id: "m-27-7", nama: "NANDA FEBRIAN", kelas: "X TKR A" }
+      { id: "m-27-1", nama: "MUH. FORLAND", kelas: "X TKR B" },
+      { id: "m-27-2", nama: "MUH. PUTRA ALRIFKI", kelas: "X TKR B" },
+      { id: "m-27-3", nama: "MUH. RENALDI P", kelas: "X TKR B" },
+      { id: "m-27-4", nama: "MUH. SAFII ADITYA", kelas: "X TKR B" },
+      { id: "m-27-5", nama: "MUHAMAD NISWAR", kelas: "X TKR B" },
+      { id: "m-27-6", nama: "MUHAMMAD NUR ALAM MATTOREANG", kelas: "X TKR B" },
+      { id: "m-27-7", nama: "NANDA FEBRIAN", kelas: "X TKR B" }
     ]
   },
   {
@@ -525,13 +520,11 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 28,
     namaGuru: "YOGA NANDA HENDRAWAN, S.Pd",
     muridList: [
-      { id: "m-28-1", nama: "NENGAH ARYA DWI ARTHA", kelas: "X TKR A" },
-      { id: "m-28-2", nama: "NUR ALIMANSYAH", kelas: "X TKR A" },
-      { id: "m-28-3", nama: "REFAN HERMAWAN", kelas: "X TKR A" },
-      { id: "m-28-4", nama: "RIFKI RAMDANI", kelas: "X TKR A" },
-      { id: "m-28-5", nama: "WAYAN BAYU ADITYA", kelas: "X TKR A" },
-      { id: "m-28-6", nama: "ABI AHZARIF", kelas: "X TKR A" },
-      { id: "m-28-7", nama: "ADITYA PRATAMA", kelas: "X TKR A" }
+      { id: "m-28-1", nama: "NENGAH ARYA DWI ARTHA", kelas: "X TKR B" },
+      { id: "m-28-2", nama: "NUR ALIMANSYAH", kelas: "X TKR B" },
+      { id: "m-28-3", nama: "REFAN HERMAWAN", kelas: "X TKR B" },
+      { id: "m-28-4", nama: "RIFKI RAMDANI", kelas: "X TKR B" },
+      { id: "m-28-5", nama: "WAYAN BAYU ADITYA", kelas: "X TKR B" }
     ]
   },
   {
@@ -539,13 +532,15 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 29,
     namaGuru: "SAIMAN, ST",
     muridList: [
-      { id: "m-29-1", nama: "AHMAD IRWAN SAPUTRA", kelas: "X TKR B" },
-      { id: "m-29-2", nama: "AKIL NUR", kelas: "X TKR B" },
-      { id: "m-29-3", nama: "ALDO ALFIANTO", kelas: "X TKR B" },
-      { id: "m-29-4", nama: "ARJUN HIRMANSA", kelas: "X TKR B" },
-      { id: "m-29-5", nama: "ARPAN", kelas: "X TKR B" },
-      { id: "m-29-6", nama: "BAGAS PANJI SAMUDRA", kelas: "X TKR B" },
-      { id: "m-29-7", nama: "FAREL ANANTA", kelas: "X TKR B" }
+      { id: "m-29-1", nama: "ABI AHZARIF", kelas: "X TSM" },
+      { id: "m-29-2", nama: "ADITYA PRATAMA", kelas: "X TSM" },
+      { id: "m-29-3", nama: "AHMAD IRWAN SAPUTRA", kelas: "X TSM" },
+      { id: "m-29-4", nama: "AKIL NUR", kelas: "X TSM" },
+      { id: "m-29-5", nama: "ALDO ALFIANTO", kelas: "X TSM" },
+      { id: "m-29-6", nama: "ARJUN HIRMANSA", kelas: "X TSM" },
+      { id: "m-29-7", nama: "ARPAN", kelas: "X TSM" },
+      { id: "m-29-8", nama: "BAGAS PANJI SAMUDRA", kelas: "X TSM" },
+      { id: "m-29-9", nama: "FAREL ANANTA", kelas: "X TSM" }
     ]
   },
   {
@@ -553,13 +548,13 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 30,
     namaGuru: "ANDI ASRUL UMAR, S.Pd",
     muridList: [
-      { id: "m-30-1", nama: "GUSTI RAKA PRATAMA", kelas: "X TKR B" },
-      { id: "m-30-2", nama: "IGNASIUS HENDRA GUNAWAN", kelas: "X TKR B" },
-      { id: "m-30-3", nama: "JANR ARISTO MATIUS", kelas: "X TKR B" },
-      { id: "m-30-4", nama: "KADEK ADI DARMAWAN", kelas: "X TKR B" },
-      { id: "m-30-5", nama: "M. HAFID ALFINSYAH", kelas: "X TKR B" },
-      { id: "m-30-6", nama: "MADE WIRA NATA", kelas: "X TKR B" },
-      { id: "m-30-7", nama: "MUH. ALFA RISKY", kelas: "X TKR B" }
+      { id: "m-30-1", nama: "GUSTI RAKA PRATAMA", kelas: "X TSM" },
+      { id: "m-30-2", nama: "IGNASIUS HENDRA GUNAWAN", kelas: "X TSM" },
+      { id: "m-30-3", nama: "JANR ARISTO MATIUS", kelas: "X TSM" },
+      { id: "m-30-4", nama: "KADEK ADI DARMAWAN", kelas: "X TSM" },
+      { id: "m-30-5", nama: "M. HAFID ALFINSYAH", kelas: "X TSM" },
+      { id: "m-30-6", nama: "MADE WIRA NATA", kelas: "X TSM" },
+      { id: "m-30-7", nama: "MUH. ALFA RISKY", kelas: "X TSM" }
     ]
   },
   {
@@ -567,14 +562,14 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 31,
     namaGuru: "MOCH. YAMIN, S.Pd",
     muridList: [
-      { id: "m-31-1", nama: "MUH. ALVHINO APRILLIO", kelas: "X TKR B" },
-      { id: "m-31-2", nama: "MUH. DESTA", kelas: "X TKR B" },
-      { id: "m-31-3", nama: "MUH. FAID HIBBAN", kelas: "X TKR B" },
-      { id: "m-31-4", nama: "MUH. FITRAHTULLAH RAHMAN", kelas: "X TKR B" },
-      { id: "m-31-5", nama: "MUH. ILHAM IMANSYAH", kelas: "X TKR B" },
-      { id: "m-31-6", nama: "MUH. RIZAL", kelas: "X TKR B" },
-      { id: "m-31-7", nama: "MUH. WAHYU HALULANGA", kelas: "X TKR B" },
-      { id: "m-31-8", nama: "MUH. YOMI ALFADJRIN", kelas: "X TKR B" }
+      { id: "m-31-1", nama: "MUH. ALVHINO APRILLIO", kelas: "X TSM" },
+      { id: "m-31-2", nama: "MUH. DESTA", kelas: "X TSM" },
+      { id: "m-31-3", nama: "MUH. FAID HIBBAN", kelas: "X TSM" },
+      { id: "m-31-4", nama: "MUH. FITRAHTULLAH RAHMAN", kelas: "X TSM" },
+      { id: "m-31-5", nama: "MUH. ILHAM IMANSYAH", kelas: "X TSM" },
+      { id: "m-31-6", nama: "MUH. RIZAL", kelas: "X TSM" },
+      { id: "m-31-7", nama: "MUH. WAHYU HALULANGA", kelas: "X TSM" },
+      { id: "m-31-8", nama: "MUH. YOMI ALFADJRIN", kelas: "X TSM" }
     ]
   },
   {
@@ -599,9 +594,7 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
       { id: "m-33-2", nama: "RIZKY ARDIANSYAH AL-FAUZI", kelas: "X TSM" },
       { id: "m-33-3", nama: "SAIFUDIN DIKA PRATAMA", kelas: "X TSM" },
       { id: "m-33-4", nama: "SULFITRA RAHARJO", kelas: "X TSM" },
-      { id: "m-33-5", nama: "WALDY DWI DAFANSYAH", kelas: "X TSM" },
-      { id: "m-33-6", nama: "CHINOVAN DWI CAHYA", kelas: "X TSM" },
-      { id: "m-33-7", nama: "DANIEL FREDY TUNGADY", kelas: "X TSM" }
+      { id: "m-33-5", nama: "WALDY DWI DAFANSYAH", kelas: "X TSM" }
     ]
   },
   {
@@ -609,12 +602,14 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 34,
     namaGuru: "MUNATAR TABARA, S.Pd",
     muridList: [
-      { id: "m-34-1", nama: "MUHAMAMAD SOFY IFAN HIDAYAT", kelas: "X TSM" },
-      { id: "m-34-2", nama: "MUHAMMAD NANDA SEPRIAN", kelas: "X TSM" },
-      { id: "m-34-3", nama: "ANDI ARIAH SAPUTRA", kelas: "X TSM" },
-      { id: "m-34-4", nama: "HANAN AFIF", kelas: "X TSM" },
-      { id: "m-34-5", nama: "MUH. KHAYRAN AFFAN S.", kelas: "X TSM" },
-      { id: "m-34-6", nama: "MUHAMMAD ALRASYID", kelas: "X TSM" }
+      { id: "m-34-1", nama: "CHINOVAN DWI CAHYA", kelas: "DKV" },
+      { id: "m-34-2", nama: "DANIEL FREDY TUNGADY", kelas: "DKV" },
+      { id: "m-34-3", nama: "MUHAMAMAD SOFY IFAN HIDAYAT", kelas: "DKV" },
+      { id: "m-34-4", nama: "MUHAMMAD NANDA SEPRIAN", kelas: "DKV" },
+      { id: "m-34-5", nama: "ANDI ARIAH SAPUTRA", kelas: "DPIB" },
+      { id: "m-34-6", nama: "HANAN AFIF", kelas: "DPIB" },
+      { id: "m-34-7", nama: "MUH. KHAYRAN AFFAN S.", kelas: "DPIB" },
+      { id: "m-34-8", nama: "MUHAMMAD ALRASYID", kelas: "DPIB" }
     ]
   },
   {
@@ -622,35 +617,51 @@ export const INITIAL_GURU_WALI_MASTER_DATA: GuruWaliMasterItem[] = [
     no: 35,
     namaGuru: "Gusti Himawan Kadiyanto, S.Pd",
     muridList: [
-      { id: "m-35-1", nama: "NIA ANISA PUTRI", kelas: "X TSM" },
-      { id: "m-35-2", nama: "AHMAD NUR LATIF", kelas: "X TSM" },
-      { id: "m-35-3", nama: "MUH. IRFAN", kelas: "X TSM" },
-      { id: "m-35-4", nama: "MUHAMMAD BAGAS RIFALDI", kelas: "X TSM" },
-      { id: "m-35-5", nama: "NARENDRA JYOTIS KAMA.", kelas: "X TSM" },
-      { id: "m-35-6", nama: "RIDO AKBAR MAULANA", kelas: "X TSM" }
+      { id: "m-35-1", nama: "NIA ANISA PUTRI", kelas: "DPIB" },
+      { id: "m-35-2", nama: "AHMAD NUR LATIF", kelas: "TEAV" },
+      { id: "m-35-3", nama: "MUH. IRFAN", kelas: "TEAV" },
+      { id: "m-35-4", nama: "MUHAMMAD BAGAS RIFALDI", kelas: "TEAV" },
+      { id: "m-35-5", nama: "NARENDRA JYOTIS KAMA.", kelas: "TEAV" },
+      { id: "m-35-6", nama: "RIDO AKBAR MAULANA", kelas: "TEAV" }
     ]
-  }
+  },
+  {
+    id: "gw-36",
+    no: 36,
+    namaGuru: "RUSNI K, S.T",
+    muridList: [
+      { id: "m-36-1", nama: "AFDHAL FIRAS LAKI LIMA", kelas: "X TAV", keterangan: "TDK NAIK" },
+      { id: "m-36-2", nama: "ALDIANSYAH GANI", kelas: "XI TAV" },
+      { id: "m-36-3", nama: "ASKAR", kelas: "XI TAV" },
+      { id: "m-36-4", nama: "KELANA TEGUH RAHARJA", kelas: "X TAV", keterangan: "TDK NAIK" },
+      { id: "m-36-5", nama: "Ketut Aria Rediawan", kelas: "X TAV" },
+      { id: "m-36-6", nama: "REHAN", kelas: "X TAV", keterangan: "TDK NAIK" },
+      { id: "m-36-7", nama: "RIAS RAHMAT", kelas: "X TAV", keterangan: "TDK NAIK" },
+      { id: "m-36-8", nama: "YESIANA", kelas: "X TAV", keterangan: "TDK NAIK" }
+    ]
+  },
 ];
 
 export function getMasterGuruWaliData(): GuruWaliMasterItem[] {
   try {
-    const saved = localStorage.getItem("sihadir_master_guru_wali_data");
-    if (saved) {
+    if (typeof window !== "undefined") {
+      const storedVersion = localStorage.getItem("sihadir_master_guru_wali_version");
+      const saved = localStorage.getItem("sihadir_master_guru_wali_data");
+      
+      // If version mismatch or not 36 teachers, update to latest official SK data
+      if (storedVersion !== DATA_VERSION_GURU_WALI || !saved) {
+        localStorage.setItem("sihadir_master_guru_wali_version", DATA_VERSION_GURU_WALI);
+        localStorage.setItem("sihadir_master_guru_wali_data", JSON.stringify(INITIAL_GURU_WALI_MASTER_DATA));
+        return INITIAL_GURU_WALI_MASTER_DATA;
+      }
+
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return INITIAL_GURU_WALI_MASTER_DATA.map(initItem => {
-          const found = parsed.find((p: GuruWaliMasterItem) => 
-            p.id === initItem.id || 
-            (p.namaGuru && initItem.namaGuru && p.namaGuru.toLowerCase().includes(initItem.namaGuru.toLowerCase().split(",")[0]))
-          );
-          if (!found || !found.muridList || found.muridList.length === 0) {
-            return initItem;
-          }
-          if (initItem.muridList && found.muridList.length < initItem.muridList.length) {
-            return initItem;
-          }
-          return found;
-        });
+      if (Array.isArray(parsed) && parsed.length === INITIAL_GURU_WALI_MASTER_DATA.length) {
+        return parsed;
+      } else {
+        localStorage.setItem("sihadir_master_guru_wali_version", DATA_VERSION_GURU_WALI);
+        localStorage.setItem("sihadir_master_guru_wali_data", JSON.stringify(INITIAL_GURU_WALI_MASTER_DATA));
+        return INITIAL_GURU_WALI_MASTER_DATA;
       }
     }
   } catch (err) {
@@ -661,7 +672,10 @@ export function getMasterGuruWaliData(): GuruWaliMasterItem[] {
 
 export function saveMasterGuruWaliData(data: GuruWaliMasterItem[]) {
   try {
-    localStorage.setItem("sihadir_master_guru_wali_data", JSON.stringify(data));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("sihadir_master_guru_wali_data", JSON.stringify(data));
+      localStorage.setItem("sihadir_master_guru_wali_version", DATA_VERSION_GURU_WALI);
+    }
   } catch (err) {
     console.error("Error saving master guru wali data:", err);
   }

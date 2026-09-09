@@ -45,9 +45,9 @@ export function getWaliKelasPerwalianClass(teacherNameOrUsername: string): strin
   if (clean.includes("saiful")) return "XI TKR B";
   if (clean.includes("arham")) return "XI TKR A";
   if (clean.includes("wahyu") || clean.includes("ngurah")) return "XI TSM A";
-  if (clean.includes("triana")) return "XI TSM B";
+  if (clean.includes("eva") || clean.includes("syahtriana") || clean.includes("evasyatriana")) return "XI DPIB";
+  if (clean.includes("daniel") || (clean.includes("triana") && !clean.includes("eva") && !clean.includes("syah"))) return "XI TSM B";
   if (clean.includes("isnawati")) return "XI TAV";
-  if (clean.includes("eva") || clean.includes("syahtriana")) return "XI DPIB";
   if (clean.includes("muslimin")) return "XI DKV";
   if (clean.includes("haerul")) return "XII TKR A";
   if (clean.includes("nunung")) return "XII TKR B";

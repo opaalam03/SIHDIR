@@ -196,7 +196,7 @@ export function KarakterAnalisis({ isAutomotive }: { isAutomotive: boolean }) {
           <div>
             <h4 className="text-xs font-extrabold uppercase text-slate-500 border-b pb-2 mb-3 tracking-wider flex justify-between">
               <span>Hasil Analisa Output AI</span>
-              <span className="text-emerald-600">SMK SIMPATI</span>
+              <span className="text-emerald-600">SMK Negeri 2 Konawe</span>
             </h4>
 
             {aiAnalysisResult ? (
@@ -359,7 +359,7 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
     } catch (e: any) {
       console.error(e);
       setAiReportBox(
-        `### REKAP & ANALISIS KINERJA PKL SMK SIMPATI\n` +
+        `### REKAP & ANALISIS KINERJA PKL SMK NEGERI 2 KONAWE\n` +
         `Rasio Pengisian Jurnal: 100% Terisi.\n` +
         `Kinerja Umum:\n` +
         `- Bagus Setiawan (Nilai: 75) perlu dorongan kedisiplinan waktu agar tidak terlambat.\n` +

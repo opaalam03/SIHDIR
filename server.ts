@@ -88,6 +88,11 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Health check endpoint FIRST
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -180,7 +185,7 @@ async function startServer() {
 
       let promptInstruction = "";
       if (fileType === "guru") {
-        promptInstruction = `Anda adalah sistem AI pengolah data induk SMKN 2 Konawe. 
+        promptInstruction = `Anda adalah sistem AI pengolah data induk SMK Negeri 2 Konawe. 
 Tugas Anda: Analisis dan ekstrak seluruh data guru/tenaga pendidik dari dokumen/teks berikut menjadi array JSON berisi objek-objek guru yang terstandarisasi.
 
 Skema JSON yang WAJIB dipenuhi:
@@ -201,7 +206,7 @@ Ketentuan:
 2. Format nama agar konsisten (kapitalisasi awal kata, gelar di belakang nama).
 3. Hanya kirimkan JSON array murni.`;
       } else if (fileType === "siswa") {
-        promptInstruction = `Anda adalah sistem AI pengolah data induk SMKN 2 Konawe. 
+        promptInstruction = `Anda adalah sistem AI pengolah data induk SMK Negeri 2 Konawe. 
 Tugas Anda: Analisis dan ekstrak seluruh data siswa/murid dari dokumen/teks berikut menjadi array JSON berisi objek-objek siswa yang terstandarisasi.
 
 Skema JSON yang WAJIB dipenuhi:
@@ -220,7 +225,7 @@ Ketentuan:
 1. Bersihkan karakter acak dari hasil scan PDF.
 2. Hanya kirimkan JSON array murni.`;
       } else {
-        promptInstruction = `Anda adalah sistem AI pengolah data induk SMKN 2 Konawe. 
+        promptInstruction = `Anda adalah sistem AI pengolah data induk SMK Negeri 2 Konawe. 
 Tugas Anda: Analisis dan ekstrak seluruh data mata pelajaran dari dokumen/teks berikut menjadi array JSON terstandarisasi.
 
 Skema JSON yang WAJIB dipenuhi:

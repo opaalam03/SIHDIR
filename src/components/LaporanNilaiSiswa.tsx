@@ -25,7 +25,7 @@ import {
   Gauge
 } from "lucide-react";
 import { MOCK_STUDENTS } from "../mockData";
-import { getTeacherMatchedSchedules, getStoredSchedules, normalizeName } from "../utils/scheduleHelper";
+import { getTeacherMatchedSchedules, getStoredSchedules, normalizeName, isSameTeacherName } from "../utils/scheduleHelper";
 
 // Define score parameters
 interface GradeRecord {
@@ -252,10 +252,8 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
 
   const activeTeacherSchedules = React.useMemo(() => {
     if (activeFilterTeacherName === "semua") return allMasterSchedules;
-    const norm = normalizeName(activeFilterTeacherName);
     return allMasterSchedules.filter(s => {
-      const schNorm = normalizeName(s.teacherName || "");
-      return schNorm.includes(norm) || norm.includes(schNorm);
+      return isSameTeacherName(s.teacherName || "", activeFilterTeacherName);
     });
   }, [activeFilterTeacherName, allMasterSchedules]);
 
@@ -1847,7 +1845,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
           <div className="space-y-12">
             <div>
               <p className="text-slate-600">Mengetahui,</p>
-              <p className="font-bold text-slate-800">Waka Kurikulum SMKN 2 Konawe</p>
+              <p className="font-bold text-slate-800">Waka Kurikulum SMK Negeri 2 Konawe</p>
             </div>
             <div>
               <p className="font-bold text-slate-950 underline">Andi Asrul Umar, S.Pd.</p>
@@ -1858,7 +1856,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
           <div className="space-y-12">
             <div>
               <p className="text-slate-600">Mengetahui,</p>
-              <p className="font-bold text-slate-800">Kepala SMKN 2 Konawe</p>
+              <p className="font-bold text-slate-800">Kepala SMK Negeri 2 Konawe</p>
             </div>
             <div>
               <p className="font-bold text-slate-950 underline">Drs. H. ABD. MANAN, M.M.</p>

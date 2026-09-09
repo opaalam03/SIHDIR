@@ -112,7 +112,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     return allStudents[0]?.name || "";
   });
 
-  // Predefined list of users based on SMKN 2 Konawe classes
+  // Predefined list of users based on SMK Negeri 2 Konawe classes
   const PRESETS = [
     { name: "Admin Utama — ARHAM AMIRUDDIN", username: "arham", role: "admin", desc: "Akses Penuh Administrator Utama SIHADIR" },
     { name: "Administrator Utama", username: "admin", role: "admin", desc: "Akses Penuh Administrator Utama SIHADIR" },
@@ -157,6 +157,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       { id: "T25", name: "NUNUNG SOSILOWATI PODADA", role: "Guru", subject: "Mata Pelajaran Umum" },
       { id: "T26", name: "NYOMAN SULIAWATI", role: "Waka Kesiswaan", subject: "Bimbingan & Kesiswaan" },
       { id: "T27", name: "PUTU ANGGI MILDAYANTI", role: "Guru", subject: "Mata Pelajaran Umum" },
+      { id: "T37", name: "RUSNI K", role: "Guru", subject: "Dasar Program Keahlian & Mapel Keahlian" },
       { id: "T28", name: "SAIFUL ARIFIN", role: "Guru", subject: "Mata Pelajaran Umum" },
       { id: "T29", name: "SAIMAN", role: "Guru", subject: "Mata Pelajaran Umum" },
       { id: "T_KS", name: "H. ABD. MANAN", role: "Kepala Sekolah", subject: "Manajemen & Pengawasan Sekolah" },
@@ -188,6 +189,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       if (n.includes("SULIAWATI")) return "NYOMAN SULIAWATI";
       if (n.includes("MUSLIMIN")) return "MUSLIMIN L.";
       if (n.includes("YOGA NANDA")) return "YOGA NANDA HERMAWAN";
+      if (n.includes("RUSNI")) return "RUSNI K";
       return n;
     };
 
@@ -252,8 +254,13 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   });
 
   const [selectedTeacherName, setSelectedTeacherName] = useState<string>(() => {
-    const first = allTeachers[0]?.name || "Alam, S.Pd.";
-    return first.replace(/\s*\([^)]*\)/g, "").trim();
+    const saved = localStorage.getItem("sihadir_active_teacher_name") || localStorage.getItem("sihadir_username");
+    if (saved && !saved.toLowerCase().includes("adrian") && saved.toLowerCase() !== "admin") {
+      return saved;
+    }
+    const admin = allTeachers.find(t => (t.name.toUpperCase().includes("ARHAM") || t.name.toUpperCase().includes("AMIRUDDIN")) && !t.role.toLowerCase().includes("tata usaha"));
+    if (admin) return admin.name.replace(/\s*\([^)]*\)/g, "").trim();
+    return "ARHAM AMIRUDDIN, S.Pd.Gr";
   });
 
   const [selectedRole, setSelectedRole] = useState<string>("guru");
@@ -383,9 +390,12 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
 
     if (loginMode === "staf") {
-      const finalTeacherName = selectedTeacherName === "CUSTOM" ? customTeacherName.trim() : selectedTeacherName;
+      let finalTeacherName = selectedTeacherName === "CUSTOM" ? customTeacherName.trim() : selectedTeacherName;
+      if (selectedRole === "admin" && (!finalTeacherName || finalTeacherName.toUpperCase().includes("ADRIAN"))) {
+        finalTeacherName = "ARHAM AMIRUDDIN, S.Pd.Gr";
+      }
       if (!finalTeacherName) {
-        setError("Silakan pilih atau ketikkan Nama Guru/Staf SMKN 2 Konawe.");
+        setError("Silakan pilih atau ketikkan Nama Guru/Staf SMK Negeri 2 Konawe.");
         return;
       }
       const validStaffPasswords = ["adminsihadir", "smkn2konawe", "admin", "tu"];
@@ -393,6 +403,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         setError("Kata sandi salah! Untuk informasi kata sandi hubungi Admin Utama.");
         return;
       }
+      localStorage.setItem("sihadir_active_teacher_name", finalTeacherName);
       onLoginSuccess(finalTeacherName, selectedRole);
       return;
     }
@@ -430,7 +441,8 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       mappedRole = foundPreset.role;
     }
 
-    const displayName = isAdminUser ? "ARHAM AMIRUDDIN" : username.trim();
+    const displayName = isAdminUser ? "ARHAM AMIRUDDIN, S.Pd.Gr" : username.trim();
+    localStorage.setItem("sihadir_active_teacher_name", displayName);
     onLoginSuccess(displayName, mappedRole);
   };
 
@@ -484,7 +496,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               <div className="relative shrink-0 flex items-center justify-center">
                 <img 
                     src="https://i.ibb.co.com/TMkWkNY4/LOGO-SMKN-2-KONAWE-BARU.png" 
-                    alt="Logo SMKN 2 Konawe" 
+                    alt="Logo SMK Negeri 2 Konawe" 
                     className="w-36 h-36 md:w-40 md:h-40 object-cover rounded-full drop-shadow-lg transition-transform duration-200 hover:scale-105"
                     style={{ clipPath: "circle(50% at 50% 50%)" }}
                     onError={(e) => {
@@ -516,23 +528,18 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 }`}>SIHADIR</span>
                 <span className={`text-xl md:text-2xl font-extrabold tracking-tight block mt-2 leading-tight ${
                   isWhite ? "text-slate-900" : "text-white"
-                }`}>SMKN 2 KONAWE</span>
+                }`}>SMK NEGERI 2 KONAWE</span>
               </div>
             </div>
 
             <div className="space-y-3 pt-4">
-              <h2 className={`text-[21px] font-black leading-tight ${
-                isWhite ? "text-slate-900" : "text-slate-100"
-              }`}>
-                Sistem Informasi Harian Absensi Digital Murid, Guru & Staf
-              </h2>
               <div className={`leading-relaxed font-medium space-y-2 ${
                 isWhite ? "text-slate-600" : "text-slate-300"
               }`}>
-                <p className={`font-bold text-[15px] ${
+                <p id="login-platform-description" className={`font-bold text-[18px] leading-relaxed ${
                   isWhite ? "text-slate-800" : "text-white"
                 }`}>
-                  Platform Absensi dan Monitoring Kehadiran Terintegrasi untuk Mendukung Ketertiban, Kedisiplinan, Administrasi, dan Perkembangan Murid di SMKN 2 Konawe
+                  Platform Absensi dan Monitoring Kehadiran Terintegrasi untuk Mendukung Ketertiban, Kedisiplinan, Administrasi, dan Perkembangan Murid, Guru, dan Staf Administrasi di SMK Negeri 2 Konawe
                 </p>
               </div>
             </div>
@@ -549,7 +556,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             </div>
             <p className={`text-[12px] font-bold mt-1.5 font-mono ${
               isWhite ? "text-slate-500" : "text-white/70"
-            }`}>SMKN 2 Konawe • Sulawesi Tenggara</p>
+            }`}>SMK Negeri 2 Konawe • Sulawesi Tenggara</p>
           </div>
         </div>
 
@@ -649,7 +656,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   {/* Select Teacher/Staff Name */}
                   <div className="space-y-1.5">
                     <label className={`text-[10px] font-black uppercase tracking-wider block transition-colors duration-300 ${style.label}`}>
-                      Pilih Nama Guru / Staf SMKN 2 Konawe
+                      Pilih Nama Guru / Staf SMK Negeri 2 Konawe
                     </label>
                     <div className="relative">
                       <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10 transition-colors duration-300 ${style.inputIcon}`} />
@@ -682,7 +689,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                             );
                           })}
                         </optgroup>
-                        <optgroup label="👨‍🏫 Daftar Guru & Pendidik SMKN 2 Konawe">
+                        <optgroup label="👨‍🏫 Daftar Guru & Pendidik SMK Negeri 2 Konawe">
                           {otherTeachers.filter(t => {
                             const r = (t.role || "").toLowerCase();
                             return !r.includes("kepala sekolah") && !r.includes("waka");

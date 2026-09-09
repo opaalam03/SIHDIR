@@ -37,13 +37,31 @@ import {
   Settings,
   Database,
   Building2,
-  QrCode
+  QrCode,
+  Copy,
+  Link,
+  ExternalLink,
+  KeyRound
 } from "lucide-react";
 import { QrScannerModal } from "./QrScannerModal";
+import { Comprehensive15WitaReportModal } from "./Comprehensive15WitaReportModal";
 
 import { isFirebaseConfigured, getFirebaseConfig, dbService } from "../firebase";
-import { OFFICIAL_SMKN2_SCHEDULES } from "../data/translatedSchedules";
+import { OFFICIAL_SMK2_SCHEDULES } from "../data/translatedSchedules";
 import { autoPruneAllStorageLogs, pruneItemsOlderThan3Weeks, isLogOlderThan3Weeks } from "../utils/dataCleanup";
+import {
+  buildTuStaffDailyReport,
+  dispatchTuStaffDailyReport,
+  getTuGroupTarget,
+  getTeacherGroupTarget,
+  getAdminTuNumber,
+  getGuruBkNumber,
+  getAdminTuPhone,
+  getGuruBkPhone,
+  getFonnteApiKey,
+  saveFonnteConfig,
+  sendFonnteMessage
+} from "../services/whatsappFonnteService";
 
 // Types matching other components
 interface TeacherAttendance {
@@ -284,6 +302,12 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   const [activeTabPanel, setActiveTabPanel] = useState<"rekap" | "rekap-siswa" | "rekap-guru" | "rekap-tu" | "rekap-piket" | "quick-submit" | "fonnte-config" | "firebase-config" | "rekap-masuk-pulang" | "rekap-refleksi">("rekap");
   const [toast, setToast] = useState<string | null>(null);
 
+  // Share Student Attendance Link Modal state
+  const [isShareLinkModalOpen, setIsShareLinkModalOpen] = useState<boolean>(false);
+  const [isComprehensive15ModalOpen, setIsComprehensive15ModalOpen] = useState<boolean>(false);
+  const [copyLinkSuccess, setCopyLinkSuccess] = useState<boolean>(false);
+  const [firestoreSyncCount, setFirestoreSyncCount] = useState<number>(0);
+
   // Custom Firebase fields
   const [firebaseApiKey, setFirebaseApiKey] = useState(() => {
     const cfg = getFirebaseConfig();
@@ -347,10 +371,78 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   };
 
   // Fonnte WhatsApp Gateway settings states
-  const [fonnteApiKey, setFonnteApiKey] = useState(() => localStorage.getItem("simpati_fonnte_api_key") || "ypkaCVkd5uLo3fkEWtnb");
-  const [fonnteTarget, setFonnteTarget] = useState(() => localStorage.getItem("simpati_fonnte_target") || "");
+  const [fonnteApiKey, setFonnteApiKey] = useState(() => getFonnteApiKey());
+  const [fonnteTarget, setFonnteTarget] = useState(() => getTeacherGroupTarget());
+  const [fonnteTuTarget, setFonnteTuTarget] = useState(() => getTuGroupTarget());
+  const [fonnteAdminTuNumber, setFonnteAdminTuNumber] = useState(() => getAdminTuPhone());
+  const [fonnteGuruBkNumber, setFonnteGuruBkNumber] = useState(() => getGuruBkPhone());
   const [isSendingWA, setIsSendingWA] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  const [testSendResult, setTestSendResult] = useState<{ target: string; msg: string; success: boolean } | null>(null);
+
+  const handleSaveFonnteSettings = () => {
+    saveFonnteConfig({
+      apiKey: fonnteApiKey,
+      teacherGroup: fonnteTarget,
+      tuGroup: fonnteTuTarget,
+      adminTuPhone: fonnteAdminTuNumber,
+      guruBkPhone: fonnteGuruBkNumber
+    });
+    triggerToast("Pengaturan Fonnte Gateway & Nomor WhatsApp berhasil disimpan!");
+  };
+
+  const handleTestSendTarget = async (target: string, label: string) => {
+    if (!target) {
+      alert(`Nomor / Target ${label} belum diisi.`);
+      return;
+    }
+    setTestSendResult(null);
+    const testMsg = `🔔 *TES KONEKSI GATEWAY FONNTE SMK NEGERI 2 KONAWE*\n\nHalo, ini adalah pesan uji konektivitas integrasi WhatsApp Fonnte SIHADIR.\nTarget: ${label} (${target})\nWaktu: ${new Date().toLocaleTimeString("id-ID")}\n\nSistem Pelaporan Otomatis Terhubung! ✅`;
+    try {
+      const res = await sendFonnteMessage(target, testMsg, fonnteApiKey);
+      if (res.success) {
+        setTestSendResult({ target: label, msg: `Pesan tes berhasil dikirim ke ${label} (${target})!`, success: true });
+        triggerToast(`Sukses terhubung ke ${label}!`);
+      } else {
+        setTestSendResult({ target: label, msg: `Gagal mengirim ke ${label}: ${res.error || "Error"}`, success: false });
+      }
+    } catch (e: any) {
+      setTestSendResult({ target: label, msg: `Error: ${e.message}`, success: false });
+    }
+  };
+
+  // Dedicated TU Daily 09:00 AM WhatsApp Report States
+  const [isSendingTuWa, setIsSendingTuWa] = useState(false);
+  const [tuSendFeedback, setTuSendFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [copiedTuText, setCopiedTuText] = useState(false);
+
+  const tuDailyReport = React.useMemo(() => {
+    return buildTuStaffDailyReport();
+  }, [teacherLogs]);
+
+  const handleSendTuReportNow = async () => {
+    setIsSendingTuWa(true);
+    setTuSendFeedback(null);
+    try {
+      const res = await dispatchTuStaffDailyReport(true);
+      if (res.success) {
+        setTuSendFeedback({ type: "success", text: "🚀 Sukses! Laporan Presensi TU Pukul 09.00 berhasil disiarkan ke Grup WhatsApp TU via Fonnte Gateway." });
+      } else {
+        setTuSendFeedback({ type: "error", text: `⚠️ Fonnte Gateway: ${res.message}` });
+      }
+    } catch (e: any) {
+      setTuSendFeedback({ type: "error", text: `Kendala: ${e.message || "Gagal menghubungi Fonnte API"}` });
+    } finally {
+      setIsSendingTuWa(false);
+      setTimeout(() => setTuSendFeedback(null), 8000);
+    }
+  };
+
+  const handleCopyTuText = () => {
+    navigator.clipboard.writeText(tuDailyReport.messageText);
+    setCopiedTuText(true);
+    setTimeout(() => setCopiedTuText(false), 3500);
+  };
 
   // Quick addition fields
   const [formType, setFormType] = useState<"sakit-izin" | "bk-case" | "guru-piket" | "guru-wali">("sakit-izin");
@@ -385,7 +477,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "bot"; text: string; time: string }[]>([
     {
       sender: "bot",
-      text: "Halo Bapak/Ibu Guru! Saya SIHADIR, asisten pemantau disiplin, kehadiran, dan bimbingan siswa di SMKN 2 Konawe. Saya mengumpulkan data absensi guru, jurnal mengajar harian, laporan wali kelas (siswa sakit/izin), serta penanganan Guru BK secara realtime. Ada yang bisa saya bantu menganalisis rekapitulasi laporan hari ini?",
+      text: "Halo Bapak/Ibu Guru! Saya SIHADIR, asisten pemantau disiplin, kehadiran, dan bimbingan siswa di SMK Negeri 2 Konawe. Saya mengumpulkan data absensi guru, jurnal mengajar harian, laporan wali kelas (siswa sakit/izin), serta penanganan Guru BK secara realtime. Ada yang bisa saya bantu menganalisis rekapitulasi laporan hari ini?",
       time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
     }
   ]);
@@ -407,12 +499,12 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   const [selectedScheduleTeacher, setSelectedScheduleTeacher] = useState<string>("auto");
   const [selectedScheduleSemester, setSelectedScheduleSemester] = useState<string>("Ganjil 2026/2027");
 
-  const scheduleTeacherNames = Array.from(new Set(OFFICIAL_SMKN2_SCHEDULES.map(s => s.teacherName))).filter(Boolean).sort();
+  const scheduleTeacherNames = Array.from(new Set(OFFICIAL_SMK2_SCHEDULES.map(s => s.teacherName))).filter(Boolean).sort();
   const autoTeacherName = scheduleTeacherNames.find(t => t.toLowerCase().includes("syamsul")) || "Syamsul Sabir, S.Kom";
   const effectiveTeacherForSchedule = selectedScheduleTeacher === "auto" ? autoTeacherName : selectedScheduleTeacher;
   const filteredScheduleList = selectedScheduleTeacher === "semua"
-    ? OFFICIAL_SMKN2_SCHEDULES
-    : OFFICIAL_SMKN2_SCHEDULES.filter(s => s.teacherName.toLowerCase() === effectiveTeacherForSchedule.toLowerCase() || s.teacherName.toLowerCase().includes(effectiveTeacherForSchedule.toLowerCase()));
+    ? OFFICIAL_SMK2_SCHEDULES
+    : OFFICIAL_SMK2_SCHEDULES.filter(s => s.teacherName.toLowerCase() === effectiveTeacherForSchedule.toLowerCase() || s.teacherName.toLowerCase().includes(effectiveTeacherForSchedule.toLowerCase()));
 
   // --- STUDENT REFLECTION RECAP FILTER STATES ---
   const [reflDateFilter, setReflDateFilter] = useState<string>(new Date().toISOString().split("T")[0]);
@@ -558,16 +650,21 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   };
 
   const handleUpdateClassRecordStatus = (logId: string, studentName: string, newStatus: "Hadir" | "Sakit" | "Izin" | "Alfa") => {
+    let targetLog: SavedAttendanceLog | null = null;
     const updated = studentLogs.map(log => {
       if (log.id === logId) {
-        return {
+        targetLog = {
           ...log,
           records: log.records.map(r => r.name === studentName ? { ...r, status: newStatus } : r)
         };
+        return targetLog;
       }
       return log;
     });
     saveStudentLogs(updated);
+    if (targetLog) {
+      dbService.saveRecord("saved_attendance_logs", logId, targetLog);
+    }
     triggerToast(`Status ${studentName} diperbarui menjadi ${newStatus}.`);
   };
 
@@ -578,19 +675,25 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       () => {
         const updated = selfAttendanceLogs.filter(log => log.id !== id);
         saveSelfAttendanceLogs(updated);
+        dbService.deleteRecord("student_self_attendance", id);
         triggerToast(`Log presensi mandiri ${studentName} berhasil dihapus.`);
       }
     );
   };
 
   const handleUpdateSelfLogStatus = (id: string, newStatus: string) => {
+    let targetSelf: any = null;
     const updated = selfAttendanceLogs.map(log => {
       if (log.id === id) {
-        return { ...log, status: newStatus };
+        targetSelf = { ...log, status: newStatus };
+        return targetSelf;
       }
       return log;
     });
     saveSelfAttendanceLogs(updated);
+    if (targetSelf) {
+      dbService.saveRecord("student_self_attendance", id, targetSelf);
+    }
     triggerToast(`Status presensi mandiri diperbarui menjadi ${newStatus}.`);
   };
 
@@ -601,6 +704,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       () => {
         const updated = studentLogs.filter(log => log.id !== logId);
         saveStudentLogs(updated);
+        dbService.deleteRecord("saved_attendance_logs", logId);
         triggerToast("Seluruh laporan presensi kelas berhasil dihapus.");
       }
     );
@@ -750,12 +854,53 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   useEffect(() => {
     loadSharedData();
 
-    // Set up local interval to pull fresh logs in case user updates other tabs!
+    // Live Realtime Subscriptions to Cloud Firestore
+    const unsubSelf = dbService.subscribeRecords("student_self_attendance", (records) => {
+      if (records && records.length > 0) {
+        setSelfAttendanceLogs(records);
+        setFirestoreSyncCount(prev => prev + 1);
+      }
+    });
+
+    const unsubStudentLogs = dbService.subscribeRecords("saved_attendance_logs", (records) => {
+      if (records && records.length > 0) {
+        setStudentLogs(records);
+        setFirestoreSyncCount(prev => prev + 1);
+      }
+    });
+
+    const unsubTeacherLogs = dbService.subscribeRecords("teacher_attendance_logs", (records) => {
+      if (records && records.length > 0) {
+        setTeacherLogs(records);
+        setFirestoreSyncCount(prev => prev + 1);
+      }
+    });
+
+    const unsubKetua = dbService.subscribeRecords("ketua_kelas_reports", (records) => {
+      if (records && records.length > 0) {
+        setKetuaKelasReports(records);
+        setFirestoreSyncCount(prev => prev + 1);
+      }
+    });
+
+    const handleDataUpdated = () => {
+      loadSharedData();
+    };
+    window.addEventListener("sihadir_data_updated", handleDataUpdated);
+
+    // Set up local interval to pull fresh logs
     const interval = setInterval(() => {
       loadSharedData();
     }, 4000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (unsubSelf) unsubSelf();
+      if (unsubStudentLogs) unsubStudentLogs();
+      if (unsubTeacherLogs) unsubTeacherLogs();
+      if (unsubKetua) unsubKetua();
+      window.removeEventListener("sihadir_data_updated", handleDataUpdated);
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
@@ -1010,10 +1155,10 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     // Guru Wali Recap
     const activeWali = guruWaliLogs.map(w => `• Kelas ${w.className} (Oleh: ${w.waliName}): Pembinaan: "${w.developmentNotes}", Kasus: "${w.specialCase}", Hubungan Ortu: "${w.parentCoordination}"`);
 
-    return `📢 *LAPORAN REKAPITULASI HARIAN INTEGRASI - SMKN 2 KONAWE*\n` +
+    return `📢 *LAPORAN REKAPITULASI HARIAN INTEGRASI - SMK NEGERI 2 KONAWE*\n` +
            `---------------------------------------------\n` +
            `📅 *Tanggal:* ${todayStr}\n` +
-           `🏫 *Wilayah Monitoring:* SMKN 2 Konawe\n\n` +
+           `🏫 *Wilayah Monitoring:* SMK Negeri 2 Konawe\n\n` +
            `⏱️ *1. KEPATUHAN & PRESENSI GURU:*\n` +
            `  - Total Terdata: ${totalTeachers} Orang Guru\n` +
            `  - Sudah Absen Masuk: ${presentTeachers} Orang\n` +
@@ -1036,7 +1181,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
            `📊 *8. REKAPITULASI KEPATUHAN & DISIPLIN SEKOLAH:*\n` +
            `${activeWarnings.length > 0 ? activeWarnings.map(w => `• ${w}`).join("\n") : "• Disiplin Prima, tidak ada pelanggaran disiplin terdeteksi hari ini."}\n\n` +
            `---------------------------------------------\n` +
-           `_Pusat Penyiaran Laporan Otomatis Terintegrasi SIHADIR SMKN 2 Konawe._`;
+           `_Pusat Penyiaran Laporan Otomatis Terintegrasi SIHADIR SMK Negeri 2 Konawe._`;
   };
 
   const triggerAutoWA = async (messageText: string) => {
@@ -1344,18 +1489,26 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     const todayStr = new Date().toISOString().split("T")[0];
     const total = teacherLogs.length;
     const hadir = teacherLogs.filter(t => t.status === "Hadir").length;
-    const terlambat = teacherLogs.filter(t => t.status === "Hadir" && t.clockIn && t.clockIn > "07:30").length;
+    const nowDay = new Date().getDay();
+    const isFriday = nowDay === 5;
+    const isMonday = nowDay === 1;
+    const jamMasukStr = isFriday ? "07:20" : "07:15";
+    const jamIstirahatStr = isFriday ? "10:00 - 10:10" : (isMonday ? "09:55 - 10:10" : "10:15 - 10:30");
+    const jamPulangStr = isFriday ? "11:30" : "13:30";
+
+    const terlambat = teacherLogs.filter(t => t.status === "Hadir" && t.clockIn && t.clockIn > jamMasukStr).length;
     const tepatWaktu = hadir - terlambat;
     const sakitIzin = teacherLogs.filter(t => t.status === "Sakit" || t.status === "Izin");
     const alpa = teacherLogs.filter(t => t.status === "Tanpa Keterangan" || !t.status || (t.status !== "Hadir" && t.status !== "Sakit" && t.status !== "Izin" && t.status !== "Ditolak"));
     
-    let text = `📢 *LAPORAN REKAP KEHADIRAN GURU MAPEL - SMKN 2 KONAWE*\n` +
+    let text = `📢 *LAPORAN REKAP KEHADIRAN GURU MAPEL - SMK NEGERI 2 KONAWE*\n` +
                `---------------------------------------------\n` +
-               `📅 *Tanggal:* ${todayStr}\n\n` +
+               `📅 *Tanggal:* ${todayStr}\n` +
+               `⏰ *Jam Masuk:* ${jamMasukStr} WITA | ☕ *Istirahat:* ${jamIstirahatStr} WITA | 🏁 *Pulang:* ${jamPulangStr} WITA\n\n` +
                `⏱️ *RINGKASAN PRESENSI GURU:*\n` +
                `  - Total Guru Mapel: ${total} Orang\n` +
-               `  - Hadir (Tepat Waktu): ${tepatWaktu} Orang\n` +
-               `  - Hadir (Terlambat >07.30): ${terlambat} Orang\n` +
+               `  - Hadir (Tepat Waktu <= ${jamMasukStr}): ${tepatWaktu} Orang\n` +
+               `  - Hadir (Terlambat > ${jamMasukStr}): ${terlambat} Orang\n` +
                `  - Sakit/Izin: ${sakitIzin.length} Orang\n` +
                `  - Tanpa Keterangan (Alpa): ${alpa.length} Orang\n\n` +
                `👤 *DETAIL KETERANGAN JADWAL GURU HARI INI:*\n`;
@@ -1364,7 +1517,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       let detail = `  • *${t.teacherName}*: `;
       if (t.status === "Hadir") {
         detail += `Hadir (Masuk: ${t.clockIn || "-"}, Pulang: ${t.clockOut || "Belum Pulang"})`;
-        if (t.clockIn && t.clockIn > "07:30") {
+        if (t.clockIn && t.clockIn > jamMasukStr) {
           detail += ` ⚠️ *TERLAMBAT*`;
         } else {
           detail += ` ✅ *TEPAT WAKTU*`;
@@ -1376,7 +1529,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     });
 
     text += `\n---------------------------------------------\n` +
-            `_Dilaporkan oleh: Admin Tata Usaha SMKN 2 Konawe_`;
+            `_Dilaporkan oleh: Admin Tata Usaha SMK Negeri 2 Konawe_`;
     return text;
   };
 
@@ -1412,7 +1565,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     const sHadir = filteredSs.filter(s => s.status === "Hadir" && s.clockIn).length;
     const sPulang = filteredSs.filter(s => s.status === "Hadir" && s.clockOut).length;
 
-    let text = `📢 *REKAP PRESENSI MASUK & PULANG TU, GURU & SISWA - SMKN 2 KONAWE*\n` +
+    let text = `📢 *REKAP PRESENSI MASUK & PULANG TU, GURU & SISWA - SMK NEGERI 2 KONAWE*\n` +
                `---------------------------------------------\n` +
                `📅 *Tanggal:* ${dateStr}\n\n` +
                `💼 *1. RINGKASAN PRESENSI ADMIN & STAF TU:*\n` +
@@ -1453,7 +1606,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     }
 
     text += `\n---------------------------------------------\n` +
-            `_Dilaporkan oleh: Admin Tata Usaha SMKN 2 Konawe_`;
+            `_Dilaporkan oleh: Admin Tata Usaha SMK Negeri 2 Konawe_`;
     return text;
   };
 
@@ -1470,7 +1623,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     const tuPulang = filteredTu.filter(t => t.status === "Hadir" && t.clockOut).length;
     const tuTerlambat = filteredTu.filter(t => t.clockIn && t.clockIn > "07:30").length;
 
-    let text = `📢 *REKAP PRESENSI STAF & ADMIN TATA USAHA - SMKN 2 KONAWE*\n` +
+    let text = `📢 *REKAP PRESENSI STAF & ADMIN TATA USAHA - SMK NEGERI 2 KONAWE*\n` +
                `---------------------------------------------\n` +
                `📅 *Tanggal:* ${dateStr}\n` +
                `🏢 *Unit Kerja:* Subbagian Tata Usaha & Administrasi Sekolah\n\n` +
@@ -1498,7 +1651,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     }
 
     text += `\n---------------------------------------------\n` +
-            `_Dilaporkan oleh: Subbagian Tata Usaha SMKN 2 Konawe_`;
+            `_Dilaporkan oleh: Subbagian Tata Usaha SMK Negeri 2 Konawe_`;
     return text;
   };
 
@@ -1512,12 +1665,12 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       `   • Status Otorisasi: ${p.status || "Terverifikasi Waka/Admin Utama"}`
     );
 
-    return `*🏫 SIHADIR SMKN 2 KONAWE - REKAP LAPORAN GURU PIKET RESMI*\n\n` +
+    return `*🏫 SIHADIR SMK NEGERI 2 KONAWE - REKAP LAPORAN GURU PIKET RESMI*\n\n` +
       `Tanggal Laporan: *${todayStr}*\n` +
       `Diotorisasi Oleh: *Administrator Utama / Kepala Sekolah / Waka Kurikulum / Admin TU*\n\n` +
       `*KONSOLIDASI CATATAN PETUGAS PIKET HARIAN:*\n\n` +
       (activePiket.length > 0 ? activePiket.join("\n\n") : "  - Belum ada entri laporan guru piket hari ini.") +
-      `\n\n_Laporan resmi dikirim secara otomatis via SIHADIR SMKN 2 Konawe._`;
+      `\n\n_Laporan resmi dikirim secara otomatis via SIHADIR SMK Negeri 2 Konawe._`;
   };
 
   // --- WHATSAPP INTEGRATION CENTER PREVIEW LOGIC ---
@@ -1627,7 +1780,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       const activeBkStr = bkLogs.map(b => `• ${b.studentName} (${b.className}): ${b.caseType} -> Tindakan: ${b.actionTaken} (${b.status})`).join("\n");
 
       const promptText = `
-Anda adalah "SIHADIR AI", asisten AI monitor disiplin, rekapitulasi sekolah, dan penegak ketertiban terintegrasi beralmamater SMKN 2 Konawe.
+Anda adalah "SIHADIR AI", asisten AI monitor disiplin, rekapitulasi sekolah, dan penegak ketertiban terintegrasi beralmamater SMK Negeri 2 Konawe.
 Gunakan data riil sekolah hari ini untuk menjawab pertanyaan guru dengan bahasa Indonesia yang ramah, sopan, mendidik, ringkas, dan profesional:
 
 DATA REAL-TIME SEKOLAH HARI INI:
@@ -1657,7 +1810,7 @@ Pertanyaan Guru: "${userMsg}"
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: "Anda adalah SIHADIR AI, asisten AI sekolah SMKN 2 Konawe yang cerdas, sopan, terhormat, dan mendidik. Jawab pertanyaan guru dengan akurat bersumber dari data realtime yang diberikan. Berikan rekomendasi bimbingan, apresiasi disiplin guru, atau ingatkan siswa sakit/alfa dengan format poin-poin yang elegan."
+          systemInstruction: "Anda adalah SIHADIR AI, asisten AI sekolah SMK Negeri 2 Konawe yang cerdas, sopan, terhormat, dan mendidik. Jawab pertanyaan guru dengan akurat bersumber dari data realtime yang diberikan. Berikan rekomendasi bimbingan, apresiasi disiplin guru, atau ingatkan siswa sakit/alfa dengan format poin-poin yang elegan."
         })
       });
 
@@ -1732,7 +1885,7 @@ Pertanyaan Guru: "${userMsg}"
               SISTEM REKAPITULASI SIHADIR
             </span>
             <span className="bg-emerald-600 text-white font-extrabold text-[9px] uppercase px-2.5 py-1 rounded-full tracking-wider">
-              SMKN 2 KONAWE
+              SMK NEGERI 2 KONAWE
             </span>
             <span className="bg-slate-800 text-indigo-300 font-extrabold text-[9px] uppercase px-2.5 py-1 rounded-full tracking-wider border border-slate-700">
               REAL-TIME INTEGRASI
@@ -1747,15 +1900,24 @@ Pertanyaan Guru: "${userMsg}"
           </p>
         </div>
         
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsShareLinkModalOpen(true)}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer border border-emerald-400/30"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span>Bagikan Link Absen Siswa</span>
+          </button>
+
           <button
             onClick={() => {
               loadSharedData();
-              triggerToast("Database tersinkronisasi dengan sukses!");
+              triggerToast("Database Cloud Firestore & Local tersinkronisasi!");
             }}
             className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <RefreshCw className="h-3.5 w-3.5 text-indigo-400 animate-spin" />
+            <RefreshCw className="h-3.5 w-3.5 text-indigo-400" />
             <span>Refresh Sinkronisasi</span>
           </button>
 
@@ -1865,6 +2027,15 @@ Pertanyaan Guru: "${userMsg}"
           {/* Menu Selector Tabs */}
           <div className="flex border-b border-slate-200 gap-4 flex-wrap">
             <button
+              onClick={() => setIsComprehensive15ModalOpen(true)}
+              className="pb-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 border-b-2 border-emerald-500 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100/80 px-3 py-1 rounded-t-xl transition-all cursor-pointer shadow-xs"
+            >
+              <Clock className="h-4 w-4 text-emerald-600 animate-pulse" />
+              <span>Rekap Presensi 15.00 WITA</span>
+              <span className="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-black">OTOMATIS WA</span>
+            </button>
+
+            <button
               onClick={() => setActiveTabPanel("rekap")}
               className={`pb-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
                 activeTabPanel === "rekap" 
@@ -1962,7 +2133,7 @@ Pertanyaan Guru: "${userMsg}"
               </button>
             )}
 
-            {isSuperAdmin && (
+            {(isSuperAdmin || isExecutiveAdmin) && (
               <button
                 onClick={() => setActiveTabPanel("fonnte-config")}
                 className={`pb-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
@@ -4402,7 +4573,7 @@ Pertanyaan Guru: "${userMsg}"
                           <span>Rekapitulasi Presensi Admin & Staf Tata Usaha</span>
                         </h3>
                         <p className="text-xs text-slate-300 max-w-2xl font-medium leading-relaxed">
-                          Pemantauan khusus jam kerja (Clock-In & Clock-Out), disiplin jam layanan administrasi, ketepatan waktu, serta koordinat lokasi presensi jajaran Tata Usaha SMKN 2 Konawe.
+                          Pemantauan khusus jam kerja (Clock-In & Clock-Out), disiplin jam layanan administrasi, ketepatan waktu, serta koordinat lokasi presensi jajaran Tata Usaha SMK Negeri 2 Konawe.
                         </p>
                       </div>
 
@@ -4475,6 +4646,87 @@ Pertanyaan Guru: "${userMsg}"
                         <span className="text-[10px] font-bold text-amber-300 uppercase block tracking-wider">Verifikasi GPS Sah</span>
                         <span className="text-xl font-black text-amber-300 mt-0.5 block">{tuGpsValidCount} Valid</span>
                         <span className="text-[9px] text-amber-400 block mt-0.5">Radius &le; 100 Meter</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 📲 KOTAK SIARAN WHATSAPP FONNTE KHUSUS GRUP TATA USAHA (PUKUL 09.00 WITA) */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div className="space-y-0.5">
+                        <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider flex items-center gap-2">
+                          <Send className="h-4 w-4 text-emerald-600" />
+                          <span>Laporan Presensi Harian Staf TU ke Grup WA (Pukul 09.00 WITA)</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Target Grup WA: <code className="bg-slate-100 px-2 py-0.5 rounded text-indigo-700 font-mono font-bold">{getTuGroupTarget()}</code> | Bot otomatis menyiarkan laporan setiap hari tepat pukul 09.00 pagi.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Scheduler 09:00 Aktif
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Text Preview */}
+                    <textarea
+                      readOnly
+                      rows={6}
+                      value={tuDailyReport.messageText}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-200 font-mono focus:outline-none scrollbar-thin"
+                    />
+
+                    {/* Feedback Message */}
+                    {tuSendFeedback && (
+                      <div className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2.5 ${
+                        tuSendFeedback.type === "success" 
+                          ? "bg-emerald-50 border border-emerald-200 text-emerald-800" 
+                          : "bg-rose-50 border border-rose-200 text-rose-800"
+                      }`}>
+                        {tuSendFeedback.type === "success" ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />}
+                        <span>{tuSendFeedback.text}</span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleCopyTuText}
+                        className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-slate-200"
+                      >
+                        <Copy className="h-4 w-4 text-indigo-600" />
+                        <span>{copiedTuText ? "Berhasil Disalin!" : "Salin Format WA TU (09.00)"}</span>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(tuDailyReport.messageText)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all"
+                          title="Kirim manual via WhatsApp Web"
+                        >
+                          <ExternalLink className="h-4 w-4 text-emerald-600" />
+                          <span>Kirim Manual WA</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={handleSendTuReportNow}
+                          disabled={isSendingTuWa}
+                          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <Send className="h-4 w-4 fill-current" />
+                          <span>
+                            {isSendingTuWa 
+                              ? "Menghubungkan ke Fonnte Gateway..." 
+                              : "Kirim Laporan TU (Pukul 09.00) via Fonnte Sekarang 🚀"}
+                          </span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -4714,7 +4966,7 @@ Pertanyaan Guru: "${userMsg}"
                         <span>Pengelolaan Persuratan Digital</span>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                        Pengarsipan resmi Surat Masuk, Surat Keluar, Disposisi Kepala Sekolah, dan Penerbitan Surat Tugas Guru & Staf SMKN 2 Konawe.
+                        Pengarsipan resmi Surat Masuk, Surat Keluar, Disposisi Kepala Sekolah, dan Penerbitan Surat Tugas Guru & Staf SMK Negeri 2 Konawe.
                       </p>
                     </div>
 
@@ -5017,6 +5269,359 @@ Pertanyaan Guru: "${userMsg}"
               );
             })()}
 
+            {/* TAB: PENGATURAN FONNTE WHATSAPP GATEWAY */}
+            {activeTabPanel === "fonnte-config" && (
+              <motion.div
+                key="tab-fonnte-config"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                {/* HEADER BANNER */}
+                <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-xl border border-emerald-800/40 space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider">
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Fonnte WhatsApp API Hub SMK Negeri 2 Konawe</span>
+                      </div>
+                      <h3 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                        <span>Konfigurasi WhatsApp Gateway & Otomatisasi Terjadwal</span>
+                      </h3>
+                      <p className="text-xs text-slate-300 max-w-2xl font-medium leading-relaxed">
+                        Kelola token Fonnte, target Grup WA Guru (laporan pergantian jam), Grup WA Tata Usaha (laporan 09.00 pagi), serta nomor darurat Admin TU dan Guru BK untuk notifikasi langsung saat siswa scan QR atau absensi manual.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveFonnteSettings}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-5 py-3 rounded-2xl shadow-lg hover:shadow-emerald-900/40 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Simpan Semua Konfigurasi</span>
+                    </button>
+                  </div>
+
+                  {/* STATUS AUTOMATION ROW */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-emerald-800/40 text-xs">
+                    <div className="bg-emerald-900/30 border border-emerald-700/40 rounded-2xl p-3 space-y-1">
+                      <div className="flex items-center gap-2 text-emerald-300 font-bold text-[11px]">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>Laporan Khusus Guru</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300">
+                        Otomatis dikirim ke Grup WA Guru setiap <strong>pergantian jam pelajaran</strong>.
+                      </p>
+                    </div>
+
+                    <div className="bg-indigo-900/30 border border-indigo-700/40 rounded-2xl p-3 space-y-1">
+                      <div className="flex items-center gap-2 text-indigo-300 font-bold text-[11px]">
+                        <span className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
+                        <span>Laporan Tata Usaha (09:00)</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300">
+                        Otomatis dikompilasi & dikirim 1x sehari setiap <strong>pukul 09.00 WITA</strong>.
+                      </p>
+                    </div>
+
+                    <div className="bg-purple-900/30 border border-purple-700/40 rounded-2xl p-3 space-y-1">
+                      <div className="flex items-center gap-2 text-purple-300 font-bold text-[11px]">
+                        <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+                        <span>Notifikasi Instan Siswa</span>
+                      </div>
+                      <p className="text-[10px] text-slate-300">
+                        Realtime ke <strong>WA Admin TU & Guru BK</strong> saat scan barcode / manual.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TEST SEND FEEDBACK BANNER */}
+                {testSendResult && (
+                  <div className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between gap-3 shadow-sm ${
+                    testSendResult.success 
+                      ? "bg-emerald-50 border border-emerald-200 text-emerald-800" 
+                      : "bg-rose-50 border border-rose-200 text-rose-800"
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {testSendResult.success ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />}
+                      <span>{testSendResult.msg}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTestSendResult(null)}
+                      className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+
+                {/* MAIN CONFIGURATION CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* CARD 1: TOKEN FONNTE */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                      <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                        <KeyRound className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                          1. API Token Fonnte (Gateway Key)
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Kunci otorisasi resmi akun Fonnte Anda untuk penyiaran pesan WhatsApp
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-700 block">
+                        Fonnte API Key:
+                      </label>
+                      <input
+                        type="text"
+                        value={fonnteApiKey}
+                        onChange={(e) => setFonnteApiKey(e.target.value)}
+                        placeholder="Contoh: ypkaCVkd5uLo3fkEWtnb"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <p className="text-[10px] text-slate-400 leading-relaxed">
+                        Kunci ini digunakan oleh proxy server <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">/api/whatsapp/send</code> untuk menyiarkan laporan langsung ke WhatsApp tanpa membuka jendela peramban.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CARD 2: GRUP WA GURU (PERGANTIAN JAM) */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                            2. Target Grup WA Guru
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Laporan absensi guru setiap pergantian jam pelajaran
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-700 block">
+                        Target ID Grup WhatsApp Guru:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={fonnteTarget}
+                          onChange={(e) => setFonnteTarget(e.target.value)}
+                          placeholder="Contoh: 120363223018241031@g.us"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleTestSendTarget(fonnteTarget, "Grup WA Guru")}
+                          className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap border border-indigo-200 shrink-0"
+                        >
+                          Tes Kirim
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        ID Grup WA Fonnte berakhiran <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">@g.us</code> atau nomor pengawas.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CARD 3: GRUP WA TATA USAHA (09.00 WITA) */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-purple-100 text-purple-700 rounded-xl">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                            3. Target Grup WA Tata Usaha
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Laporan rekap presensi seluruh staf TU tepat pukul 09.00 pagi
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-700 block">
+                        Target ID Grup WhatsApp TU:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={fonnteTuTarget}
+                          onChange={(e) => setFonnteTuTarget(e.target.value)}
+                          placeholder="Contoh: 120363223018241031@g.us"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleTestSendTarget(fonnteTuTarget, "Grup WA Tata Usaha")}
+                          className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-extrabold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap border border-purple-200 shrink-0"
+                        >
+                          Tes Kirim
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        Scheduler otomatis akan menyiarkan rekap kehadiran jajaran TU ke target ini tepat pukul 09.00 WITA.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CARD 4: NOTIFIKASI INSTAN SISWA (ADMIN TU & GURU BK) */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                          <Bell className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                            4. Nomor WA Admin TU & Guru BK
+                          </h4>
+                          <p className="text-[11px] text-slate-500">
+                            Penerima notifikasi instan langsung saat siswa presensi QR / manual
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Nomor WhatsApp Admin Tata Usaha:
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={fonnteAdminTuNumber}
+                            onChange={(e) => setFonnteAdminTuNumber(e.target.value)}
+                            placeholder="Contoh: 085241445566"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleTestSendTarget(fonnteAdminTuNumber, "Admin Tata Usaha")}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-extrabold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap border border-amber-200 shrink-0"
+                          >
+                            Tes WA TU
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Nomor WhatsApp Guru BK (Bimbingan Konseling):
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={fonnteGuruBkNumber}
+                            onChange={(e) => setFonnteGuruBkNumber(e.target.value)}
+                            placeholder="Contoh: 085322223333"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleTestSendTarget(fonnteGuruBkNumber, "Guru BK")}
+                            className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-extrabold text-xs rounded-xl transition-all cursor-pointer whitespace-nowrap border border-amber-200 shrink-0"
+                          >
+                            Tes WA BK
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400">
+                        Setiap kali ada siswa yang scan barcode atau dicatat izin/sakit/alfa, ringkasan instan langsung masuk ke nomor WhatsApp ini.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BOTTOM SAVE BUTTON */}
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveFonnteSettings}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-6 py-3 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Simpan Seluruh Pengaturan Fonnte WhatsApp</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* TAB: STATUS DATABASE CLOUD FIREBASE */}
+            {activeTabPanel === "firebase-config" && (
+              <motion.div
+                key="tab-firebase-config"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-indigo-800/40 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-2xl bg-indigo-600 text-white">
+                      <Database className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                        <span>Database Cloud Firestore SMK Negeri 2 Konawe</span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                          isFirebaseConfigured() ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        }`}>
+                          {isFirebaseConfigured() ? "TERHUBUNG (ONLINE)" : "MODE LOCALSTORAGE OFFLINE"}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-300">
+                        Seluruh entri presensi siswa, guru, jurnal KBM, dan log guru piket otomatis dicadangkan dan disinkronkan secara aman.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                  <h4 className="text-xs font-black uppercase text-slate-900 tracking-wider">
+                    Statistik Koleksi Data Terhubung
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Log Siswa</span>
+                      <span className="text-lg font-black text-slate-900">{studentLogs.length} Sesi Kelas</span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Log Guru</span>
+                      <span className="text-lg font-black text-slate-900">{teacherLogs.length} Presensi</span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Jurnal Mengajar</span>
+                      <span className="text-lg font-black text-slate-900">{journals.length} Jurnal</span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Laporan Piket</span>
+                      <span className="text-lg font-black text-slate-900">{guruPiketLogs.length} Laporan</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
           </AnimatePresence>
 
         </div>
@@ -5039,7 +5644,7 @@ Pertanyaan Guru: "${userMsg}"
                     WA
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-100">Grup WA Guru SMKN 2 Konawe</h4>
+                    <h4 className="text-sm font-black text-slate-100">Grup WA Guru SMK Negeri 2 Konawe</h4>
                     <span className="text-[10px] text-emerald-400">Pratinjau Integrasi Gateway WhatsApp</span>
                   </div>
                 </div>
@@ -5362,11 +5967,129 @@ Pertanyaan Guru: "${userMsg}"
         )}
       </AnimatePresence>
 
+      {/* Modal Bagikan Link Presensi Siswa */}
+      <AnimatePresence>
+        {isShareLinkModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-slate-800"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <Share2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-800">Bagikan Tautan Presensi Siswa</h3>
+                    <p className="text-xs text-slate-500">Kirim tautan presensi mandiri ke siswa agar langsung terisi & terekap otomatis di dashboard ini.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsShareLinkModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Share URL Box */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Tautan Langsung Presensi Siswa:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}${window.location.pathname}?mode=absen_siswa`}
+                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-mono text-slate-700 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = `${window.location.origin}${window.location.pathname}?mode=absen_siswa`;
+                      navigator.clipboard.writeText(link);
+                      setCopyLinkSuccess(true);
+                      setTimeout(() => setCopyLinkSuccess(false), 2500);
+                    }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold text-white transition-all shrink-0 cursor-pointer shadow-sm ${
+                      copyLinkSuccess ? "bg-emerald-600" : "bg-indigo-600 hover:bg-indigo-700"
+                    }`}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>{copyLinkSuccess ? "Tersalin! ✓" : "Salin Link"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Direct WhatsApp Share Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const link = `${window.location.origin}${window.location.pathname}?mode=absen_siswa`;
+                    const waText = encodeURIComponent(
+                      `*LINK PRESENSI HARIAN SISWA SMK NEGERI 2 KONAWE* 📲\n\n` +
+                      `Halo siswa-siswi SMK Negeri 2 Konawe, silakan lakukan presensi masuk/pulang hari ini melalui tautan resmi:\n` +
+                      `👉 ${link}\n\n` +
+                      `*Langkah Pengisian:*\n` +
+                      `1. Buka tautan di atas melalui browser HP (Chrome/Safari).\n` +
+                      `2. Pilih Jurusan, Kelas, dan Nama Lengkap Anda.\n` +
+                      `3. Masukkan NISN Anda sebagai kata sandi.\n` +
+                      `4. Lakukan pengambilan foto selfie berseragam rapi & pastikan GPS diaktifkan.\n` +
+                      `5. Klik "Simpan Presensi". Hasil presensi otomatis terekap langsung di dashboard Guru Pengajar & Admin Tata Usaha SMK Negeri 2 Konawe!`
+                    );
+                    window.open(`https://api.whatsapp.com/send?text=${waText}`, "_blank");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>Kirim Tautan ke Grup WhatsApp Siswa / Kelas</span>
+                </button>
+              </div>
+
+              {/* Informative Guidance */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs text-slate-600">
+                <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                  Sinkronisasi Real-Time Cloud Firestore
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
+                  <li>Setiap presensi yang di-submit siswa langsung terunggah ke Cloud Firestore.</li>
+                  <li>Laporan di tab <strong>Rekap Presensi Siswa</strong>, <strong>Selfie Mandiri Siswa</strong>, dan <strong>Absensi Masuk & Pulang</strong> otomatis ter-update tanpa perlu refresh halaman.</li>
+                  <li>Bukti foto selfie wearpack siswa, jam masuk, jam pulang, dan koordinat GPS tersimpan aman.</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsShareLinkModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* QR Scanner Modal for Admin TU */}
       <QrScannerModal
         isOpen={isQrScannerOpen}
         onClose={() => setIsQrScannerOpen(false)}
         role="Admin Tata Usaha"
+      />
+
+      {/* Modal Rekapitulasi Presensi Terpadu 15.00 WITA */}
+      <Comprehensive15WitaReportModal
+        isOpen={isComprehensive15ModalOpen}
+        onClose={() => setIsComprehensive15ModalOpen(false)}
       />
 
     </div>

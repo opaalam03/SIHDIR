@@ -73,7 +73,7 @@ const SCHEDULES: ScheduleItem[] = [
     tpCode: "TP-TKR-02",
     tpTitle: "Pemeliharaan & Troubleshooting Kelistrikan Bodi",
     tpContent: "Peserta didik mampu mengidentifikasi dan memperbaiki sirkuit kelistrikan lampu sein, hazard, klakson, serta wiring diagram kelistrikan bodi otomotif sesuai standar K3.",
-    modulAjar: "Modul_Kelistrikan_Bodi_SMK_Simpati.pdf",
+    modulAjar: "Modul_Kelistrikan_Bodi_SMKN2_Konawe.pdf",
   },
   {
     id: "SCH03",
@@ -455,7 +455,7 @@ export function JurnalMengajarInput({
     const statusGuru = "HADIR & TERVERIFIKASI (SIHADIR GPS)";
     
     return `*📢 LAPORAN REKAPITULASI KBM & JURNAL MENGAJAR*\n` +
-           `*Ditujukan ke: WA Grup Admin Tata Usaha (TU) SMKN 2 Konawe*\n` +
+           `*Ditujukan ke: WA Grup Admin Tata Usaha (TU) SMK Negeri 2 Konawe*\n` +
            `-----------------------------------------\n` +
            `📅 *Tanggal:* ${j.date}\n` +
            `🏫 *Kelas Ampu:* ${j.className}\n` +
@@ -479,7 +479,7 @@ export function JurnalMengajarInput({
            `-----------------------------------------\n` +
            `🎯 *Poin Kualitas Jurnal AI:* ${j.points || 92}/100\n` +
            `-----------------------------------------\n` +
-           `_Arsip Digital Jurnal Mengajar Sekolah Terintegrasi SIHADIR SMKN 2 Konawe_`;
+           `_Arsip Digital Jurnal Mengajar Sekolah Terintegrasi SIHADIR SMK Negeri 2 Konawe_`;
   };
 
   const shareJournalToTUWA = async (j: JurnalMengajar, auto: boolean) => {
@@ -505,7 +505,7 @@ export function JurnalMengajarInput({
       });
       const data = await response.json();
       if (data.status === true || data.status === "true" || (data.hasOwnProperty("status") && data.status !== false)) {
-        alert(`🚀 Berhasil! Rekap jurnal mengajar & absensi guru mapel telah dikirim otomatis ke WA Grup Admin TU SMKN 2 Konawe.`);
+        alert(`🚀 Berhasil! Rekap jurnal mengajar & absensi guru mapel telah dikirim otomatis ke WA Grup Admin TU SMK Negeri 2 Konawe.`);
       } else {
         const errorMsg = data.reason || data.message || "Gagal mengirim.";
         alert(`Fonnte API: ${errorMsg}\n\nMengalihkan ke pengiriman WhatsApp manual...`);
@@ -532,7 +532,7 @@ export function JurnalMengajarInput({
       return;
     }
 
-    let text = `*📢 REKAP LAPORAN JURNAL MENGAJAR GURU - SMKN 2 KONAWE*\n` +
+    let text = `*📢 REKAP LAPORAN JURNAL MENGAJAR GURU - SMK NEGERI 2 KONAWE*\n` +
                `📅 *Tanggal Rekap:* ${todayStr}\n` +
                `-----------------------------------------\n\n`;
                
@@ -823,14 +823,14 @@ export function JurnalMengajarInput({
           <div class="footer-sign">
             <div class="sign-col">
               <p>Mengetahui,</p>
-              <p>Waka Kurikulum SMKN 2 Konawe</p>
+              <p>Waka Kurikulum SMK Negeri 2 Konawe</p>
               <div class="sign-space"></div>
               <p><strong><u>Andi Asrul Umar, S.Pd.</u></strong></p>
               <p>NIP. 19690408 199503 1 002</p>
             </div>
             <div class="sign-col">
               <p>Mengetahui,</p>
-              <p>Kepala SMKN 2 Konawe</p>
+              <p>Kepala SMK Negeri 2 Konawe</p>
               <div class="sign-space"></div>
               <p><strong><u>Drs. H. ABD. MANAN, M.M.</u></strong></p>
               <p>NIP. 19650812 199003 1 008</p>
@@ -1230,7 +1230,7 @@ export function JurnalMengajarInput({
               {/* Informative alert card */}
               <div className="p-3 bg-amber-50 border border-amber-200/60 rounded-2xl text-[11px] text-amber-900 space-y-1">
                 <span className="font-extrabold flex items-center gap-1">
-                  ⚠️ Regulasi Dokumentasi Kurikulum Merdeka SMKN 2 Konawe:
+                  ⚠️ Regulasi Dokumentasi Kurikulum Merdeka SMK Negeri 2 Konawe:
                 </span>
                 <p className="font-semibold leading-relaxed text-slate-700">
                   Laporan KBM wajib menyertakan <span className="underline font-bold text-slate-900">3 jenis foto asli</span>: (1) Foto selfie guru bersama murid di belakangnya, (2) Foto murid aktif saat belajar, dan (3) Foto kondisi ruangan belajar.
@@ -1800,7 +1800,7 @@ export function JurnalMengajarInput({
       {/* Archive of Jurnal */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Arsip Log Jurnal Mengajar Sekolah (SMKN 2 KONAWE)</h4>
+          <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Arsip Log Jurnal Mengajar Sekolah (SMK NEGERI 2 KONAWE)</h4>
           <span className="text-[10px] text-indigo-600 font-extrabold uppercase bg-indigo-50 px-2.5 py-1 rounded border border-indigo-200/40">
             Sinkronisasi Database Kurikulum Aktif
           </span>
@@ -2655,7 +2655,7 @@ export function PenilaianAnalisis({
                   <div className="space-y-12">
                     <div>
                       <p className="text-slate-600">Mengetahui,</p>
-                      <p className="font-bold text-slate-800">Waka Kurikulum SMKN 2 Konawe</p>
+                      <p className="font-bold text-slate-800">Waka Kurikulum SMK Negeri 2 Konawe</p>
                     </div>
                     <div>
                       <p className="font-bold text-slate-950 underline">Andi Asrul Umar, S.Pd.</p>
@@ -2666,7 +2666,7 @@ export function PenilaianAnalisis({
                   <div className="space-y-12">
                     <div>
                       <p className="text-slate-600">Mengetahui,</p>
-                      <p className="font-bold text-slate-800">Kepala SMKN 2 Konawe</p>
+                      <p className="font-bold text-slate-800">Kepala SMK Negeri 2 Konawe</p>
                     </div>
                     <div>
                       <p className="font-bold text-slate-950 underline">Drs. H. ABD. MANAN, M.M.</p>

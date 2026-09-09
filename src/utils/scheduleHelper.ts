@@ -1,5 +1,5 @@
 import { TeachingSchedule, TeacherAttendance, JurnalMengajar } from "../types";
-import { OFFICIAL_SMKN2_SCHEDULES } from "../data/translatedSchedules";
+import { OFFICIAL_SMK2_SCHEDULES } from "../data/translatedSchedules";
 
 export interface MatchedScheduleItem extends TeachingSchedule {
   timeRange?: string; // e.g. "07:55 - 09:55"
@@ -18,9 +18,9 @@ export interface TeacherDailyStatus {
   clockInTime?: string;
 }
 
-// Convert OFFICIAL_SMKN2_SCHEDULES to TeachingSchedule array
+// Convert OFFICIAL_SMK2_SCHEDULES to TeachingSchedule array
 export function getDefaultMasterSchedules(): TeachingSchedule[] {
-  return OFFICIAL_SMKN2_SCHEDULES.map((item, idx) => ({
+  return OFFICIAL_SMK2_SCHEDULES.map((item, idx) => ({
     id: `sch-master-${idx + 1}`,
     teacherId: item.teacherCode.toLowerCase(),
     teacherCode: item.teacherCode,
@@ -40,9 +40,42 @@ export function getStoredSchedules(): TeachingSchedule[] {
     const saved = localStorage.getItem("simpati_teaching_schedules");
     if (saved) {
       const parsed = JSON.parse(saved);
-      // If stored array is valid and has at least as many items as current master matrix
-      if (Array.isArray(parsed) && parsed.length >= OFFICIAL_SMKN2_SCHEDULES.length) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        let hasMigration = false;
+        parsed.forEach((s: any) => {
+          // If Friday schedule was previously saved with 07:30, migrate it back to official PDF 07:20 schedule
+          if (s.day && s.day.toLowerCase() === "jumat") {
+            if (s.period) {
+              s.period = s.period
+                .replace(/07:30\s*-\s*10:10/g, "07:20 - 10:00")
+                .replace(/07:30\s*-\s*09:30/g, "07:20 - 09:20")
+                .replace(/07:30\s*-\s*08:50/g, "07:20 - 08:40")
+                .replace(/07:30\s*-\s*11:30/g, "07:20 - 11:30")
+                .replace(/08:50\s*-\s*11:30/g, "08:40 - 11:30")
+                .replace(/08:50\s*-\s*10:10/g, "08:40 - 10:00")
+                .replace(/09:30\s*-\s*11:30/g, "09:20 - 11:30");
+              hasMigration = true;
+            }
+            if (s.time) {
+              s.time = s.time
+                .replace(/07:30\s*-\s*10:10/g, "07:20 - 10:00")
+                .replace(/07:30\s*-\s*09:30/g, "07:20 - 09:20")
+                .replace(/07:30\s*-\s*08:50/g, "07:20 - 08:40")
+                .replace(/07:30\s*-\s*11:30/g, "07:20 - 11:30")
+                .replace(/08:50\s*-\s*11:30/g, "08:40 - 11:30")
+                .replace(/08:50\s*-\s*10:10/g, "08:40 - 10:00")
+                .replace(/09:30\s*-\s*11:30/g, "09:20 - 11:30");
+              hasMigration = true;
+            }
+          }
+        });
+        if (hasMigration) {
+          localStorage.setItem("simpati_teaching_schedules", JSON.stringify(parsed));
+        }
+        // If stored array is valid and has at least as many items as current master matrix
+        if (parsed.length >= OFFICIAL_SMK2_SCHEDULES.length) {
+          return parsed;
+        }
       }
     }
   } catch (e) {
@@ -68,6 +101,45 @@ export function normalizeName(str: string): string {
     .trim();
 }
 
+// Strictly distinguish teacher names to prevent false cross-matching (especially between Eva Syahtriana and Triana Daniel)
+export function isSameTeacherName(nameA: string, nameB: string): boolean {
+  if (!nameA || !nameB) return false;
+  const a = normalizeName(nameA);
+  const b = normalizeName(nameB);
+  if (a === b) return true;
+
+  // Strict disambiguation: Eva Syahtriana vs Triana Daniel
+  const isAEva = a.includes("eva") || a.includes("syahtriana") || a.includes("evasyatriana") || a === "eva";
+  const isBEva = b.includes("eva") || b.includes("syahtriana") || b.includes("evasyatriana") || b === "eva";
+  const isATriana = (a.includes("daniel") || a.includes("trd") || /\btriana\b/.test(a) || a === "triana") && !isAEva;
+  const isBTriana = (b.includes("daniel") || b.includes("trd") || /\btriana\b/.test(b) || b === "triana") && !isBEva;
+
+  // If one is Eva Syahtriana and the other is Triana Daniel, they MUST NOT match
+  if ((isAEva && isBTriana) || (isATriana && isBEva)) {
+    return false;
+  }
+  if (isAEva && isBEva) return true;
+  if (isATriana && isBTriana) return true;
+
+  // Direct word or substring match when safe
+  if (a.includes(b) || b.includes(a)) {
+    if ((a.includes("triana") && b.includes("evasyahtriana")) || (b.includes("triana") && a.includes("evasyahtriana"))) {
+      return false;
+    }
+    return true;
+  }
+
+  // Token matching with 3+ char words
+  const tokensA = a.split(" ").filter(t => t.length > 2);
+  const tokensB = b.split(" ").filter(t => t.length > 2);
+  return tokensA.some(t => {
+    if (t === "triana") {
+      return tokensB.some(tb => tb === "triana" && !b.includes("eva") && !b.includes("syah"));
+    }
+    return tokensB.includes(t);
+  });
+}
+
 // Match teacher schedules by full name, username, or teacher code
 export function getTeacherMatchedSchedules(
   teacherNameOrUsername: string,
@@ -78,9 +150,17 @@ export function getTeacherMatchedSchedules(
 
   if (!inputNorm) return [];
 
+  // Specifically distinguish Eva Syahtriana vs Triana Daniel
+  const isEvaUser = inputNorm.includes("eva") || inputNorm.includes("syahtriana") || inputNorm.includes("evasyatriana") || inputNorm === "eva";
+  const isTrianaDanielUser = (inputNorm.includes("daniel") || inputNorm === "trd" || /\btriana\b/.test(inputNorm) || inputNorm === "triana") && !isEvaUser;
+
   // Alias checks for special role usernames
   let aliasTokens: string[] = [];
-  if (inputNorm.includes("kesiswaan") || inputNorm.includes("nyoman") || inputNorm.includes("suliawati")) {
+  if (isEvaUser) {
+    aliasTokens = ["evasyahtriana", "eva"];
+  } else if (isTrianaDanielUser) {
+    aliasTokens = ["triana daniel", "daniel", "trd"];
+  } else if (inputNorm.includes("kesiswaan") || inputNorm.includes("nyoman") || inputNorm.includes("suliawati")) {
     aliasTokens = ["nyoman", "suliawati", "nym"];
   } else if (inputNorm.includes("kurikulum") || inputNorm.includes("asrul")) {
     aliasTokens = ["asrul", "aau"];
@@ -90,18 +170,16 @@ export function getTeacherMatchedSchedules(
     aliasTokens = ["haerul", "hrl"];
   } else if (inputNorm.includes("isnawati")) {
     aliasTokens = ["isnawati", "isn"];
-  } else if (inputNorm.includes("juniyasa") || inputNorm.includes("putu")) {
+  } else if (inputNorm.includes("juniyasa") || (inputNorm.includes("putu") && !inputNorm.includes("wahyu") && !inputNorm.includes("ngurah"))) {
     aliasTokens = ["juniyasa", "jys"];
+  } else if (inputNorm.includes("wahyu") || inputNorm.includes("ngurah")) {
+    aliasTokens = ["wahyu", "ngurah", "wdm"];
   } else if (inputNorm.includes("askin")) {
     aliasTokens = ["askin", "akn"];
-  } else if (inputNorm.includes("triana")) {
-    aliasTokens = ["triana", "trd"];
   } else if (inputNorm.includes("khotijah") || inputNorm.includes("sitti")) {
     aliasTokens = ["khotijah", "skh"];
   } else if (inputNorm.includes("salmah")) {
     aliasTokens = ["salmah", "slm"];
-  } else if (inputNorm.includes("evasyahtriana") || inputNorm.includes("eva")) {
-    aliasTokens = ["evasyahtriana", "eva"];
   } else if (inputNorm.includes("saiman")) {
     aliasTokens = ["saiman", "smn"];
   } else if (inputNorm.includes("arham")) {
@@ -118,6 +196,8 @@ export function getTeacherMatchedSchedules(
     aliasTokens = ["himawan", "ghk"];
   } else if (inputNorm.includes("izzat")) {
     aliasTokens = ["izzat", "iwz"];
+  } else if (inputNorm.includes("rusni") || inputNorm === "rus") {
+    aliasTokens = ["rusni", "rus"];
   } else {
     // Break input into key name tokens (excluding 1-2 char words if longer words exist)
     aliasTokens = inputNorm.split(" ").filter(t => t.length > 2);
@@ -125,23 +205,52 @@ export function getTeacherMatchedSchedules(
 
   const matched = schedules.filter(sch => {
     const schNameNorm = normalizeName(sch.teacherName);
-    const schIdNorm = normalizeName(sch.teacherId);
+    const schCodeUpper = (sch.teacherCode || sch.teacherId || "").toUpperCase();
 
-    // Direct string match
-    if (schNameNorm.includes(inputNorm) || inputNorm.includes(schNameNorm)) {
+    // Critical filter: Prevent cross-contamination between Triana Daniel and Eva Syahtriana
+    if (isTrianaDanielUser) {
+      if (schCodeUpper === "EVA" || schNameNorm.includes("eva") || schNameNorm.includes("syahtriana") || schNameNorm.includes("evasyatriana")) {
+        return false;
+      }
+      if (schCodeUpper === "TRD" || schNameNorm.includes("daniel") || (schNameNorm.includes("triana") && !schNameNorm.includes("eva"))) {
+        return true;
+      }
+    }
+
+    if (isEvaUser) {
+      if (schCodeUpper === "TRD" || schNameNorm.includes("daniel") || (schNameNorm.includes("triana") && !schNameNorm.includes("eva"))) {
+        return false;
+      }
+      if (schCodeUpper === "EVA" || schNameNorm.includes("eva") || schNameNorm.includes("syahtriana") || schNameNorm.includes("evasyatriana")) {
+        return true;
+      }
+    }
+
+    // Direct match check using isSameTeacherName
+    if (isSameTeacherName(inputNorm, schNameNorm)) {
       return true;
     }
 
-    // Token match
-    return aliasTokens.some(token => schNameNorm.includes(token) || schIdNorm === token);
+    // Check teacher code exact match
+    if (aliasTokens.some(tok => schCodeUpper === tok.toUpperCase())) {
+      return true;
+    }
+
+    // Token match with safe boundary
+    return aliasTokens.some(token => {
+      if (token === "triana") {
+        return /\btriana\b/.test(schNameNorm) && !schNameNorm.includes("eva") && !schNameNorm.includes("syah");
+      }
+      return schNameNorm.includes(token);
+    });
   });
 
   // Calculate duration in hours & parse time range
   return matched.map(sch => {
     let durationHours = 2; // default 2 jam pelajaran
 
-    // Parse Jam range e.g. "Jam 1-4", "Jam 2-4", "Jam 5-8", "Jam 7-9"
-    const jamRangeMatch = sch.period.match(/Jam\s*(\d+)-(\d+)/i);
+    // Parse Jam range e.g. "Jam 1-4", "Jam Ke 1-4", "Jam 2-4", "Jam 5-8", "Jam 7-9"
+    const jamRangeMatch = sch.period.match(/Jam\s*(?:ke\s*|-)?\s*(\d+)-(\d+)/i);
     if (jamRangeMatch) {
       const startJam = parseInt(jamRangeMatch[1], 10);
       const endJam = parseInt(jamRangeMatch[2], 10);
@@ -266,14 +375,15 @@ export function getTodayTeachersScheduleStatus(targetDay?: string): {
 
     // Check if teacher logged attendance today
     const attLog = attendanceLogs.find(log => {
-      const logNameNorm = normalizeName(log.teacherName);
-      return (logNameNorm.includes(schNameNorm) || schNameNorm.includes(logNameNorm)) &&
+      return isSameTeacherName(log.teacherName, sch.teacherName) &&
              (log.date === todayStr || log.date === new Date().toLocaleDateString("id-ID"));
     });
 
     // Check if teacher submitted a teaching journal today
     const journalLog = journalLogs.find(j => {
-      return j.className.trim().toLowerCase() === sch.className.trim().toLowerCase() &&
+      const teacherMatch = j.teacherName ? isSameTeacherName(j.teacherName, sch.teacherName) : true;
+      return teacherMatch &&
+             j.className.trim().toLowerCase() === sch.className.trim().toLowerCase() &&
              j.subject.trim().toLowerCase() === sch.subject.trim().toLowerCase();
     });
 
@@ -283,8 +393,11 @@ export function getTodayTeachersScheduleStatus(targetDay?: string): {
     if (attLog || journalLog) {
       status = "HADIR";
     } else {
-      // Check if schedule time has passed 07:30 WITA
-      if (currentHour > 8 || (currentHour === 8 && currentMinute > 0)) {
+      // Check if schedule time has passed entry time: Friday 07:20 (440 min), other days 07:15 (435 min)
+      const currentMinutes = currentHour * 60 + currentMinute;
+      const isFriday = todayDay.toLowerCase() === "jumat";
+      const lateThreshold = isFriday ? (7 * 60 + 20) : (7 * 60 + 15);
+      if (currentMinutes > lateThreshold) {
         status = "TERLAMBAT";
       } else {
         status = "BELUM_ABSEN";
@@ -329,9 +442,17 @@ export function buildWAAlarmBroadcastMessage(): { messageText: string; waLink: s
   const belumAbsenOrLate = statusInfo.scheduledToday.filter(s => s.status !== "HADIR");
   const hadirList = statusInfo.scheduledToday.filter(s => s.status === "HADIR");
 
-  let msg = `*📢 ALARM & REKAP KBM GURU SMKN 2 KONAWE*\n`;
+  const todayDay = statusInfo.todayDay;
+  const isFriday = todayDay.toLowerCase() === "jumat";
+  const isMonday = todayDay.toLowerCase() === "senin";
+  const jamMasuk = isFriday ? "07:20" : "07:15";
+  const jamIstirahat = isFriday ? "10:00 - 10:10" : (isMonday ? "09:55 - 10:10" : "10:15 - 10:30");
+  const jamPulang = isFriday ? "11:30" : "13:30";
+
+  let msg = `*📢 ALARM & REKAP KBM GURU SMK NEGERI 2 KONAWE*\n`;
   msg += `📅 *Hari/Tanggal:* ${todayFormatted}\n`;
-  msg += `⏰ *Sistem Waktu:* Presensi Harian & Jam Mengajar KBM\n\n`;
+  msg += `⏰ *Jam Masuk:* ${jamMasuk} WITA | ☕ *Istirahat:* ${jamIstirahat} WITA | 🏁 *Pulang:* ${jamPulang} WITA\n`;
+  msg += `📍 *Sistem Waktu:* Presensi Harian & Jadwal Mengajar KBM\n\n`;
 
   msg += `📊 *RINGKASAN KEHADIRAN KBM HARI INI:*\n`;
   msg += `• Total Terjadwal: ${statusInfo.scheduledToday.length} Jam Pelajaran\n`;
@@ -363,7 +484,7 @@ export function buildWAAlarmBroadcastMessage(): { messageText: string; waLink: s
   }
 
   msg += `*Himbauan:* Mohon Bapak/Ibu Guru yang bertugas segera melakukan presensi lokasi dan mengisi Jurnal KBM. Terima Kasih 🙏\n\n`;
-  msg += `_Laporan Otomatis Aplikasi SiHadir SMKN 2 Konawe_`;
+  msg += `_Laporan Otomatis Aplikasi SiHadir SMK Negeri 2 Konawe_`;
 
   const encodedMsg = encodeURIComponent(msg);
   const waLink = `https://api.whatsapp.com/send?text=${encodedMsg}`;

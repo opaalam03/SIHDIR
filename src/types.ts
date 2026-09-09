@@ -97,6 +97,7 @@ export interface ModulAjar {
 export interface JurnalMengajar {
   id: string;
   date: string;
+  teacherName?: string;
   subject: string;
   className: string;
   tpCode: string;
@@ -184,5 +185,46 @@ export interface TeachingSchedule {
   day: string;
   period: string;
   semester: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  channelId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: string;
+  senderRoleTitle?: string;
+  senderAvatar?: string;
+  senderClass?: string;
+  text: string;
+  attachmentUrl?: string;
+  timestamp: number;
+  dateStr: string;
+  timeStr: string;
+  readBy?: string[];
+  replyTo?: {
+    id: string;
+    senderName: string;
+    text: string;
+  };
+}
+
+export interface ChatChannel {
+  id: string;
+  type: "group" | "direct";
+  name: string;
+  description?: string;
+  avatar?: string;
+  roleBadge?: string;
+  participantIds?: string[];
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unreadCount?: number;
+  category: "all" | "group" | "teacher" | "student";
+  subCategory?: "kelas_wali" | "guru_wali" | "tu" | "umum" | "custom" | "guru_staff";
+  targetClass?: string;
+  assignedStudents?: string[];
+  createdBy?: string;
+  createdAt?: number;
 }
 

@@ -124,7 +124,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
   const [botChatHistory, setBotChatHistory] = useState<Array<{ sender: "user" | "bot"; text: string; timestamp: string }>>([
     { 
       sender: "bot", 
-      text: "Halo! Saya adalah SIMPATI AI Chatbot Asisten SMK Simpati. 🤖✨\n\nSilakan pilih menu bantuan atau ketik langsung:\n\n📌 Ketik *INFO* - Profil SMK & Jurusan\n📌 Ketik *NILAI* - Akses nilai akademis siswa kelas XI TKR\n📌 Ketik *PRESENSI* - Ringkasan kehadiran siswa\n📌 Ketik *KONTAK* - Nomor darurat wali kelas & sekolah", 
+      text: "Halo! Saya adalah SIHADIR AI Chatbot Asisten SMK Negeri 2 Konawe. 🤖✨\n\nSilakan pilih menu bantuan atau ketik langsung:\n\n📌 Ketik *INFO* - Profil SMK & Jurusan\n📌 Ketik *NILAI* - Akses nilai akademis siswa kelas XI TKR\n📌 Ketik *PRESENSI* - Ringkasan kehadiran siswa\n📌 Ketik *KONTAK* - Nomor darurat wali kelas & sekolah", 
       timestamp: "20:00" 
     }
   ]);
@@ -152,7 +152,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       const lower = textToSend.toLowerCase().trim();
 
       if (lower.includes("info")) {
-        botResponse = `🏫 *PROFIL SMK SIMPATI & JURUSAN TKR* \n\nSMK SIMPATI berdiri sebagai Pusat Keunggulan dengan Kurikulum Standar Industri.\n\n📍 *Fasilitas Bengkel Otomotif:* \n- Lift Penyelaras Roda 3D (3D Wheel Alignment)\n- Engine Scanner OBD2 Pro\n- Simulator Sistem Kelistrikan Mutakhir\n- Studio Inovasi Guru Produktif\n\n📞 _Butuh informasi pendaftaran? Hubungi sekretariat SIMPATI di nomor (021) 1234-5678._`;
+        botResponse = `🏫 *PROFIL SMK NEGERI 2 KONAWE & JURUSAN TKR* \n\nSMK Negeri 2 Konawe berdiri sebagai Pusat Keunggulan dengan Kurikulum Standar Industri.\n\n📍 *Fasilitas Bengkel Otomotif:* \n- Lift Penyelaras Roda 3D (3D Wheel Alignment)\n- Engine Scanner OBD2 Pro\n- Simulator Sistem Kelistrikan Mutakhir\n- Studio Inovasi Guru Produktif\n\n📞 _Butuh informasi pendaftaran? Hubungi sekretariat SIHADIR SMK Negeri 2 Konawe._`;
       } else if (lower.includes("nilai") || lower.includes("rapor")) {
         botResponse = `📊 *HASIL AKADEMIK SISWA (XI TKR)*\n\nSilakan masukkan salah satu nama siswa untuk verifikasi nilai:\n\n- Ketik *NILAI ADI* (Adi Saputra)\n- Ketik *NILAI BUDI* (Budi Budiman)\n- Ketik *NILAI CITRA* (Citra Lestari)\n- Ketik *NILAI GALIH* (Galih Sentosa)`;
       } else if (lower.includes("adi")) {
@@ -166,7 +166,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       } else if (lower.includes("presensi") || lower.includes("hadir") || lower.includes("absen")) {
         botResponse = `✅ *DAFTAR PRESENSI SISWA KELAS XI TKR*\n\nPresensi Terkini Mingguan:\n- Adi Saputra: *100%* (Hadir)\n- Budi Budiman: *95%* (1 Sakit)\n- Citra Lestari: *100%* (Hadir)\n- Galih Sentosa: *88%* (1 Sinyal Buruk, 2 Terlambat)\n\n📌 _Sistem presensi kami terkoneksi langsung dengan modul GPS Geolocation SIMPATI._`;
       } else if (lower.includes("kontak") || lower.includes("telepon") || lower.includes("hubungi")) {
-        botResponse = `📞 *KONTAK PENTING SEKOLAH & WALI KELAS*\n\n- Wali Kelas XI TKR A: Bpk. Haerul, S.Pd. (*0812-4444-5555*)\n- Konselor BK: Ibu Cici Murni, S.Pd. (*0853-2222-3333*)\n- Hubungan Industri (Humas PKL): Bpk. Hariyadi, M.T. (*0877-2233-4455*)\n- Kantor Call Center SMKN 2 Konawe: *0899-1234-5678*`;
+        botResponse = `📞 *KONTAK PENTING SEKOLAH & WALI KELAS*\n\n- Wali Kelas XI TKR A: Bpk. Haerul, S.Pd. (*0812-4444-5555*)\n- Konselor BK: Ibu Cici Murni, S.Pd. (*0853-2222-3333*)\n- Hubungan Industri (Humas PKL): Bpk. Hariyadi, M.T. (*0877-2233-4455*)\n- Kantor Call Center SMK Negeri 2 Konawe: *0899-1234-5678*`;
       } else {
         botResponse = `🤖 *SIMPATI AI Chatbot Otomatis:* \nPesan Anda "${textToSend}" telah diproses.\n\nMaaf, kata kunci tersebut belum terdaftar. Silakan pilih menu beres berikut:\n\n👉 Ketik *INFO* (Profil SMK)\n👉 Ketik *NILAI* (Nilai Siswa)\n👉 Ketik *PRESENSI* (Absensi Kelas)\n👉 Ketik *KONTAK* (No HP Pendidik)`;
       }
@@ -288,7 +288,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
   useEffect(() => {
     if (broadcastTemplate === "rapat") {
       setCustomBroadcastText(
-        `*UNDANGAN KELAS XI TKR - SMK SIMPATI*\n\nYth. Bapak/Ibu Wali Murid XI TKR,\nKami mengundang Bapak/Ibu untuk menghadiri Rapat Koordinasi Progress Praktikum PKL & Evaluasi Tengah Semester.\n\n📅 Hari/Tgl: Sabtu, 27 Juni 2026\n⏰ Waktu: 09:00 WIB - Selesai\n📍 Tempat: Bengkel Utama Otomotif SMK Simpati\n\nKehadiran Bapak/Ibu sangat menentukan keselarasan pendidikan ananda. Terima kasih.`
+        `*UNDANGAN KELAS XI TKR - SMK NEGERI 2 KONAWE*\n\nYth. Bapak/Ibu Wali Murid XI TKR,\nKami mengundang Bapak/Ibu untuk menghadiri Rapat Koordinasi Progress Praktikum PKL & Evaluasi Tengah Semester.\n\n📅 Hari/Tgl: Sabtu, 27 Juni 2026\n⏰ Waktu: 09:00 WIB - Selesai\n📍 Tempat: Bengkel Utama Otomotif SMK Negeri 2 Konawe\n\nKehadiran Bapak/Ibu sangat menentukan keselarasan pendidikan ananda. Terima kasih.`
       );
     } else if (broadcastTemplate === "praktik") {
       setCustomBroadcastText(
@@ -296,7 +296,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       );
     } else {
       setCustomBroadcastText(
-        `*LAPORAN STREAK DISIPLIN KELAS - SMK SIMPATI*\n\nSelamat Pagi Bapak/Ibu Wali Kelas & Guru,\nBerikut statistik kepatuhan siswa dalam kurun waktu minggu ini:\n\n- Kehadiran Tepat Waktu: 96.4%\n- Kedisplinan Atribut Bengkel: 100%\n- Pengisian Logbook PKL Terverifikasi: 92%\n\nSangat membanggakan. Mari kita tingkatkan mutu pembimbingan kita sehari-hari!\n\nAsisten Sistem Digital SIMPATI AI`
+        `*LAPORAN STREAK DISIPLIN KELAS - SMK NEGERI 2 KONAWE*\n\nSelamat Pagi Bapak/Ibu Wali Kelas & Guru,\nBerikut statistik kepatuhan siswa dalam kurun waktu minggu ini:\n\n- Kehadiran Tepat Waktu: 96.4%\n- Kedisplinan Atribut Bengkel: 100%\n- Pengisian Logbook PKL Terverifikasi: 92%\n\nSangat membanggakan. Mari kita tingkatkan mutu pembimbingan kita sehari-hari!\n\nAsisten Sistem Digital SIHADIR`
       );
     }
   }, [broadcastTemplate]);
@@ -648,7 +648,7 @@ print("Hasil:", response.json())`
                 <form onSubmit={handleSaveSettings} className="space-y-3">
                   <div>
                     <label className="block text-[10px] uppercase font-black text-gray-550 mb-1">
-                      Link Grup WA Guru / Staf SMK Simpati 
+                      Link Grup WA Guru / Staf SMK Negeri 2 Konawe 
                     </label>
                     <div className="flex rounded-md shadow-xs bg-white">
                       <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-250 bg-gray-50 text-[10px] font-bold text-gray-500">

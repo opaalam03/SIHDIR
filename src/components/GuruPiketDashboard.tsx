@@ -81,8 +81,8 @@ const CLASSES_LIST = [
   "XII TKR A", "XII TKR B", "XII TSM", "XII TAV", "XII DPIB"
 ];
 
-// DATA RESMI SK KEPALA SMKN 2 KONAWE TP 2026-2027 (NO. 521.3/..../800/VII/2026)
-export const JADWAL_PIKET_SMKN2_KONAWE = [
+// DATA RESMI SK KEPALA SMK NEGERI 2 KONAWE TP 2026-2027 (NO. 521.3/..../800/VII/2026)
+export const JADWAL_PIKET_SMK2_KONAWE = [
   {
     day: "Senin",
     teamName: "Tim Piket Senin (Seluruh Guru)",
@@ -90,7 +90,7 @@ export const JADWAL_PIKET_SMKN2_KONAWE = [
     totalCount: "Seluruh Dewan Guru",
     description: "Kolektif Penertiban Upacara Bendera, Apel Pagi, dan Kedisiplinan Awal Pekan",
     members: [
-      "Seluruh Dewan Guru SMKN 2 Konawe (Kolektif & Terintegrasi)"
+      "Seluruh Dewan Guru SMK Negeri 2 Konawe (Kolektif & Terintegrasi)"
     ]
   },
   {
@@ -226,7 +226,7 @@ export const checkIsPiketDutyToday = (
   const assignedDays: string[] = [];
 
   if (cleanName) {
-    JADWAL_PIKET_SMKN2_KONAWE.forEach((item) => {
+    JADWAL_PIKET_SMK2_KONAWE.forEach((item) => {
       if (item.isAllTeachers) {
         assignedDays.push(item.day);
       } else {
@@ -587,7 +587,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
 
   // Send WhatsApp Broadcast Template for Student Permission
   const sendStudentPassWA = (pass: StudentPermissionPass) => {
-    const message = `*SIHADIR SMKN 2 KONAWE - SURAT IZIN GURU PIKET*%0A%0A` +
+    const message = `*SIHADIR SMK NEGERI 2 KONAWE - SURAT IZIN GURU PIKET*%0A%0A` +
       `Yth. Orang Tua / Wali dari siswa:*%0A` +
       `👤 Nama: *${pass.studentName}*%0A` +
       `🏫 Kelas: *${pass.className}*%0A%0A` +
@@ -677,7 +677,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
 
   // Send WA to Substitution Teacher
   const sendSubstitutionWA = (sub: SubstitutionAssignment) => {
-    const message = `*SIHADIR SMKN 2 KONAWE - PENUGASAN GURU PENGGANTI (INFAL)*%0A%0A` +
+    const message = `*SIHADIR SMK NEGERI 2 KONAWE - PENUGASAN GURU PENGGANTI (INFAL)*%0A%0A` +
       `Yth. Bapak/Ibu *${sub.substituteTeacher}*,%0A%0A` +
       `Sehubungan dengan berhalangannya hadir rekan kita:*%0A` +
       `👤 Guru Utama: *${sub.absentTeacher}*%0A` +
@@ -695,15 +695,15 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
   };
 
   // Broadcast WA Schedule Piket
-  const sendPiketScheduleWA = (item: typeof JADWAL_PIKET_SMKN2_KONAWE[0]) => {
-    const message = `*SIHADIR SMKN 2 KONAWE - JADWAL PETUGAS PIKET RESMI*%0A` +
+  const sendPiketScheduleWA = (item: typeof JADWAL_PIKET_SMK2_KONAWE[0]) => {
+    const message = `*SIHADIR SMK NEGERI 2 KONAWE - JADWAL PETUGAS PIKET RESMI*%0A` +
       `📌 *Hari: ${item.day.toUpperCase()}*%0A` +
       `📋 *${item.teamName}*%0A` +
       `👥 Total Petugas: ${item.totalCount}%0A` +
       `📝 Deskripsi Tugas: ${item.description}%0A%0A` +
       `*Daftar Anggota Petugas Piket:*%0A` +
       item.members.map((m, i) => `${i + 1}. ${m}`).join("%0A") + `%0A%0A` +
-      `_Berdasarkan SK Kepala SMKN 2 Konawe No. 521.3/..../800/VII/2026_`;
+      `_Berdasarkan SK Kepala SMK Negeri 2 Konawe No. 521.3/..../800/VII/2026_`;
 
     const waUrl = `https://wa.me/?text=${message}`;
     window.open(waUrl, "_blank");
@@ -1092,7 +1092,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                     SK Kepala Sekolah
                   </span>
                   <h3 className="text-lg font-black tracking-tight mt-1.5">
-                    PEMBAGIAN TUGAS TAMBAHAN PETUGAS PIKET SMKN 2 KONAWE
+                    PEMBAGIAN TUGAS TAMBAHAN PETUGAS PIKET SMK NEGERI 2 KONAWE
                   </h3>
                   <p className="text-xs text-amber-100 font-medium">
                     Tahun Pelajaran 2026-2027 • Keputusan No. 521.3 / .... / 800 / VII / 2026 (22 Juli 2026)
@@ -1102,7 +1102,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                 <button
                   type="button"
                   onClick={() => {
-                    const activeTeam = JADWAL_PIKET_SMKN2_KONAWE.find(j => j.day === selectedScheduleDay) || JADWAL_PIKET_SMKN2_KONAWE[4];
+                    const activeTeam = JADWAL_PIKET_SMK2_KONAWE.find(j => j.day === selectedScheduleDay) || JADWAL_PIKET_SMK2_KONAWE[4];
                     sendPiketScheduleWA(activeTeam);
                   }}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md cursor-pointer transition-all shrink-0"
@@ -1113,13 +1113,13 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
               </div>
 
               <p className="text-xs text-amber-100/90 leading-relaxed font-medium pt-1">
-                Seluruh petugas piket pada hari yang bersangkutan secara otomatis terintegrasi ke dalam satu akun kerja Guru Piket. Untuk hari <strong>Senin</strong>, tugas piket dilaksanakan oleh <strong>Seluruh Guru SMKN 2 Konawe</strong> secara kolektif.
+                Seluruh petugas piket pada hari yang bersangkutan secara otomatis terintegrasi ke dalam satu akun kerja Guru Piket. Untuk hari <strong>Senin</strong>, tugas piket dilaksanakan oleh <strong>Seluruh Guru SMK Negeri 2 Konawe</strong> secara kolektif.
               </p>
             </div>
 
             {/* Day Selector Buttons */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-              {JADWAL_PIKET_SMKN2_KONAWE.map((item) => {
+              {JADWAL_PIKET_SMK2_KONAWE.map((item) => {
                 const isSelected = selectedScheduleDay.toLowerCase().replace("'", "") === item.day.toLowerCase().replace("'", "");
                 return (
                   <button
@@ -1155,7 +1155,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
 
             {/* Detailed Mapped View for Selected Day */}
             {(() => {
-              const activeItem = JADWAL_PIKET_SMKN2_KONAWE.find(j => j.day.toLowerCase().replace("'", "") === selectedScheduleDay.toLowerCase().replace("'", "")) || JADWAL_PIKET_SMKN2_KONAWE[4];
+              const activeItem = JADWAL_PIKET_SMK2_KONAWE.find(j => j.day.toLowerCase().replace("'", "") === selectedScheduleDay.toLowerCase().replace("'", "")) || JADWAL_PIKET_SMK2_KONAWE[4];
               return (
                 <div id="detail-tim-piket" className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5 scroll-mt-6">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4">
@@ -1192,7 +1192,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                     {activeItem.isAllTeachers ? (
                       <div className="p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl text-center space-y-2">
                         <Users className="h-8 w-8 text-indigo-600 mx-auto" />
-                        <h4 className="text-sm font-black text-indigo-950">SELURUH DEWAN GURU SMKN 2 KONAWE</h4>
+                        <h4 className="text-sm font-black text-indigo-950">SELURUH DEWAN GURU SMK NEGERI 2 KONAWE</h4>
                         <p className="text-xs text-indigo-800/80 max-w-xl mx-auto font-medium">
                           Pada hari Senin, seluruh guru bertugas sebagai tim piket kolektif untuk menertibkan jalannya Upacara Bendera, Apel Awal Pekan, dan monitoring kedisiplinan gerbang sekolah.
                         </p>
@@ -1249,7 +1249,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {JADWAL_PIKET_SMKN2_KONAWE.map((item) => {
+                {JADWAL_PIKET_SMK2_KONAWE.map((item) => {
                   const isSelected = selectedScheduleDay.toLowerCase().replace("'", "") === item.day.toLowerCase().replace("'", "");
                   return (
                     <div

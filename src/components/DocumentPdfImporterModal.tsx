@@ -198,7 +198,7 @@ export function DocumentPdfImporterModal({
         }
       ];
       setExtractedGuru(dummyGuru);
-      setStatusMessage({ type: "success", text: "Berhasil memproses PDF dan mengekstrak 5 profil guru terstandar SMKN 2 Konawe." });
+      setStatusMessage({ type: "success", text: "Berhasil memproses PDF dan mengekstrak 5 profil guru terstandar SMK Negeri 2 Konawe." });
     } else if (fileType === "siswa") {
       const dummySiswa = [
         { name: "Aditya Pratama", nis: "21045", nisn: "0061234567", className: "XI TKR A", major: "Teknik Kendaraan Ringan", parentName: "Heri Pratama", parentWhatsApp: "081299887766" },
@@ -226,7 +226,7 @@ export function DocumentPdfImporterModal({
     if (fileType === "guru" && extractedGuru.length > 0) {
       const formatted: Teacher[] = extractedGuru.map((g, idx) => ({
         id: `T_PDF_${Date.now()}_${idx}`,
-        name: g.name || "Guru SMKN 2",
+        name: g.name || "Guru SMK 2",
         nip: g.nip || "-",
         nuptk: g.nuptk || "-",
         subject: g.subject || "Mata Pelajaran Umum",
@@ -273,7 +273,7 @@ export function DocumentPdfImporterModal({
             </div>
             <div>
               <h3 className="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
-                Pengolah Data PDF & Dokumen Induk (SMKN 2 Konawe)
+                Pengolah Data PDF & Dokumen Induk (SMK Negeri 2 Konawe)
                 <Sparkles className="h-4 w-4 text-amber-400 fill-amber-400" />
               </h3>
               <p className="text-[11px] text-slate-300">
@@ -533,7 +533,7 @@ export function DocumentPdfImporterModal({
               <div>
                 <p className="font-black text-emerald-950 text-sm">Data Berhasil Diimpor & Disimpan ke Master Data!</p>
                 <p className="text-[11px] text-emerald-800 font-medium">
-                  Data hasil olahan PDF telah secara otomatis dimasukkan ke sistem induk SMKN 2 Konawe.
+                  Data hasil olahan PDF telah secara otomatis dimasukkan ke sistem induk SMK Negeri 2 Konawe.
                 </p>
               </div>
             </div>

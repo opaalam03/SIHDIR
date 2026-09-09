@@ -114,7 +114,7 @@ export function ArsipSuratDigital({
       perihal: "Penerimaan Siswa Praktik Kerja Lapangan (PKL) Jurusan TSM T.A 2026/2027",
       sifat: "Penting",
       disposisi: "Disetujui Kepsek -> Diserahkan ke Kaprog Keahlian TSM",
-      keterangan: "Kuota 15 siswa jurusan TSM SMKN 2 Konawe untuk penempatan kuartal III.",
+      keterangan: "Kuota 15 siswa jurusan TSM SMK Negeri 2 Konawe untuk penempatan kuartal III.",
       fileName: "Penerimaan_PKL_Astra_Honda.pdf",
       status: "Selesai / Diarsipkan"
     },
@@ -137,9 +137,9 @@ export function ArsipSuratDigital({
   const DEFAULT_SURAT_KELUAR: SuratKeluarItem[] = [
     {
       id: "sk-1",
-      nomorSurat: "421.5/101/SMKN2-KNW/VII/2026",
+      nomorSurat: "421.5/101/SMK2-KNW/VII/2026",
       tanggalSurat: "2026-07-22",
-      tujuanSurat: "Yth. Orang Tua / Wali Murid Kelas X, XI, & XII SMKN 2 Konawe",
+      tujuanSurat: "Yth. Orang Tua / Wali Murid Kelas X, XI, & XII SMK Negeri 2 Konawe",
       perihal: "Pemberitahuan Ketentuan Presensi Digital SIHADIR & Jam Masuk Sekolah",
       sifat: "Edaran",
       penandatangan: "Drs. H. ABD. MANAN, M.M. (Kepala Sekolah)",
@@ -149,7 +149,7 @@ export function ArsipSuratDigital({
     },
     {
       id: "sk-2",
-      nomorSurat: "421.5/102/SMKN2-KNW/VII/2026",
+      nomorSurat: "421.5/102/SMK2-KNW/VII/2026",
       tanggalSurat: "2026-07-18",
       tujuanSurat: "Yth. Pimpinan PT. Auto2000 Kendari (Toyota Sultra)",
       perihal: "Permohonan Izin Tempat Praktik Kerja Lapangan (PKL) Siswa TKR",
@@ -161,7 +161,7 @@ export function ArsipSuratDigital({
     },
     {
       id: "sk-3",
-      nomorSurat: "421.5/103/SMKN2-KNW/VII/2026",
+      nomorSurat: "421.5/103/SMK2-KNW/VII/2026",
       tanggalSurat: "2026-07-14",
       tujuanSurat: "Yth. Kepala Dinas Pendidikan & Kebudayaan Prov. Sultra",
       perihal: "Laporan Periodik Sarana Prasarana & Laboratorium Komputer DKV",
@@ -173,7 +173,7 @@ export function ArsipSuratDigital({
     },
     {
       id: "sk-4",
-      nomorSurat: "421.5/104/SMKN2-KNW/VII/2026",
+      nomorSurat: "421.5/104/SMK2-KNW/VII/2026",
       tanggalSurat: "2026-07-08",
       tujuanSurat: "Yth. Kepala Cabang Dinas Pendidikan Wilayah I Konawe",
       perihal: "Permohonan Penambahan Pendidik Guru Produktif Teknik Otomotif",
@@ -267,7 +267,7 @@ export function ArsipSuratDigital({
     const romanMonths = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
     const currentMonthRoman = romanMonths[new Date().getMonth()];
     const year = new Date().getFullYear();
-    return `421.5/10${formattedCount}/SMKN2-KNW/${currentMonthRoman}/${year}`;
+    return `421.5/10${formattedCount}/SMK2-KNW/${currentMonthRoman}/${year}`;
   };
 
   const handleOpenAddModal = () => {
@@ -409,7 +409,7 @@ export function ArsipSuratDigital({
   };
 
   const handleShareReportToWhatsApp = () => {
-    const text = `*📢 LAPORAN PERSURATAN SUBBAGIAN TATA USAHA (SMKN 2 KONAWE)*\n` +
+    const text = `*📢 LAPORAN PERSURATAN SUBBAGIAN TATA USAHA (SMK NEGERI 2 KONAWE)*\n` +
       `*Diisi oleh Staf TU:* Saktinani Djunaid & Adelia Pusparini\n` +
       `*Laporan Resmi Kepada:* Kepala Sekolah, Admin Utama (ARHAM AMIRUDDIN), Waka Kurikulum, Waka Kesiswaan\n\n` +
       `*📊 REKAPITULASI PERSURATAN:*\n` +
@@ -420,7 +420,7 @@ export function ArsipSuratDigital({
       suratMasukList.slice(0, 3).map((s, i) => `${i+1}. [${s.nomorSurat}] ${s.pengirim} - "${s.perihal}"`).join("\n") +
       `\n\n*📤 DAFTAR SURAT KELUAR TERBARU:*\n` +
       suratKeluarList.slice(0, 3).map((s, i) => `${i+1}. [${s.nomorSurat}] Tujuan: ${s.tujuanSurat} - "${s.perihal}"`).join("\n") +
-      `\n\n_Laporan dikirim otomatis melalui Sistem Kearsipan Digital SIHADIR SMKN 2 Konawe._`;
+      `\n\n_Laporan dikirim otomatis melalui Sistem Kearsipan Digital SIHADIR SMK Negeri 2 Konawe._`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/?text=${encoded}`, "_blank");
@@ -438,14 +438,14 @@ export function ArsipSuratDigital({
                 Sistem Tata Usaha & Kearsipan Sekolah
               </span>
               <span className="text-slate-400 text-xs">|</span>
-              <span className="text-slate-300 font-mono text-xs">SMKN 2 KONAWE</span>
+              <span className="text-slate-300 font-mono text-xs">SMK NEGERI 2 KONAWE</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white flex items-center gap-3">
               <FolderIcon className="h-8 w-8 text-indigo-400" />
               Arsip Surat Masuk & Surat Keluar
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Pengelolaan dokumen resmi, penomoran otomatis, disposisi pimpinan, dan rekapitulasi surat keluar/masuk Tata Usaha SMKN 2 Konawe.
+              Pengelolaan dokumen resmi, penomoran otomatis, disposisi pimpinan, dan rekapitulasi surat keluar/masuk Tata Usaha SMK Negeri 2 Konawe.
             </p>
           </div>
 
@@ -515,7 +515,7 @@ export function ArsipSuratDigital({
 
           <div className="text-xs text-slate-400 font-medium flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span>Format Penomoran Baku: 421.5/xxx/SMKN2-KNW/2026</span>
+            <span>Format Penomoran Baku: 421.5/xxx/SMK2-KNW/2026</span>
           </div>
         </div>
       </div>
@@ -682,7 +682,7 @@ export function ArsipSuratDigital({
                   Daftar Arsip Surat Keluar
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Registrasi penomoran resmi dan arsip surat keluar SMKN 2 Konawe.
+                  Registrasi penomoran resmi dan arsip surat keluar SMK Negeri 2 Konawe.
                 </p>
               </div>
             </div>
@@ -787,7 +787,7 @@ export function ArsipSuratDigital({
                     Laporan Resmi Subbagian Tata Usaha
                   </span>
                   <span className="text-slate-400 text-xs">•</span>
-                  <span className="text-slate-500 text-xs font-bold">SMKN 2 KONAWE</span>
+                  <span className="text-slate-500 text-xs font-bold">SMK NEGERI 2 KONAWE</span>
                 </div>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight">
                   Rekapitulasi Persuratan Masuk & Surat Keluar
@@ -938,7 +938,7 @@ export function ArsipSuratDigital({
                     Laporan Rekapitulasi Surat Keluar
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Arsip penomoran resmi, perihal, dan penandatangan surat keluar SMKN 2 Konawe.
+                    Arsip penomoran resmi, perihal, dan penandatangan surat keluar SMK Negeri 2 Konawe.
                   </p>
                 </div>
               </div>
@@ -998,7 +998,7 @@ export function ArsipSuratDigital({
                       {activeTab === "masuk" ? "Arsip Surat Masuk" : "Arsip Surat Keluar"}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Lengkapi data registrasi surat untuk sistem Tata Usaha SMKN 2 Konawe.
+                      Lengkapi data registrasi surat untuk sistem Tata Usaha SMK Negeri 2 Konawe.
                     </p>
                   </div>
                 </div>
@@ -1145,14 +1145,14 @@ export function ArsipSuratDigital({
                             onClick={() => setFormDataKeluar({ ...formDataKeluar, nomorSurat: generateAutoNoSuratKeluar() })}
                             className="text-[10px] text-indigo-600 font-bold hover:underline"
                           >
-                            Auto No. SMKN 2
+                            Auto No. SMK 2
                           </button>
                         </div>
                         <input
                           type="text"
                           value={formDataKeluar.nomorSurat || ""}
                           onChange={e => setFormDataKeluar({ ...formDataKeluar, nomorSurat: e.target.value })}
-                          placeholder="421.5/101/SMKN2-KNW/VII/2026"
+                          placeholder="421.5/101/SMK2-KNW/VII/2026"
                           className="w-full border border-slate-300 rounded-xl px-3 py-2.5 font-mono font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                           required
                         />

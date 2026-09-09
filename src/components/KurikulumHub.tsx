@@ -131,7 +131,7 @@ export function KurikulumHub({ isAutomotive }: KurikulumHubProps) {
             Fase F & Kurikulum Merdeka
           </span>
           <h2 className="text-xl font-extrabold tracking-tight mt-2 flex items-center gap-2">
-            Mapping Kurikulum & SOP SMK SIMPATI
+            Mapping Kurikulum & SOP SMK Negeri 2 Konawe
           </h2>
           <p className="text-xs text-slate-400 mt-1">
             Visualisasikan keterhubungan Capaian Pembelajaran (CP) ➔ Alur Tujuan Pembelajaran (ATP) ➔ Tujuan Pembelajaran (TP).
@@ -225,7 +225,7 @@ export function KurikulumHub({ isAutomotive }: KurikulumHubProps) {
                 <label className="block text-xs font-bold text-slate-600 mb-1">Sumber Resmi (WAJIB untuk Kutipan)</label>
                 <input
                   type="text"
-                  placeholder="Contoh: Kurikulum Merdeka SMK SIMPATI - SK BK-03"
+                  placeholder="Contoh: Kurikulum Merdeka SMK Negeri 2 Konawe - SK BK-03"
                   value={newSource}
                   onChange={(e) => setNewSource(e.target.value)}
                   className="w-full bg-emerald-50/50 border border-emerald-100 text-xs text-emerald-950 font-medium rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"

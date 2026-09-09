@@ -66,7 +66,7 @@ export interface StudentViolationRecord {
   createdAt?: string;
 }
 
-// DEFAULT MASTER RULES CATALOG (SMKN 2 KONAWE STANDARD)
+// DEFAULT MASTER RULES CATALOG (SMK NEGERI 2 KONAWE STANDARD)
 export const DEFAULT_VIOLATION_RULES: ViolationRule[] = [
   // --- KATEGORI RINGAN ---
   {
@@ -103,7 +103,7 @@ export const DEFAULT_VIOLATION_RULES: ViolationRule[] = [
     category: "Ringan",
     points: 10,
     description: "Membuang sampah tidak pada tempatnya di area kelas, koridor, atau area praktik bengkel",
-    standardAction: "Pemberihan area lingkungan sekolah"
+    standardAction: "Pembersihan area lingkungan sekolah"
   },
   {
     id: "r-5",
@@ -439,7 +439,13 @@ export function StudentViolationCreditManager({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          const sanitized = parsed.map((r: ViolationRule) => ({
+            ...r,
+            standardAction: r.standardAction ? r.standardAction.replace(/Pemberihan/g, "Pembersihan") : r.standardAction
+          }));
+          return sanitized;
+        }
       } catch (e) {
         console.error(e);
       }
@@ -693,7 +699,7 @@ export function StudentViolationCreditManager({
             </div>
           </div>
           <p className="text-xs text-slate-300 max-w-2xl font-medium leading-relaxed">
-            Sistem rekapitulasi poin kedisiplinan murid SMKN 2 Konawe. Poin diakumulasikan dari <strong>0 Poin (Siswa Taat)</strong> hingga maksimal <strong>100 Poin (Surat Pengembalian Orang Tua)</strong>. Siswa juga dapat memulihkan poin melalui kegiatan prestasi/apresiasi.
+            Sistem rekapitulasi poin kedisiplinan murid SMK Negeri 2 Konawe. Poin diakumulasikan dari <strong>0 Poin (Siswa Taat)</strong> hingga maksimal <strong>100 Poin (Surat Pengembalian Orang Tua)</strong>. Siswa juga dapat memulihkan poin melalui kegiatan prestasi/apresiasi.
           </p>
         </div>
 
@@ -1124,7 +1130,7 @@ export function StudentViolationCreditManager({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-base font-black text-slate-900">
-                  BUKU PEDOMAN KRITERIA PELANGGARAN & POIN (SMKN 2 KONAWE)
+                  BUKU PEDOMAN KRITERIA PELANGGARAN & POIN (SMK NEGERI 2 KONAWE)
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
                   Aturan resmi bobot kredit poin akumulasi pelanggaran siswa serta bentuk penanganan BK / Sekolah.
@@ -1285,7 +1291,7 @@ export function StudentViolationCreditManager({
                 <div>
                   <h3 className="text-sm font-black text-slate-900">PENCATATAN POIN PELANGGARAN / APRESIASI</h3>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    SMKN 2 KONAWE
+                    SMK NEGERI 2 KONAWE
                   </span>
                 </div>
               </div>

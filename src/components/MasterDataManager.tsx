@@ -38,17 +38,19 @@ import {
   X,
   ChevronRight,
   GraduationCap,
-  UserPlus
+  UserPlus,
+  QrCode
 } from "lucide-react";
 import { Student, Teacher, TeachingSchedule } from "../types";
 import { compressImageFile } from "../lib/imageCompressor";
 import { MOCK_STUDENTS, MOCK_TEACHERS } from "../mockData";
 import { OFFICIAL_CLASSES } from "../data/classCaptains";
-import { APIProvider, Map, AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
-import { OFFICIAL_SMKN2_SCHEDULES } from "../data/translatedSchedules";
+import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
+import { OFFICIAL_SMK2_SCHEDULES } from "../data/translatedSchedules";
 import ScheduleImporterModal from "./ScheduleImporterModal";
 import BirthDateSelector from "./BirthDateSelector";
 import { DocumentPdfImporterModal } from "./DocumentPdfImporterModal";
+import { CetakKartuQrModal } from "./CetakKartuQrModal";
 import { 
   getMasterGuruWaliData, 
   saveMasterGuruWaliData, 
@@ -83,7 +85,7 @@ const DEFAULT_SUBJECTS = [
 ];
 
 const DEFAULT_SCHEDULES: TeachingSchedule[] = [
-  ...OFFICIAL_SMKN2_SCHEDULES.slice(0, 20).map((item, idx) => ({
+  ...OFFICIAL_SMK2_SCHEDULES.slice(0, 20).map((item, idx) => ({
     id: `sch-${idx + 1}`,
     teacherId: item.teacherCode.toLowerCase(),
     teacherName: item.teacherName,
@@ -332,7 +334,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     const nonSubjectRoles = ["Admin Utama", "Administrator Utama", "Guru Mapel", "Guru Mata Pelajaran", "Guru Piket", "Guru Wali", "Wali Kelas"];
     list = list.filter(item => !nonSubjectRoles.some(role => role.toLowerCase() === item.trim().toLowerCase()));
 
-    // Ensure all official SMKN 2 Konawe subjects are present
+    // Ensure all official SMK Negeri 2 Konawe subjects are present
     OFFICIAL_SUBJECTS.forEach(sub => {
       if (!list.some(item => item.toLowerCase() === sub.toLowerCase())) {
         list.push(sub);
@@ -357,6 +359,8 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [pdfModalType, setPdfModalType] = useState<"guru" | "siswa" | "mapel">("guru");
+  const [isStudentQrModalOpen, setIsStudentQrModalOpen] = useState(false);
+  const [studentQrModalClass, setStudentQrModalClass] = useState<string>("ALL");
   const [editType, setEditType] = useState<"siswa" | "guru" | "mapel" | "kelas" | "jadwal">("siswa");
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -462,10 +466,10 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   };
 
   const handleResetGuruWaliData = () => {
-    if (window.confirm("Reset seluruh data Guru Wali ke versi SK Resmi Kepala SMKN 2 Konawe (35 Guru Wali)?")) {
+    if (window.confirm("Reset seluruh data Guru Wali ke versi SK Resmi Kepala SMK Negeri 2 Konawe (36 Guru Wali)?")) {
       setGuruWaliList(INITIAL_GURU_WALI_MASTER_DATA);
       saveMasterGuruWaliData(INITIAL_GURU_WALI_MASTER_DATA);
-      setStatusMessage({ type: "success", text: "Data Master Guru Wali berhasil direset sesuai SK Kepala Sekolah SMKN 2 Konawe!" });
+      setStatusMessage({ type: "success", text: "Data Master Guru Wali berhasil direset sesuai SK Kepala Sekolah SMK Negeri 2 Konawe!" });
     }
   };
 
@@ -630,7 +634,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     let rowsHTML = "";
 
     if (type === "siswa") {
-      title = "REKAPITULASI DATA MASTER SISWA SMKN 2 KONAWE";
+      title = "REKAPITULASI DATA MASTER SISWA SMK NEGERI 2 KONAWE";
       headersHTML = `
         <th>No</th>
         <th>NISN / NIS</th>
@@ -658,7 +662,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </tr>
       `).join("");
     } else if (type === "guru_wali") {
-      title = "DAFTAR NAMA GURU WALI & BIMBINGAN SISWA SMKN 2 KONAWE (PELAJARAN 2026 / 2027)";
+      title = "DAFTAR NAMA GURU WALI & BIMBINGAN SISWA SMK NEGERI 2 KONAWE (PELAJARAN 2026 / 2027)";
       headersHTML = `
         <th style="width: 40px">No</th>
         <th style="width: 220px">Nama Guru Wali</th>
@@ -687,7 +691,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </tr>
       `).join("");
     } else if (type === "guru") {
-      title = "REKAPITULASI DATA MASTER GURU & PENDIDIK SMKN 2 KONAWE";
+      title = "REKAPITULASI DATA MASTER GURU & PENDIDIK SMK NEGERI 2 KONAWE";
       headersHTML = `
         <th>No</th>
         <th>NIP / NUPTK</th>
@@ -709,7 +713,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </tr>
       `).join("");
     } else if (type === "mapel") {
-      title = "REKAPITULASI DAFTAR MATA PELAJARAN SMKN 2 KONAWE";
+      title = "REKAPITULASI DAFTAR MATA PELAJARAN SMK NEGERI 2 KONAWE";
       headersHTML = `
         <th>No</th>
         <th>Nama Mata Pelajaran</th>
@@ -723,7 +727,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </tr>
       `).join("");
     } else if (type === "jadwal") {
-      title = "REKAPITULASI JADWAL MENGAJAR SMKN 2 KONAWE";
+      title = "REKAPITULASI JADWAL MENGAJAR SMK NEGERI 2 KONAWE";
       headersHTML = `
         <th>No</th>
         <th>Hari</th>
@@ -798,7 +802,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
           </div>
           <div class="footer-box">
             <p>Konawe, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p style="margin-bottom: 50px;"><strong>Kepala SMKN 2 Konawe</strong></p>
+            <p style="margin-bottom: 50px;"><strong>Kepala SMK Negeri 2 Konawe</strong></p>
             <p><strong><u>Drs. H. ABD. MANAN, M.M.</u></strong><br/>NIP. 19650812 199003 1 008</p>
           </div>
         </div>
@@ -922,7 +926,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   const handleResetCalibration = () => {
     triggerConfirm(
       "Setel Ulang Kalibrasi GPS",
-      "Kembalikan koordinat sekolah ke standar default SMKN 2 Konawe?",
+      "Kembalikan koordinat sekolah ke standar default SMK Negeri 2 Konawe?",
       () => {
         setCalibratedLat(-3.8380461319668107);
         setCalibratedLon(122.04194960321178);
@@ -930,7 +934,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         localStorage.setItem("sihadir_school_lat", "-3.8380461319668107");
         localStorage.setItem("sihadir_school_lon", "122.04194960321178");
         localStorage.setItem("sihadir_school_radius", "700");
-        showStatus("Titik koordinat berhasil dikembalikan ke default SMKN 2 Konawe!", "success");
+        showStatus("Titik koordinat berhasil dikembalikan ke default SMK Negeri 2 Konawe!", "success");
       }
     );
   };
@@ -1268,7 +1272,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
               <span className="text-xs font-bold text-amber-800 font-mono">Akun {tuRoleTitle}</span>
             </div>
             <p className="text-xs font-semibold leading-relaxed">
-              Sebagai {tuRoleTitle}, Anda berhak meninjau dan melihat seluruh Data Master Siswa, Guru, Mata Pelajaran, Kelas, dan Jadwal Mengajar SMKN 2 Konawe. 
+              Sebagai {tuRoleTitle}, Anda berhak meninjau dan melihat seluruh Data Master Siswa, Guru, Mata Pelajaran, Kelas, dan Jadwal Mengajar SMK Negeri 2 Konawe. 
               <strong className="font-extrabold text-rose-800 ml-1">
                 Akses untuk Menambah, Mengedit, dan Menghapus Data Master dinonaktifkan
               </strong> dan hanya dipegang oleh Administrator Utama.
@@ -1378,14 +1382,38 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
 
           <div>
             {isReadOnly ? (
-              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/80 text-amber-900 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs">
-                <Lock className="h-4 w-4 text-amber-600 shrink-0" />
-                <span>Mode Lihat Saja (Admin TU) - Akses Tambah/Edit Dibatasi</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/80 text-amber-900 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs">
+                  <Lock className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>Mode Lihat Saja (Admin TU) - Akses Tambah/Edit Dibatasi</span>
+                </div>
+                {activeSubTab === "siswa" && (
+                  <button
+                    onClick={() => {
+                      setStudentQrModalClass("ALL");
+                      setIsStudentQrModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    Cetak Kartu QR Siswa
+                  </button>
+                )}
               </div>
             ) : (
               <>
                 {activeSubTab === "siswa" && (
                   <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setStudentQrModalClass("ALL");
+                        setIsStudentQrModalOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
+                    >
+                      <QrCode className="h-4 w-4" />
+                      Cetak Kartu QR Siswa
+                    </button>
                     <button
                       onClick={() => handleExportPDF("siswa")}
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-700 hover:bg-sky-800 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
@@ -1527,7 +1555,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       <FileText className="h-4 w-4" />
-                      Penerjemah & Impor Jadwal SMKN 2
+                      Penerjemah & Impor Jadwal SMK 2
                     </button>
                     <button
                       onClick={handleOpenAddJadwal}
@@ -1727,7 +1755,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
               <div className="space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="bg-amber-500/30 text-amber-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-400/30">
-                    SK KEPALA SMKN 2 KONAWE (PELAJARAN 2026/2027)
+                    SK KEPALA SMK NEGERI 2 KONAWE (PELAJARAN 2026/2027)
                   </span>
                   <span className="text-[10px] text-amber-300 font-mono">NOMOR: 521.3/ /800/VII/2026</span>
                 </div>
@@ -1745,7 +1773,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                   type="button"
                   onClick={handleResetGuruWaliData}
                   className="px-3 py-2 bg-amber-800/80 hover:bg-amber-700 text-amber-100 border border-amber-600/50 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
-                  title="Kembalikan ke data standar SK SMKN 2 Konawe"
+                  title="Kembalikan ke data standar SK SMK Negeri 2 Konawe"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   <span>Reset Sesuai SK</span>
@@ -1783,7 +1811,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                             </span>
                           </h4>
                           <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
-                            Pembimbing Siswa • SMKN 2 Konawe
+                            Pembimbing Siswa • SMK Negeri 2 Konawe
                           </span>
                         </div>
                       </div>
@@ -1982,7 +2010,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="text-xs font-black text-indigo-950 uppercase tracking-tight block">{kelasName}</span>
-                        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">SMKN 2 Konawe</span>
+                        <span className="text-[9px] font-bold text-slate-400 block mt-0.5">SMK Negeri 2 Konawe</span>
                       </div>
                       {!isReadOnly && (
                         <button
@@ -2186,7 +2214,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Reset ke Default SMK SIMPATI
+                    Reset ke Default SMK Negeri 2 Konawe
                   </button>
                 </div>
               </form>
@@ -2200,11 +2228,11 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       setCalibratedLat(-3.8380461319668107);
                       setCalibratedLon(122.04194960321178);
                       setCalibratedRadius(700);
-                      showStatus("Preset SMKN 2 Konawe dipilih!", "success");
+                      showStatus("Preset SMK Negeri 2 Konawe dipilih!", "success");
                     }}
                     className="p-2 border border-slate-100 hover:border-indigo-300 rounded-lg text-left bg-slate-50/50 hover:bg-indigo-50/20 transition-all text-[10px] font-bold text-slate-700 cursor-pointer"
                   >
-                    🏫 SMKN 2 Konawe (Default)
+                    🏫 SMK Negeri 2 Konawe (Default)
                     <span className="block font-mono text-[8px] text-slate-400 font-normal mt-0.5">Sultra, ID</span>
                   </button>
                   <button
@@ -2306,7 +2334,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 >
                   <div className="w-full h-[450px] rounded-2xl overflow-hidden border border-slate-200 relative bg-slate-50 shadow-inner">
                     <APIProvider apiKey={API_KEY} version="weekly">
-                      <Map
+                      <GoogleMap
                         defaultCenter={{ lat: calibratedLat, lng: calibratedLon }}
                         center={{ lat: calibratedLat, lng: calibratedLon }}
                         defaultZoom={15}
@@ -2335,12 +2363,12 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                               setCalibratedLon(parseFloat(e.latLng.lng().toFixed(6)));
                             }
                           }}
-                          title="Titik Kalibrasi SMK SIMPATI"
+                          title="Titik Kalibrasi SMK Negeri 2 Konawe"
                         >
                           <Pin background="#4f46e5" glyphColor="#fff" borderColor="#3730a3" />
                         </AdvancedMarker>
                         <MapCircle center={{ lat: calibratedLat, lng: calibratedLon }} radius={calibratedRadius} />
-                      </Map>
+                      </GoogleMap>
                     </APIProvider>
                   </div>
                 </MapErrorBoundary>
@@ -3023,7 +3051,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 if (filteredNew.length < importedSchedules.length) {
                   showStatus(`Berhasil mengimpor ${filteredNew.length} jadwal pelajaran baru. ${importedSchedules.length - filteredNew.length} jadwal dilewati karena sudah ada.`);
                 } else {
-                  showStatus(`Berhasil mengimpor ${filteredNew.length} jadwal pelajaran baru dari SMKN 2 Konawe.`);
+                  showStatus(`Berhasil mengimpor ${filteredNew.length} jadwal pelajaran baru dari SMK Negeri 2 Konawe.`);
                 }
                 
                 return [...prev, ...filteredNew];
@@ -3082,6 +3110,14 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         existingClasses={classes}
       />
 
+      {/* Student QR Card Generator & Print Modal */}
+      <CetakKartuQrModal
+        isOpen={isStudentQrModalOpen}
+        onClose={() => setIsStudentQrModalOpen(false)}
+        students={students}
+        initialClass={studentQrModalClass}
+      />
+
       {/* Class Student List Modal */}
       <AnimatePresence>
         {selectedClassForModal && (
@@ -3106,7 +3142,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-medium mt-0.5">
-                      Data Resmi Siswa SMKN 2 Konawe (NISN & Identitas)
+                      Data Resmi Siswa SMK Negeri 2 Konawe (NISN & Identitas)
                     </p>
                   </div>
                 </div>
@@ -3142,6 +3178,16 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       Tambah Siswa
                     </button>
                   )}
+                  <button
+                    onClick={() => {
+                      setStudentQrModalClass(selectedClassForModal);
+                      setIsStudentQrModalOpen(true);
+                    }}
+                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <QrCode className="h-3.5 w-3.5 text-indigo-600" />
+                    Cetak Kartu QR
+                  </button>
                   <button
                     onClick={() => window.print()}
                     className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-250 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
@@ -3278,7 +3324,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     <h3 className="text-sm font-extrabold text-slate-900">
                       {editingGuruWali ? "Edit Data Guru Wali" : "Tambah Guru Wali Baru"}
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-medium">SK Kepala SMKN 2 Konawe</p>
+                    <p className="text-[10px] text-slate-400 font-medium">SK Kepala SMK Negeri 2 Konawe</p>
                   </div>
                 </div>
                 <button
@@ -3344,7 +3390,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     <h3 className="text-sm font-extrabold text-slate-900">
                       {editingMurid ? "Edit Data Murid Bimbingan" : "Tambah Murid Bimbingan Baru"}
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-medium">Binaan Guru Wali SMKN 2 Konawe</p>
+                    <p className="text-[10px] text-slate-400 font-medium">Binaan Guru Wali SMK Negeri 2 Konawe</p>
                   </div>
                 </div>
                 <button

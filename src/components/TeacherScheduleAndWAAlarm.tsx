@@ -14,6 +14,17 @@ import {
   MatchedScheduleItem,
   getIndonesianDayName
 } from "../utils/scheduleHelper";
+import {
+  LESSON_PERIODS,
+  LessonPeriod,
+  getCurrentOrUpcomingPeriod,
+  buildTeacherPeriodReport,
+  dispatchTeacherPeriodReport,
+  getTeacherGroupTarget,
+  getLessonPeriods,
+  getDayScheduleConfig
+} from "../services/whatsappFonnteService";
+import { Comprehensive15WitaReportModal } from "./Comprehensive15WitaReportModal";
 
 interface TeacherScheduleAndWAAlarmProps {
   teacherName: string; // Profile name or username
@@ -72,6 +83,45 @@ export function TeacherScheduleAndWAAlarm({
   const [waReport, setWaReport] = useState(() => buildWAAlarmBroadcastMessage());
 
   const todayDayName = getIndonesianDayName();
+  const activeLessonPeriods = React.useMemo(() => getLessonPeriods(todayDayName), [todayDayName]);
+
+  // Period report state
+  const { currentPeriod: initialActivePeriod } = getCurrentOrUpcomingPeriod();
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string>(
+    initialActivePeriod?.id || (activeLessonPeriods[0]?.id || "jam-1")
+  );
+  const [isSendingPeriodWa, setIsSendingPeriodWa] = useState<boolean>(false);
+  const [periodSendFeedback, setPeriodSendFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [copiedPeriodText, setCopiedPeriodText] = useState<boolean>(false);
+  const [is15ReportModalOpen, setIs15ReportModalOpen] = useState<boolean>(false);
+
+  const activePeriodReport = React.useMemo(() => {
+    return buildTeacherPeriodReport(selectedPeriodId);
+  }, [selectedPeriodId, allSchedules, todayStatus]);
+
+  const handleSendPeriodFonnte = async () => {
+    setIsSendingPeriodWa(true);
+    setPeriodSendFeedback(null);
+    try {
+      const res = await dispatchTeacherPeriodReport(selectedPeriodId, true);
+      if (res.success) {
+        setPeriodSendFeedback({ type: "success", text: `🚀 Sukses! Laporan ${res.periodLabel} terkirim otomatis ke Grup WhatsApp Guru via Fonnte Gateway.` });
+      } else {
+        setPeriodSendFeedback({ type: "error", text: `⚠️ Fonnte Gateway: ${res.message}` });
+      }
+    } catch (e: any) {
+      setPeriodSendFeedback({ type: "error", text: `Terjadi kendala: ${e.message || "Gagal menghubungi server"}` });
+    } finally {
+      setIsSendingPeriodWa(false);
+      setTimeout(() => setPeriodSendFeedback(null), 7000);
+    }
+  };
+
+  const handleCopyPeriodText = () => {
+    navigator.clipboard.writeText(activePeriodReport.messageText);
+    setCopiedPeriodText(true);
+    setTimeout(() => setCopiedPeriodText(false), 3500);
+  };
 
   // Refresh data function
   const handleRefreshData = () => {
@@ -124,7 +174,7 @@ export function TeacherScheduleAndWAAlarm({
                 </span>
                 <span className="text-slate-300 text-xs">|</span>
                 <span className="text-xs font-bold text-slate-500">
-                  SMKN 2 Konawe (T.A 2026/2027)
+                  SMK Negeri 2 Konawe (T.A 2026/2027)
                 </span>
               </div>
               <h3 className="text-lg font-black text-slate-900 mt-0.5 tracking-tight flex items-center gap-2 flex-wrap">
@@ -202,6 +252,50 @@ export function TeacherScheduleAndWAAlarm({
             <span className="text-[9px] text-blue-700 font-semibold block mt-0.5">
               Hari Ini: {todayDayName} ({groupedByDay[todayDayName]?.reduce((sum, item) => sum + (item.durationHours || 2), 0) || 0} JP)
             </span>
+          </div>
+        </div>
+
+        {/* Official Bell Schedule Timetable Reference (Resmi SMK Negeri 2 Konawe) */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-xs text-slate-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-extrabold text-slate-900 flex items-center gap-1.5 text-xs">
+              <Clock className="h-4 w-4 text-indigo-600" />
+              Pedoman Jam Masuk, Jam Istirahat & Jam Pulang KBM Resmi:
+            </span>
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+              Aktif Hari Ini: {todayDayName} ({getDayScheduleConfig(todayDayName).jamMasuk} - {getDayScheduleConfig(todayDayName).jamPulang} WITA)
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+            <div className={`p-2.5 rounded-xl border ${todayDayName.toLowerCase() === "senin" ? "bg-indigo-50/80 border-indigo-300 font-bold" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-black text-indigo-950">Senin (9 JP @ 40 mnt)</span>
+                {todayDayName.toLowerCase() === "senin" && <span className="text-[9px] bg-indigo-600 text-white px-1.5 py-0.2 rounded font-black">HARI INI</span>}
+              </div>
+              <p className="text-slate-600 mt-1">
+                ⏰ Masuk: <strong>07:15</strong> (Upacara) | ☕ Istirahat: <strong>09:55 - 10:10</strong> | 🏁 Pulang: <strong>13:30</strong> WITA
+              </p>
+            </div>
+
+            <div className={`p-2.5 rounded-xl border ${["selasa", "rabu", "kamis", "sabtu"].includes(todayDayName.toLowerCase()) ? "bg-indigo-50/80 border-indigo-300 font-bold" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-black text-indigo-950">Selasa - Kamis & Sabtu (8 JP @ 45 mnt)</span>
+                {["selasa", "rabu", "kamis", "sabtu"].includes(todayDayName.toLowerCase()) && <span className="text-[9px] bg-indigo-600 text-white px-1.5 py-0.2 rounded font-black">HARI INI</span>}
+              </div>
+              <p className="text-slate-600 mt-1">
+                ⏰ Masuk: <strong>07:15</strong> | ☕ Istirahat: <strong>10:15 - 10:30</strong> | 🏁 Pulang: <strong>13:30</strong> WITA
+              </p>
+            </div>
+
+            <div className={`p-2.5 rounded-xl border ${todayDayName.toLowerCase() === "jumat" ? "bg-emerald-50 border-emerald-300 font-bold" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center justify-between">
+                <span className="font-black text-emerald-950">Jumat (6 JP @ 40 mnt)</span>
+                {todayDayName.toLowerCase() === "jumat" && <span className="text-[9px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-black">HARI INI</span>}
+              </div>
+              <p className="text-slate-600 mt-1">
+                ⏰ Masuk: <strong>07:20</strong> | ☕ Istirahat: <strong>10:00 - 10:10</strong> | 🏁 Pulang: <strong>11:30</strong> WITA
+              </p>
+            </div>
           </div>
         </div>
 
@@ -499,8 +593,220 @@ export function TeacherScheduleAndWAAlarm({
             </a>
           </div>
         </div>
+
+        {/* 2.5. MODUL KHUSUS: LAPORAN ABSENSI GURU SETIAP PERGANTIAN JAM MENGAJAR (FONNTE GATEWAY) */}
+        <div className="bg-gradient-to-br from-indigo-950/90 to-slate-950/95 p-5 rounded-2xl border border-indigo-500/30 space-y-4 text-slate-100 shadow-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-indigo-500/20 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-500 text-white rounded-xl shadow-sm">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-white flex items-center gap-2">
+                  Laporan Khusus Guru Setiap Pergantian Jam Pelajaran
+                  <span className="bg-indigo-500/30 text-indigo-300 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/40">
+                    Fonnte WA Gateway
+                  </span>
+                </h4>
+                <p className="text-[11px] text-indigo-200/80">
+                  Laporan otomatis disiarkan ke Grup WhatsApp Guru di setiap pergantian bel jam mengajar KBM.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                Auto-Broadcast Aktif
+              </span>
+            </div>
+          </div>
+
+          {/* Period selector pill buttons */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+              Pilih Sesi Jam Pelajaran KBM:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {activeLessonPeriods.filter(p => !p.isBreak).map(period => {
+                const isSelected = selectedPeriodId === period.id;
+                const isCurrentActive = initialActivePeriod?.id === period.id;
+
+                return (
+                  <button
+                    key={period.id}
+                    type="button"
+                    onClick={() => setSelectedPeriodId(period.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border ${
+                      isSelected
+                        ? "bg-indigo-600 text-white border-indigo-400 shadow-md scale-105"
+                        : "bg-white/5 hover:bg-white/10 text-slate-300 border-white/10"
+                    }`}
+                  >
+                    <span>{period.label}</span>
+                    <span className="text-[10px] opacity-75 font-mono">({period.startTime})</span>
+                    {isCurrentActive && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" title="Jam Sedang Aktif" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selected period details & teacher roster */}
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-white text-sm">
+                  {activePeriodReport.period.label} ({activePeriodReport.timeRange})
+                </span>
+                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300">
+                  {activePeriodReport.scheduledTeachers.length} Guru Terjadwal
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-[11px]">
+                <span className="text-emerald-400 font-bold">
+                  ✓ {activePeriodReport.hadirCount} Hadir / Di Kelas
+                </span>
+                <span className="text-rose-400 font-bold">
+                  ✗ {activePeriodReport.belumHadirCount} Belum Absen KBM
+                </span>
+              </div>
+            </div>
+
+            {/* List of teachers for this period */}
+            {activePeriodReport.scheduledTeachers.length > 0 ? (
+              <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
+                {activePeriodReport.scheduledTeachers.map((t, idx) => (
+                  <div
+                    key={idx}
+                    className={`px-3 py-2 rounded-lg text-xs flex items-center justify-between border ${
+                      t.isHadir
+                        ? "bg-emerald-950/30 border-emerald-500/20 text-emerald-200"
+                        : "bg-rose-950/30 border-rose-500/30 text-rose-200"
+                    }`}
+                  >
+                    <div>
+                      <strong className="font-bold text-white">{t.teacherName}</strong>
+                      <span className="text-[11px] opacity-80 block sm:inline sm:ml-2">
+                        {t.className} - {t.subject} ({t.periodStr})
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase shrink-0 ${
+                      t.isHadir ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/30 text-rose-300 animate-pulse"
+                    }`}>
+                      {t.isHadir ? (t.hasJournal ? "Jurnal Terisi" : "Hadir") : "Belum Masuk"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic py-1">
+                Tidak ada guru yang terjadwal mengajar pada {activePeriodReport.period.label} hari {activePeriodReport.day}.
+              </p>
+            )}
+          </div>
+
+          {/* WhatsApp Text Preview & Direct Fonnte Send Button */}
+          <div className="space-y-2">
+            <textarea
+              readOnly
+              rows={4}
+              value={activePeriodReport.messageText}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-300 font-mono focus:outline-none scrollbar-thin"
+            />
+
+            {periodSendFeedback && (
+              <div className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                periodSendFeedback.type === "success" 
+                  ? "bg-emerald-950/80 border border-emerald-500/40 text-emerald-200" 
+                  : "bg-rose-950/80 border border-rose-500/40 text-rose-200"
+              }`}>
+                {periodSendFeedback.type === "success" ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />}
+                <span>{periodSendFeedback.text}</span>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCopyPeriodText}
+                className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer border border-white/15"
+              >
+                <Copy className="h-3.5 w-3.5 text-indigo-300" />
+                <span>{copiedPeriodText ? "Tersalin!" : `Salin Teks ${activePeriodReport.period.label}`}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(activePeriodReport.messageText)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl border border-white/15 transition-all"
+                  title="Kirim manual via WhatsApp Web"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>Kirim Manual WA</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={handleSendPeriodFonnte}
+                  disabled={isSendingPeriodWa}
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="h-3.5 w-3.5 fill-current" />
+                  <span>
+                    {isSendingPeriodWa 
+                      ? "Menghubungkan ke Fonnte..." 
+                      : `Siarkan Laporan ${activePeriodReport.period.label} via Fonnte 🚀`}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 15:00 WITA Comprehensive Daily Report Card (Siswa, Guru, Staf TU) */}
+        <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-slate-950 p-5 rounded-3xl border border-emerald-500/40 text-white space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-emerald-500/30 text-emerald-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-400/30 tracking-wider">
+                  Rekapitulasi 15.00 WITA
+                </span>
+                <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-400/20">
+                  Transparansi Presensi — Menghindari Dusta di Antara Kita
+                </span>
+              </div>
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-emerald-400" />
+                <span>Siaran Rekapitulasi Presensi Terpadu Pukul 15.00 WITA</span>
+              </h3>
+              <p className="text-xs text-emerald-200/90 leading-relaxed max-w-3xl">
+                Otomatis mengompilasi rekapitulasi presensi siswa 18 kelas (hadir, sakit, izin, alfa dengan nama), 36 Dewan Guru (jam masuk, pulang, jurnal), dan 4 Tenaga Kependidikan / Tata Usaha tepat pukul 15.00 WITA ke Saluran / Grup WhatsApp Sekolah.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIs15ReportModalOpen(true)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-5 py-3 rounded-2xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
+            >
+              <Clock className="h-4 w-4" />
+              <span>Buka Rekap 15.00 WITA</span>
+            </button>
+          </div>
+        </div>
       </div>
       )}
+
+      {/* Modal Rekapitulasi Presensi Terpadu 15.00 WITA */}
+      <Comprehensive15WitaReportModal
+        isOpen={is15ReportModalOpen}
+        onClose={() => setIs15ReportModalOpen(false)}
+      />
     </div>
   );
 }

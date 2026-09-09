@@ -18,7 +18,7 @@ import {
   FileText,
   Filter
 } from "lucide-react";
-import { OFFICIAL_SMKN2_SCHEDULES, TEACHER_MAP, SUBJECT_MAP, TranslatedScheduleItem } from "../data/translatedSchedules";
+import { OFFICIAL_SMK2_SCHEDULES, TEACHER_MAP, SUBJECT_MAP, TranslatedScheduleItem } from "../data/translatedSchedules";
 import { TeachingSchedule } from "../types";
 
 interface ScheduleImporterModalProps {
@@ -38,11 +38,11 @@ export default function ScheduleImporterModal({ isOpen, onClose, onImport }: Sch
 
   // Extract distinct values for filters
   const days = ["Semua Hari", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const classesList = ["Semua Kelas", ...Array.from(new Set(OFFICIAL_SMKN2_SCHEDULES.map(s => s.className)))].sort();
-  const teachersList = ["Semua Guru", ...Array.from(new Set(OFFICIAL_SMKN2_SCHEDULES.map(s => `${s.teacherCode} - ${s.teacherName}`)))].sort();
+  const classesList = ["Semua Kelas", ...Array.from(new Set(OFFICIAL_SMK2_SCHEDULES.map(s => s.className)))].sort();
+  const teachersList = ["Semua Guru", ...Array.from(new Set(OFFICIAL_SMK2_SCHEDULES.map(s => `${s.teacherCode} - ${s.teacherName}`)))].sort();
 
   // Filter items
-  const filteredSchedules = OFFICIAL_SMKN2_SCHEDULES.filter((item, idx) => {
+  const filteredSchedules = OFFICIAL_SMK2_SCHEDULES.filter((item, idx) => {
     const key = `${item.day}-${item.className}-${item.period}-${item.teacherCode}`;
     
     const matchesSearch = 
@@ -123,7 +123,7 @@ export default function ScheduleImporterModal({ isOpen, onClose, onImport }: Sch
             </div>
             <div>
               <h2 className="text-sm font-black tracking-wide uppercase">Penerjemah & Impor Jadwal Resmi</h2>
-              <p className="text-[10px] text-indigo-200 font-medium">Jadwal Pelajaran Semester Ganjil SMKN 2 Konawe TA 2026/2027</p>
+              <p className="text-[10px] text-indigo-200 font-medium">Jadwal Pelajaran Semester Ganjil SMK Negeri 2 Konawe TA 2026/2027</p>
             </div>
           </div>
           <button
@@ -214,7 +214,7 @@ export default function ScheduleImporterModal({ isOpen, onClose, onImport }: Sch
               {filteredSchedules.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-slate-400 font-semibold">
-                    Tidak ada jadwal SMKN 2 Konawe yang cocok dengan saringan filter Anda.
+                    Tidak ada jadwal SMK Negeri 2 Konawe yang cocok dengan saringan filter Anda.
                   </td>
                 </tr>
               ) : (

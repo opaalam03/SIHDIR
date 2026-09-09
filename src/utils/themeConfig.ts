@@ -725,7 +725,7 @@ export const SIHADIR_THEMES: Record<ThemeId, ThemeDefinition> = {
   blue: {
     id: "blue",
     name: "Biru Samudra",
-    tagline: "Khas SMKN 2 Konawe Royal Blue",
+    tagline: "Khas SMK Negeri 2 Konawe Royal Blue",
     category: "Klasik & Elegan",
     previewClass: "bg-blue-600",
     iconColor: "text-blue-400",

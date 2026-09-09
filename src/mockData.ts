@@ -516,6 +516,20 @@ export const MOCK_TEACHERS: Teacher[] = [
     qrCode: "35_YOGA_NANDA_HENDRAWAN"
   },
   {
+    id: "T37",
+    name: "RUSNI K",
+    nip: "-",
+    nuptk: "-",
+    subject: "Dasar Program Keahlian & Mapel Keahlian",
+    classes: ["X TAV", "XI TAV", "XII TAV", "XII TKR B"],
+    role: "Guru",
+    whatsApp: "-",
+    email: "rusni@smkn2konawe.sch.id",
+    birthDate: "1990-01-01",
+    birthInfo: "Konawe",
+    qrCode: "37_RUSNI_K_ST"
+  },
+  {
     id: "TU01",
     name: "SAKTINANI DJUNAID",
     nip: "19930114 201801 2 003",
@@ -4215,7 +4229,7 @@ export const MOCK_DOCUMENTS: CurriculumDoc[] = [
     code: "CP-TKR-01",
     title: "Capaian Pembelajaran (CP) TKR Fase F",
     content: "Pada akhir Fase F (kelas XI & XII SMK), peserta didik dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI (Electronic Fuel Injection) secara mandiri dan profesional sesuai dengan rekomendasi pabrikan.",
-    sourceDocument: "Kurikulum Merdeka SMK SIMPATI - Dokumen CP TKR 2024"
+    sourceDocument: "Kurikulum Merdeka SMK Negeri 2 Konawe - Dokumen CP TKR 2024"
   },
   {
     id: "D02",
@@ -4223,7 +4237,7 @@ export const MOCK_DOCUMENTS: CurriculumDoc[] = [
     code: "ATP-TKR-01",
     title: "Alur Tujuan Pembelajaran (ATP) Perbaikan Engine",
     content: "Alur pembelajaran dimulai dengan: (1) Penerapan prinsip K3LH di bengkel industri. (2) Identifikasi komponen motor 4 tak dan cara kerja mesin bensin. (3) Melakukan perawatan sistem pelumasan dan pendinginan kendaraan. (4) Troubleshooting sistem bahan bakar konvensional. (5) Diagnosis kerusakan sistem Electronic Fuel Injection (EFI) menggunakan scanner diagnostik OBD-II. (6) Pembersihan/kalibrasi sensor mesin injeksi.",
-    sourceDocument: "Alur Tujuan Pembelajaran SMK SIMPATI - ATP TKR Fase F 2024"
+    sourceDocument: "Alur Tujuan Pembelajaran SMK Negeri 2 Konawe - ATP TKR Fase F 2024"
   },
   {
     id: "D03",
@@ -4231,15 +4245,15 @@ export const MOCK_DOCUMENTS: CurriculumDoc[] = [
     code: "TP-TKR-01",
     title: "Tujuan Pembelajaran (TP) Sistem EFI",
     content: "TP-1: Peserta didik mampu menjelaskan prinsip dasar Electronic Fuel Injection (EFI) dengan teliti.\nTP-2: Peserta didik mampu mengukur tegangan dan resistansi sensor Air Flow Meter (MAF) dan Coolant Temperature Sensor (ECT) menggunakan multimeter.\nTP-3: Peserta didik mampu melakukan diagnosis kode kerusakan (DTC) menggunakan Diagnostic Scan Tool OBD-II.\nTP-4: Peserta didik dapat melakukan troubleshooting kelistrikan pompa bahan bakar.",
-    sourceDocument: "Tujuan Pembelajaran SMK SIMPATI - TP TKR-EFI 2024"
+    sourceDocument: "Tujuan Pembelajaran SMK Negeri 2 Konawe - TP TKR-EFI 2024"
   },
   {
     id: "D04",
     type: "SOP",
     code: "SOP-GUR-01",
     title: "SOP Presensi Kehadiran Guru Dengan GPS",
-    content: "Guru wajib melakukan presensi masuk paling lambat pukul 06.45 WIB dan presensi pulang paling cepat pukul 15.30 WIB menggunakan aplikasi SIMPATI AI berbasis GPS. Guru dianggap Hadir jika posisi presensi berjarak maksimal 700 meter dari koordinat pusat sekolah SMK SIMPATI (Pusat Koordinat: Lat -3.8380461319668107, Lon 122.04194960321178). Presensi yang diperoleh di luar radius 700m otomatis Ditolak oleh sistem kecuali menyertakan surat izin sakit/tugas luar resmi yang disetujui Kepala Sekolah.",
-    sourceDocument: "SOP Kehadiran Guru SMK SIMPATI - No. SOP-GUR-01"
+    content: "Guru wajib melakukan presensi masuk paling lambat pukul 06.45 WIB dan presensi pulang paling cepat pukul 15.30 WIB menggunakan aplikasi SIHADIR berbasis GPS. Guru dianggap Hadir jika posisi presensi berjarak maksimal 700 meter dari koordinat pusat sekolah SMK Negeri 2 Konawe (Pusat Koordinat: Lat -3.8380461319668107, Lon 122.04194960321178). Presensi yang diperoleh di luar radius 700m otomatis Ditolak oleh sistem kecuali menyertakan surat izin sakit/tugas luar resmi yang disetujui Kepala Sekolah.",
+    sourceDocument: "SOP Kehadiran Guru SMK Negeri 2 Konawe - No. SOP-GUR-01"
   },
   {
     id: "D05",
@@ -4247,15 +4261,15 @@ export const MOCK_DOCUMENTS: CurriculumDoc[] = [
     code: "SK-DIR-05",
     title: "Dokumen Tata Tertib dan Disiplin Murid",
     content: "Seluruh murid wajib hadir di kelas sebelum bel masuk berbunyi pukul 07.00 WIB. Murid dilarang membawa kendaraan berknalpot bising (brong). Murid laki-laki tidak boleh berambut panjang melebihi 3 cm di atas kerah serta wajib mengenakan sepatu warna hitam dominan. Pelanggaran aturan ini akan diproses oleh Guru BK dengan pemberian sanksi akumulatif poin perilaku.",
-    sourceDocument: "Tata Tertib Murid SMK SIMPATI - SK-DIR-05"
+    sourceDocument: "Tata Tertib Murid SMK Negeri 2 Konawe - SK-DIR-05"
   },
   {
     id: "D06",
     type: "PKL_DOC",
     code: "SOP-PKL-03",
     title: "SOP Pelaksanaan PKL (Praktek Kerja Lapangan)",
-    content: "Siswa PKL wajib melakukan pengisian jurnal harian aktivitas kerja dan absen masuk-pulang disertai unggahan bukti foto di tempat industri lewat aplikasi SIMPATI AI. Pembimbing sekolah dan instansi wajib melakukan monitoring mingguan. Kelulusan kegiatan PKL mensyaratkan perolehan nilai minimal 75 dari instruktur industri di akhir semester dan seluruh logbook kegiatan terisi 100%.",
-    sourceDocument: "SOP Pelaksanaan PKL SMK SIMPATI - No. SOP-PKL-03"
+    content: "Siswa PKL wajib melakukan pengisian jurnal harian aktivitas kerja dan absen masuk-pulang disertai unggahan bukti foto di tempat industri lewat aplikasi SIHADIR. Pembimbing sekolah dan instansi wajib melakukan monitoring mingguan. Kelulusan kegiatan PKL mensyaratkan perolehan nilai minimal 75 dari instruktur industri di akhir semester dan seluruh logbook kegiatan terisi 100%.",
+    sourceDocument: "SOP Pelaksanaan PKL SMK Negeri 2 Konawe - No. SOP-PKL-03"
   }
 ];
 
@@ -4316,7 +4330,7 @@ export const INITIAL_CHARACTERS: StudentKarakter[] = [
     ringkasanKarakter: "Siswa teladan dengan profil karakter Pancasila yang luar biasa lengkap di semua lini.",
     kelebihan: "Jiwa kepemimpinan kuat, kedisiplinan dan kejujuran berstandar industri tinggi.",
     areaPengembangan: "Manajemen waktu agar tidak overload mengerjakan tugas-tugas timnya sendiri.",
-    saranPembinaan: "Nomor satukan untuk mewakili SMK SIMPATI pada seleksi beasiswa magang Jepang."
+    saranPembinaan: "Nomor satukan untuk mewakili SMK Negeri 2 Konawe pada seleksi beasiswa magang Jepang."
   },
   {
     studentId: "S04",

@@ -5,7 +5,7 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy } from "firebase/firestore";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import defaultFirebaseConfig from "../firebase-applet-config.json";
 
 // Helper to load Firebase configuration dynamically from env, config file, or localStorage
@@ -79,37 +79,106 @@ export const dbService = {
    * Save a record to a collection
    */
   async saveRecord(collectionName: string, id: string, data: any) {
+    const payload = { ...data, id, updatedAt: new Date().toISOString() };
+
+    // 1. Immediately cache in localStorage for lightning fast local UI response & offline support
+    try {
+      const localKey = `simpati_${collectionName}`;
+      const existingRaw = localStorage.getItem(localKey);
+      let list: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+      const idx = list.findIndex((item: any) => item.id === id);
+      if (idx > -1) {
+        list[idx] = payload;
+      } else {
+        list.unshift(payload);
+      }
+      localStorage.setItem(localKey, JSON.stringify(list));
+      window.dispatchEvent(new Event("sihadir_data_updated"));
+    } catch (e) {
+      console.error(`[Local Storage Error] Failed to save fallback data for ${collectionName}:`, e);
+    }
+
+    // 2. Persist to Firebase Cloud Firestore for real-time multi-device sync
     if (db) {
       try {
         const docRef = doc(db, collectionName, id);
-        await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+        await setDoc(docRef, payload, { merge: true });
         console.log(`[Firebase] Document ${id} saved successfully in ${collectionName}.`);
         return true;
       } catch (error) {
         console.error(`[Firebase Error] Failed to save to ${collectionName}:`, error);
       }
     }
-    
-    // Local fallback
-    try {
-      const localKey = `simpati_${collectionName}`;
-      const existingRaw = localStorage.getItem(localKey);
-      let list: any[] = existingRaw ? JSON.parse(existingRaw) : [];
-      
-      // Update or insert
-      const idx = list.findIndex((item: any) => item.id === id);
-      const payload = { ...data, id, updatedAt: new Date().toISOString() };
-      if (idx > -1) {
-        list[idx] = payload;
-      } else {
-        list.push(payload);
-      }
-      localStorage.setItem(localKey, JSON.stringify(list));
-      return true;
-    } catch (e) {
-      console.error(`[Local Storage Error] Failed to save fallback data for ${collectionName}:`, e);
-      return false;
+    return true;
+  },
+
+  /**
+   * Realtime Subscription to a collection across all devices
+   */
+  subscribeRecords(collectionName: string, onUpdate: (records: any[]) => void): () => void {
+    const localKey = `simpati_${collectionName}`;
+
+    // 1. Read existing local cache immediately
+    const existingRaw = localStorage.getItem(localKey);
+    if (existingRaw) {
+      try {
+        const parsed = JSON.parse(existingRaw);
+        if (Array.isArray(parsed)) onUpdate(parsed);
+      } catch (e) {}
     }
+
+    // 2. Set up Firebase Cloud Firestore onSnapshot realtime listener
+    let unsubscribeFirestore: (() => void) | null = null;
+    if (db) {
+      try {
+        const colRef = collection(db, collectionName);
+        unsubscribeFirestore = onSnapshot(colRef, (snapshot) => {
+          const cloudRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          if (cloudRecords.length > 0) {
+            // Merge cloud records with any unique local records
+            const existingCacheRaw = localStorage.getItem(localKey);
+            let merged = [...cloudRecords];
+            if (existingCacheRaw) {
+              try {
+                const localList: any[] = JSON.parse(existingCacheRaw);
+                const cloudIds = new Set(cloudRecords.map(r => r.id));
+                localList.forEach(loc => {
+                  if (loc.id && !cloudIds.has(loc.id)) {
+                    merged.push(loc);
+                  }
+                });
+              } catch (e) {}
+            }
+            localStorage.setItem(localKey, JSON.stringify(merged));
+            onUpdate(merged);
+            window.dispatchEvent(new Event("sihadir_data_updated"));
+          }
+        }, (error) => {
+          console.warn(`[Firebase onSnapshot Warning] in ${collectionName}:`, error);
+        });
+      } catch (error) {
+        console.error(`[Firebase Subscribe Error] in ${collectionName}:`, error);
+      }
+    }
+
+    // 3. Set up browser event listeners for local updates
+    const handleStorage = () => {
+      const updatedRaw = localStorage.getItem(localKey);
+      if (updatedRaw) {
+        try {
+          const parsed = JSON.parse(updatedRaw);
+          if (Array.isArray(parsed)) onUpdate(parsed);
+        } catch (e) {}
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("sihadir_data_updated", handleStorage);
+
+    return () => {
+      if (unsubscribeFirestore) unsubscribeFirestore();
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("sihadir_data_updated", handleStorage);
+    };
   },
 
   /**

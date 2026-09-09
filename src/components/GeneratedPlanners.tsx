@@ -35,7 +35,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
       "1. Identitas, 2. Kompetensi Awal, 3. Profil Pelajar Pancasila, 4. Sarana Prasarana, 5. Target Peserta Didik, 6. Model Pembelajaran, 7. Pendekatan Pembelajaran, 8. Tujuan Pembelajaran, 9. Pemahaman Bermakna, 10. Pertanyaan Pemantik, 11. Kegiatan Pendahuluan, 12. Kegiatan Inti, 13. Kegiatan Penutup, 14. Asesmen Diagnostik, 15. Asesmen Formatif, 16. Asesmen Sumatif, 17. Pengayaan, 18. Remedial, 19. Refleksi Guru, 20. Refleksi Murid, 21. LKPD.\n" +
       (isAutomotive ? "KHUSUS PRODUKTIF OTOMOTIF: Gunakan istilah teknis otomotif yang akurat, K3 Bengkel, hubungan dengan industri karoseri/bengkel resmi, kasus pemeliharaan nyata, dan troubleshooting sensor/mekanis." : "") +
       "\nFormat output harus berupa JSON yang valid dengan properti:\n" +
-      `{"identitas": {"namaPenyusun": "Alam, S.Pd.", "sekolah": "SMK SIMPATI", "kelas": "${kelas}", "alokasiWaktu": "${alokasi}"}, "kompetensiAwal": "...", "profilPancasila": ["..."], "saranaPrasarana": "...", "targetPesertaDidik": "...", "modelPembelajaran": "...", "pendekatanPembelajaran": "...", "tujuanPembelajaran": ["..."], "pemahamanBermakna": "...", "pertanyaanPemantik": ["..."], "kegiatanPembelajaran": {"pendahuluan": "...", "inti": "...", "penutup": "..."}, "asesmen": {"diagnostik": "...", "formatif": "...", "sumatif": "..."}, "pengayaanRemedial": {"pengayaan": "...", "remedial": "..."}, "refleksi": {"guru": "...", "murid": "..."}, "lkpd": "..."}`;
+      `{"identitas": {"namaPenyusun": "Alam, S.Pd.", "sekolah": "SMK Negeri 2 Konawe", "kelas": "${kelas}", "alokasiWaktu": "${alokasi}"}, "kompetensiAwal": "...", "profilPancasila": ["..."], "saranaPrasarana": "...", "targetPesertaDidik": "...", "modelPembelajaran": "...", "pendekatanPembelajaran": "...", "tujuanPembelajaran": ["..."], "pemahamanBermakna": "...", "pertanyaanPemantik": ["..."], "kegiatanPembelajaran": {"pendahuluan": "...", "inti": "...", "penutup": "..."}, "asesmen": {"diagnostik": "...", "formatif": "...", "sumatif": "..."}, "pengayaanRemedial": {"pengayaan": "...", "remedial": "..."}, "refleksi": {"guru": "...", "murid": "..."}, "lkpd": "..."}`;
 
     const prompt = `Buatlah Modul Ajar Kurikulum Merdeka untuk Tujuan Pembelajaran (TP) berikut: "${tpInput}" untuk Kelas: ${kelas} dengan Alokasi Waktu: ${alokasi}. Tulislah dalam Bahasa Indonesia yang formal dan terperinci.`;
 
@@ -66,7 +66,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
       setGeneratedModule({
         identitas: {
           namaPenyusun: "Alam, S.Pd. (Wali Kelas TKR)",
-          sekolah: "SMK SIMPATI",
+          sekolah: "SMK Negeri 2 Konawe",
           tahunPelajaran: "2026/2027",
           jenjang: "SMK",
           mataPelajaran: isAutomotive ? "Pemeliharaan Mesin Kendaraan Ringan" : "Mata Pelajaran Umum",
@@ -213,7 +213,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 border b-slate-100 p-4 rounded-xl bg-slate-50">
                   <div><strong>Penyusun:</strong> {generatedModule.identitas?.namaPenyusun}</div>
-                  <div><strong>Sekolah:</strong> {generatedModule.identitas?.sekolah || "SMK SIMPATI"}</div>
+                  <div><strong>Sekolah:</strong> {generatedModule.identitas?.sekolah || "SMK Negeri 2 Konawe"}</div>
                   <div><strong>Mata Pelajaran:</strong> {generatedModule.identitas?.mataPelajaran}</div>
                   <div><strong>Kelas / Alokasi:</strong> {generatedModule.identitas?.kelas} / {generatedModule.identitas?.alokasiWaktu}</div>
                 </div>

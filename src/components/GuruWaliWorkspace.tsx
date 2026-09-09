@@ -104,7 +104,7 @@ function convertMuridListToStudents(guruWali: ReturnType<typeof getMasterGuruWal
   }
   return guruWali.muridList.map((m, idx) => {
     const kUpper = (m.kelas || "").toUpperCase();
-    let jurusan = "Kejuruan SMKN 2 Konawe";
+    let jurusan = "Kejuruan SMK Negeri 2 Konawe";
     if (kUpper.includes("DPIB")) jurusan = "Desain Pemodelan & Informasi Bangunan (DPIB)";
     else if (kUpper.includes("TKR")) jurusan = "Teknik Kendaraan Ringan (TKR)";
     else if (kUpper.includes("TSM")) jurusan = "Teknik Sepeda Motor (TSM)";

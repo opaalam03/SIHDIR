@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, Component, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Users, 
@@ -32,195 +32,21 @@ import {
   Upload,
   MapPin,
   Compass,
-  RefreshCw
+  RefreshCw,
+  Share2,
+  Copy,
+  Link,
+  ExternalLink
 } from "lucide-react";
+import { dbService } from "../firebase";
 import { TeachingSchedule } from "../types";
-import { getTeacherMatchedSchedules, getStoredSchedules, normalizeName, getTeacherPerwalianClass } from "../utils/scheduleHelper";
+import { getTeacherMatchedSchedules, getStoredSchedules, normalizeName, getTeacherPerwalianClass, isSameTeacherName } from "../utils/scheduleHelper";
 import { MOCK_STUDENTS } from "../mockData";
 import { getStudentCaptainClass } from "../data/classCaptains";
 import { getMasterGuruWaliData } from "../data/guruWaliMasterData";
-import { APIProvider, Map, AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
-
-const API_KEY =
-  process.env.GOOGLE_MAPS_PLATFORM_KEY ||
-  (import.meta as any).env?.VITE_GOOGLE_MAPS_PLATFORM_KEY ||
-  (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
-  "";
-const hasValidKey = Boolean(API_KEY) && API_KEY !== "YOUR_API_KEY" && API_KEY.trim() !== "";
-
-// Helper component for Google Maps circle radius
-function MapCircle({ center, radius }: { center: { lat: number; lng: number }; radius: number }) {
-  const map = useMap();
-  useEffect(() => {
-    if (!map || !window.google) return;
-    try {
-      if (!window.google.maps || !window.google.maps.Circle) return;
-      const circle = new window.google.maps.Circle({
-        map,
-        center,
-        radius,
-        fillColor: "#10b981",
-        fillOpacity: 0.15,
-        strokeColor: "#059669",
-        strokeOpacity: 0.5,
-        strokeWeight: 1.5,
-      });
-      return () => {
-        try {
-          circle.setMap(null);
-        } catch (e) {
-          console.error("Error clearing circle map", e);
-        }
-      };
-    } catch (err) {
-      console.error("Failed to build Google Maps Circle:", err);
-    }
-  }, [map, center, radius]);
-  return null;
-}
-
-// React Error Boundary for catching Google Maps API / Marker errors
-class MapErrorBoundary extends Component<
-  { children: React.ReactNode; fallback: React.ReactNode },
-  { hasError: boolean; error: any }
-> {
-  constructor(props: any) {
-    super(props);
-    (this as any).state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error("Map rendering error captured by boundary:", error, errorInfo);
-  }
-
-  render() {
-    if ((this as any).state.hasError) {
-      return (this as any).props.fallback;
-    }
-    return (this as any).props.children;
-  }
-}
-
-// Reusable local telemetry radar map fallback
-interface RadarFallbackProps {
-  useRealGps: boolean;
-  realLat: number | null;
-  realLon: number | null;
-  schoolLat: number;
-  schoolLon: number;
-  gpsOffsetLat: number;
-  gpsOffsetLon: number;
-  setGpsOffsetLat: (lat: number) => void;
-  setGpsOffsetLon: (lon: number) => void;
-  username: string;
-  schoolRadius: number;
-  customErrorMsg?: string;
-}
-
-const RadarFallbackMap: React.FC<RadarFallbackProps> = ({
-  useRealGps,
-  realLat,
-  realLon,
-  schoolLat,
-  schoolLon,
-  gpsOffsetLat,
-  gpsOffsetLon,
-  setGpsOffsetLat,
-  setGpsOffsetLon,
-  username,
-  schoolRadius,
-  customErrorMsg
-}) => {
-  return (
-    <div className="w-full border border-slate-200 rounded-xl overflow-hidden bg-slate-950 text-white relative">
-      <div 
-        className="h-44 w-full relative bg-slate-950 flex items-center justify-center overflow-hidden border-b border-slate-800 cursor-crosshair"
-        title="Klik pada area radar untuk mensimulasikan posisi"
-        onClick={(e) => {
-          if (!useRealGps) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            // Map click to coordinates offsets
-            const scale = 2500;
-            const offsetLon = (clickX - centerX) / scale;
-            const offsetLat = (centerY - clickY) / scale;
-            
-            setGpsOffsetLat(parseFloat(offsetLat.toFixed(6)));
-            setGpsOffsetLon(parseFloat(offsetLon.toFixed(6)));
-          }
-        }}
-      >
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        
-        <div className="absolute h-36 w-36 rounded-full border border-slate-800/80 animate-pulse"></div>
-        <div className="absolute h-24 w-24 rounded-full border border-slate-800/50"></div>
-        
-        <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 300 176">
-          {/* Green school radius ring */}
-          <circle cx="150" cy="88" r="45" fill="none" stroke="#10b981" strokeWidth="1.5" strokeDasharray="3 3" />
-          <circle cx="150" cy="88" r="45" fill="#10b981" fillOpacity="0.05" />
-          
-          <circle cx="150" cy="88" r="4" fill="#10b981" />
-          <text x="156" y="92" fill="#10b981" className="text-[9px] font-black tracking-wide">SMK NEGERI 2</text>
-          
-          {(() => {
-            const activeLat = useRealGps && realLat !== null ? realLat : schoolLat + gpsOffsetLat;
-            const activeLon = useRealGps && realLon !== null ? realLon : schoolLon + gpsOffsetLon;
-            const offsetLat = activeLat - schoolLat;
-            const offsetLon = activeLon - schoolLon;
-            
-            const scale = 2500;
-            const cx = 150 + offsetLon * scale;
-            const cy = 88 - offsetLat * scale;
-            
-            const safeCx = Math.max(10, Math.min(290, cx));
-            const safeCy = Math.max(10, Math.min(166, cy));
-            
-            return (
-              <>
-                <line x1="150" y1="88" x2={safeCx} y2={safeCy} stroke="#38bdf8" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
-                <circle cx={safeCx} cy={safeCy} r="8" fill="none" stroke="#38bdf8" strokeWidth="1" className="animate-ping" opacity="0.7" />
-                <circle cx={safeCx} cy={safeCy} r="4.5" fill="#38bdf8" />
-                <text x={safeCx + 8} y={safeCy + 3} fill="#38bdf8" className="text-[8px] font-bold">{username}</text>
-              </>
-            );
-          })()}
-        </svg>
-        
-        <div className="absolute top-2.5 left-2.5 bg-slate-900/90 border border-slate-800 text-[9px] px-2 py-0.5 rounded-md font-mono text-slate-300">
-          Telemetry Radar Fallback (Klik untuk Simulasi)
-        </div>
-      </div>
-
-      <div className="p-3 bg-slate-900 text-[10px] leading-relaxed text-slate-300 border-t border-slate-800/80">
-        {customErrorMsg ? (
-          <>
-            <span className="text-amber-400 font-bold flex items-center gap-1 mb-1">
-              <AlertTriangle className="w-3.5 h-3.5" /> Peta Google Maps Gagal Dimuat
-            </span>
-            <p className="text-rose-200/90 font-medium mb-1">{customErrorMsg}</p>
-            <p className="text-slate-400 text-[9px]">Aktivitas absensi tetap berjalan normal menggunakan Radar Telemetri Koordinat Mandiri di atas.</p>
-          </>
-        ) : (
-          <>
-            <span className="text-amber-400 font-bold flex items-center gap-1 mb-1">
-              <AlertCircle className="w-3.5 h-3.5" /> Google Maps API Key Belum Terpasang
-            </span>
-            <p>Siswa dapat melacak lokasi riil mereka setelah Administrator menambahkan secret key <strong className="text-white">GOOGLE_MAPS_PLATFORM_KEY</strong> di pengaturan AI Studio.</p>
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
+import { InteractiveAttendanceMap } from "./InteractiveAttendanceMap";
+import { notifyStudentAttendanceInstant, notifyClassAttendanceSummary } from "../services/whatsappFonnteService";
+import { AttendanceScheduleInfoCard } from "./AttendanceScheduleInfoCard";
 
 // Haversine formula to calculate distance in meters
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -489,12 +315,12 @@ export function StudentAttendance({
       // 2. Teacher filter
       if (effectiveTeacherName === "semua") return true;
 
-      const normSchTeacher = normalizeName(sch.teacherName || "");
-      const normFilterTeacher = normalizeName(effectiveTeacherName);
+      const normSchTeacher = sch.teacherName || "";
+      const normFilterTeacher = effectiveTeacherName;
 
       if (!normSchTeacher || !normFilterTeacher) return true;
 
-      return normSchTeacher.includes(normFilterTeacher) || normFilterTeacher.includes(normSchTeacher);
+      return isSameTeacherName(normSchTeacher, normFilterTeacher);
     });
   }, [activeSchedules, selectedSemester, effectiveTeacherName]);
 
@@ -704,6 +530,28 @@ export function StudentAttendance({
     localStorage.setItem("simpati_student_self_attendance", JSON.stringify(selfAttendanceList));
   }, [selfAttendanceList]);
 
+  // Realtime subscription to Firebase Cloud Firestore for multi-device sync
+  useEffect(() => {
+    const unsubSelf = dbService.subscribeRecords("student_self_attendance", (records) => {
+      if (records && records.length > 0) {
+        setSelfAttendanceList(records);
+      }
+    });
+    const unsubLogs = dbService.subscribeRecords("saved_attendance_logs", (records) => {
+      if (records && records.length > 0) {
+        setSavedLogs(records);
+      }
+    });
+    return () => {
+      if (unsubSelf) unsubSelf();
+      if (unsubLogs) unsubLogs();
+    };
+  }, []);
+
+  // Modal State for Sharing Student Attendance Link via WhatsApp
+  const [isShareLinkModalOpen, setIsShareLinkModalOpen] = useState<boolean>(false);
+  const [copyLinkSuccess, setCopyLinkSuccess] = useState<boolean>(false);
+
   // Student level reactive inputs for active self attendance logging
   const [studentSelfStatus, setStudentSelfStatus] = useState<string>("Hadir");
   const [studentSelfReason, setStudentSelfReason] = useState<string>("");
@@ -740,8 +588,10 @@ export function StudentAttendance({
     if (savedRadius) setSchoolRadius(parseInt(savedRadius));
   }, []);
 
-  // Real GPS vs Simulation states for Student
-  const [useRealGps, setUseRealGps] = useState<boolean>(false);
+  // Real GPS vs Simulation states for Student (Default to real GPS if available or previously used)
+  const [useRealGps, setUseRealGps] = useState<boolean>(() => {
+    return true; // Default to reading real device GPS
+  });
   const [realLat, setRealLat] = useState<number | null>(() => {
     const saved = localStorage.getItem("sihadir_last_real_lat");
     return saved ? parseFloat(saved) : null;
@@ -785,14 +635,15 @@ export function StudentAttendance({
 
   const startRealGpsTracking = () => {
     if (!navigator.geolocation) {
-      setGpsError("Perangkat atau browser Anda tidak mendukung fitur pencarian lokasi GPS.");
+      setGpsError("Perangkat atau browser ini tidak mendukung pembacaan koordinat GPS.");
       setIsGpsLoading(false);
       return;
     }
     
     setIsGpsLoading(true);
     setGpsError(null);
-    
+    setUseRealGps(true);
+
     const handleSuccess = (pos: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = pos.coords;
       const lat = parseFloat(latitude.toFixed(6));
@@ -802,36 +653,39 @@ export function StudentAttendance({
       setGpsAccuracy(Math.round(accuracy));
       setUseRealGps(true);
       setIsGpsLoading(false);
+      setGpsError(null);
       localStorage.setItem("sihadir_last_real_lat", String(latitude));
       localStorage.setItem("sihadir_last_real_lon", String(longitude));
     };
 
-    const handleError = (_err: GeolocationPositionError) => {
-      // Fallback attempt with standard accuracy if high accuracy times out or fails
-      navigator.geolocation.getCurrentPosition(
-        handleSuccess,
-        (fallbackErr) => {
-          setIsGpsLoading(false);
-          if (studentGpsWatchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(studentGpsWatchIdRef.current);
-            studentGpsWatchIdRef.current = null;
-          }
-          if (fallbackErr.code === fallbackErr.PERMISSION_DENIED) {
-            setGpsError("Izin lokasi (GPS) ditolak browser. Izinkan akses Lokasi di pengaturan browser HP Anda.");
-          } else {
-            setGpsError("Sinyal GPS lemah atau tidak tersedia. Pastikan fitur Lokasi (GPS) di HP telah diaktifkan.");
-          }
-        },
-        { enableHighAccuracy: false, maximumAge: 10000, timeout: 10000 }
-      );
+    const handleError = (err: GeolocationPositionError) => {
+      setIsGpsLoading(false);
+      if (err.code === err.PERMISSION_DENIED) {
+        setGpsError("Izin lokasi (GPS) ditolak browser HP. Buka Pengaturan HP > Aplikasi > Browser > Izinkan Akses Lokasi.");
+      } else if (err.code === err.POSITION_UNAVAILABLE) {
+        setGpsError("Sinyal GPS belum terbaca. Pastikan tombol Lokasi / GPS di status bar HP Anda sudah aktif.");
+      } else {
+        setGpsError("Waktu pencarian GPS habis. Pastikan GPS aktif dan berada di area terbuka untuk mendapatkan sinyal.");
+      }
     };
 
-    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
-      enableHighAccuracy: true,
-      maximumAge: 5000,
-      timeout: 8000
-    });
+    // Step 1: Request quick initial fix with standard accuracy (low latency)
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      () => {
+        // Fallback: try high accuracy if low accuracy fails
+      },
+      { enableHighAccuracy: false, maximumAge: 30000, timeout: 6000 }
+    );
 
+    // Step 2: Request precise high-accuracy satellite fix
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      handleError,
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+
+    // Step 3: Continuously watch position
     if (studentGpsWatchIdRef.current !== null) {
       navigator.geolocation.clearWatch(studentGpsWatchIdRef.current);
     }
@@ -839,12 +693,26 @@ export function StudentAttendance({
       (pos) => {
         handleSuccess(pos);
       },
-      (_err) => {
-        // Quiet watch handler
+      (err) => {
+        // Only report if we don't have any coordinates yet
+        if (realLat === null) {
+          handleError(err);
+        }
       },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     );
   };
+
+  // Automatically start real GPS tracking on mount for student
+  useEffect(() => {
+    startRealGpsTracking();
+    return () => {
+      if (studentGpsWatchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(studentGpsWatchIdRef.current);
+        studentGpsWatchIdRef.current = null;
+      }
+    };
+  }, []);
 
   // Real-time ticking system clock (Jam, Tanggal, Bulan, Tahun)
   const [liveDateTime, setLiveDateTime] = useState<Date>(new Date());
@@ -1010,12 +878,12 @@ export function StudentAttendance({
     const videoRef = isOut ? studentVideoRefOut.current : studentVideoRef.current;
     if (videoRef) {
       const canvas = document.createElement("canvas");
-      canvas.width = 300;
-      canvas.height = 200;
+      canvas.width = 320;
+      canvas.height = 240;
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(videoRef, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/png");
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
         if (isOut) {
           setCustomPhotoOut(dataUrl);
         } else {
@@ -1108,8 +976,9 @@ export function StudentAttendance({
     
     setSelfAttendanceList(prev => {
       const existingIdx = prev.findIndex(r => r.studentName === studentName && r.date === todayStr);
+      const recordId = existingIdx >= 0 ? prev[existingIdx].id : `self-${todayStr}-${studentName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
       const newRecord = {
-        id: existingIdx >= 0 ? prev[existingIdx].id : `self-${Date.now()}`,
+        id: recordId,
         studentName,
         className: studentClass,
         date: todayStr,
@@ -1124,6 +993,9 @@ export function StudentAttendance({
         distanceMeter: activeDistance
       };
       
+      // Save directly to Firebase Cloud Firestore for real-time aggregation across Guru & Admin TU
+      dbService.saveRecord("student_self_attendance", newRecord.id, newRecord);
+
       if (existingIdx >= 0) {
         const copy = [...prev];
         copy[existingIdx] = newRecord;
@@ -1132,7 +1004,7 @@ export function StudentAttendance({
         return [newRecord, ...prev];
       }
     });
-    alert(`Presensi Mandiri (${status}) berhasil disimpan pada ${timeStr || "hari ini"} dengan verifikasi foto berseragam dan lokasi GPS!`);
+    alert(`Presensi Mandiri (${status}) berhasil disimpan pada ${timeStr || "hari ini"} dengan verifikasi foto berseragam dan lokasi GPS! Data otomatis tersinkron ke Rekap Guru & Admin TU.`);
   };
 
   // Student self clock-out handler
@@ -1168,9 +1040,8 @@ export function StudentAttendance({
     setSelfAttendanceList(prev => {
       const existingIdx = prev.findIndex(r => r.studentName === studentName && r.date === todayStr);
       if (existingIdx >= 0) {
-        const copy = [...prev];
-        copy[existingIdx] = {
-          ...copy[existingIdx],
+        const updatedRecord = {
+          ...prev[existingIdx],
           clockOut: timeStr,
           photoOut: photo || null,
           photoOutLabel: photoLabel || null,
@@ -1178,11 +1049,16 @@ export function StudentAttendance({
           longitudeOut: activeLon,
           distanceMeterOut: activeDistance
         };
+        // Save update to Firebase Cloud Firestore
+        dbService.saveRecord("student_self_attendance", updatedRecord.id, updatedRecord);
+        const copy = [...prev];
+        copy[existingIdx] = updatedRecord;
         return copy;
       } else {
         const studentClass = Object.keys(classStudents).find(cls => classStudents[cls].includes(studentName)) || "XI TKR A";
-        return [{
-          id: `self-${Date.now()}`,
+        const recordId = `self-${todayStr}-${studentName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        const newRecord = {
+          id: recordId,
           studentName,
           className: studentClass,
           date: todayStr,
@@ -1195,23 +1071,52 @@ export function StudentAttendance({
           latitudeOut: activeLat,
           longitudeOut: activeLon,
           distanceMeterOut: activeDistance
-        }, ...prev];
+        };
+        dbService.saveRecord("student_self_attendance", newRecord.id, newRecord);
+        return [newRecord, ...prev];
       }
     });
-    alert(`Presensi Keluar berhasil terekam pada pukul ${timeStr} dengan verifikasi lokasi GPS! Terima kasih dan hati-hati di jalan!`);
+    alert(`Presensi Keluar berhasil terekam pada pukul ${timeStr} dengan verifikasi lokasi GPS! Data otomatis tersinkron ke Rekap Guru & Admin TU.`);
   };
 
-  // Convert uploaded photo to Base64
+  // Convert uploaded photo to Base64 with compression
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, isOut: boolean) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (isOut) {
-          setCustomPhotoOut(reader.result as string);
-        } else {
-          setCustomPhoto(reader.result as string);
-        }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 400;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL("image/jpeg", 0.7);
+            if (isOut) {
+              setCustomPhotoOut(compressed);
+            } else {
+              setCustomPhoto(compressed);
+            }
+            return;
+          }
+          if (isOut) setCustomPhotoOut(reader.result as string);
+          else setCustomPhoto(reader.result as string);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -1223,11 +1128,25 @@ export function StudentAttendance({
       alert("Akses Terkunci: Hanya Akun Admin Utama atau Admin Tata Usaha ('tu') yang diizinkan untuk menginput atau mengubah status absensi.");
       return;
     }
+    const targetStudent = attendanceList.find(s => s.id === studentId);
     setAttendanceList(prev => 
       prev.map(student => 
         student.id === studentId ? { ...student, status: newStatus } : student
       )
     );
+
+    // Instantly notify Admin TU and Guru BK
+    if (targetStudent) {
+      notifyStudentAttendanceInstant({
+        studentName: targetStudent.name,
+        className: selectedClass,
+        status: newStatus,
+        clockIn: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+        method: "Absensi Manual Guru/Wali",
+        recordedBy: `${currentRole === "tu" ? "Admin Tata Usaha" : "Guru / Wali Kelas"} (${currentRole})`,
+        notes: `Pembaruan absensi kelas ${selectedClass}`
+      }).catch(err => console.warn("TU/BK instant notify failed:", err));
+    }
   };
 
   // Bulk operation to mark all present (Hadir)
@@ -1338,7 +1257,26 @@ export function StudentAttendance({
     };
     
     setSavedLogs(prev => [newLog, ...prev]);
-    triggerAlert("Sukses", `Laporan absensi ${selectedClass} berhasil disimpan ke log arsip!`);
+    dbService.saveRecord("saved_attendance_logs", newLog.id, newLog);
+
+    // Broadcast class recap to Admin TU and Guru BK via Fonnte
+    const absentList = attendanceList
+      .filter(s => s.status !== "Hadir")
+      .map(s => ({ name: s.name, status: s.status }));
+    notifyClassAttendanceSummary({
+      className: selectedClass,
+      date: selectedDate,
+      subject: subjectName,
+      total: attendanceList.length,
+      hadir: attendanceList.filter(s => s.status === "Hadir").length,
+      sakit: attendanceList.filter(s => s.status === "Sakit").length,
+      izin: attendanceList.filter(s => s.status === "Izin").length,
+      alfa: attendanceList.filter(s => s.status === "Alfa").length,
+      absentList,
+      recordedBy: `${currentRole === "tu" ? "Admin Tata Usaha" : "Guru / Wali Kelas"} (${currentRole})`
+    }).catch(err => console.warn("TU & BK class summary notify failed:", err));
+
+    triggerAlert("Sukses", `Laporan absensi ${selectedClass} berhasil disimpan ke log arsip, tersinkron ke Cloud Firestore, dan disiarkan ke WA Admin TU & Guru BK!`);
   };
 
   const handleDeleteLog = (logId: string) => {
@@ -1347,6 +1285,7 @@ export function StudentAttendance({
       "Hapus rekap absensi ini dari arsip?",
       () => {
         setSavedLogs(prev => prev.filter(l => l.id !== logId));
+        dbService.deleteRecord("saved_attendance_logs", logId);
       }
     );
   };
@@ -1426,7 +1365,7 @@ export function StudentAttendance({
     else if (status === "Izin") statusText = "Izin Halangan Keluarga/Pribadi";
     else statusText = "Alfa (Tanpa Keterangan Tertulis)";
 
-    return `*PRESENSI SMK SIMPATI*\n\nYth. Bapak/Ibu Wali Murid dari *${studentName}*\n\nKami menginfokan laporan resmi kehadiran siswa kelas *${selectedClass}* untuk mata pelajaran *${subjectName}* pada tanggal *${selectedDate}*:\n\n📌 Keterangan: *${statusText}*\n\nMohon bantuannya untuk terus mendampingi belajar siswa di rumah. Jika ada surat keterangan dokter/resmi silakan diserahkan kepada Wali Kelas.\n\nHormat kami,\nWali Kelas & SIMPATI AI\n*SMK Simpati Pusat Keunggulan*`;
+    return `*PRESENSI RESMI SIHADIR - SMK NEGERI 2 KONAWE*\n\nYth. Bapak/Ibu Wali Murid dari *${studentName}*\n\nKami menginfokan laporan resmi kehadiran siswa kelas *${selectedClass}* untuk mata pelajaran *${subjectName}* pada tanggal *${selectedDate}*:\n\n📌 Keterangan: *${statusText}*\n\nMohon bantuannya untuk terus mendampingi belajar siswa di rumah. Jika ada surat keterangan dokter/resmi silakan diserahkan kepada Wali Kelas.\n\nHormat kami,\nWali Kelas & Tim SIHADIR\n*SMK Negeri 2 Konawe*`;
   };
 
   const handleLaunchWhatsApp = (studentName: string, status: string) => {
@@ -1498,8 +1437,10 @@ export function StudentAttendance({
     const currentMinute = liveDateTime.getMinutes();
     const liveTimeMinutes = currentHour * 60 + currentMinute;
     const isFriday = liveDateTime.getDay() === 5;
-    const isClockInTimeOpen = liveTimeMinutes >= 7 * 60; // 07:00 pagi
+    const isClockInTimeOpen = liveTimeMinutes >= (6 * 60 + 30); // 06:30 pagi
+    const isClockInCutOffPassed = liveTimeMinutes > (9 * 60 + 30); // 09:30 pagi batas akhir
     const isClockOutTimeOpen = liveTimeMinutes >= (isFriday ? 11 * 60 : (13 * 60 + 15)); // 11:00 Jumat, 13:15 hari biasa
+    const isClockOutCutOffPassed = liveTimeMinutes > (14 * 60 + 30); // 14:30 WITA batas akhir pulang
 
     // Filter logs for this class & student
     const myAttendanceHistory = savedLogs.flatMap(log => {
@@ -1535,7 +1476,7 @@ export function StudentAttendance({
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Selamat datang, <strong className="text-white font-extrabold">{username}</strong> ({studentClass}). Di sini Anda dapat memantau akumulasi data presensi harian Anda yang diinput secara riil oleh Wali Kelas & Guru Pengajar SMKN 2 Konawe.
+              Selamat datang, <strong className="text-white font-extrabold">{username}</strong> ({studentClass}). Di sini Anda dapat memantau akumulasi data presensi harian Anda yang diinput secara riil oleh Wali Kelas & Guru Pengajar SMK Negeri 2 Konawe.
             </p>
           </div>
 
@@ -1754,20 +1695,10 @@ export function StudentAttendance({
                 <p className="text-xs text-slate-500">Lengkapi kehadiran harian beserta bukti foto berseragam dengan latar sekolah.</p>
               </div>
             </div>
-
-            {/* LIVE DIGITAL CLOCK & CALENDAR */}
-            <div className="bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-100 p-3 rounded-xl flex items-center gap-3 shrink-0 self-stretch sm:self-auto shadow-xs">
-              <div className="bg-indigo-600 text-white p-2 rounded-lg text-center font-mono font-black text-xs min-w-[50px] leading-tight">
-                {liveDateTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-              </div>
-              <div className="text-left leading-tight">
-                <span className="text-[10px] uppercase font-black tracking-wider text-indigo-800 block">Waktu Server SMKN 2</span>
-                <span className="text-xs font-bold text-slate-700">
-                  {liveDateTime.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                </span>
-              </div>
-            </div>
           </div>
+
+          {/* INFORMASI JADWAL & BATAS WAKTU ABSENSI */}
+          <AttendanceScheduleInfoCard role="siswa" variant="full" />
 
           {(() => {
             const todayStr = new Date().toISOString().split("T")[0];
@@ -1937,96 +1868,30 @@ export function StudentAttendance({
                           {schoolLat.toFixed(6)}, {schoolLon.toFixed(6)}
                         </div>
                         <span className="text-slate-400 text-[9px] block">
-                          SMKN 2 Konawe (Radius {schoolRadius}m)
+                          SMK Negeri 2 Konawe (Radius {schoolRadius}m)
                         </span>
                       </div>
                     </div>
 
-                    {/* Interactive Google Map Panel */}
+                    {/* Interactive Real Map Panel (Leaflet / OpenStreetMap & Satellite & Google Maps Link) */}
                     <div className="relative">
-                      {hasValidKey && !mapAuthFailed ? (
-                        <MapErrorBoundary
-                          fallback={
-                            <RadarFallbackMap
-                              useRealGps={useRealGps}
-                              realLat={realLat}
-                              realLon={realLon}
-                              schoolLat={schoolLat}
-                              schoolLon={schoolLon}
-                              gpsOffsetLat={gpsOffsetLat}
-                              gpsOffsetLon={gpsOffsetLon}
-                              setGpsOffsetLat={setGpsOffsetLat}
-                              setGpsOffsetLon={setGpsOffsetLon}
-                              username={username}
-                              schoolRadius={schoolRadius}
-                              customErrorMsg="Peta interaktif tidak dapat dimuat karena Google Maps API belum aktif (ApiNotActivatedMapError) atau kunci tidak valid."
-                            />
-                          }
-                        >
-                          <div className="w-full h-56 rounded-xl border border-slate-200 overflow-hidden shadow-xs bg-slate-100">
-                            <APIProvider apiKey={API_KEY} version="weekly">
-                              <Map
-                                defaultCenter={{ lat: schoolLat, lng: schoolLon }}
-                                center={{ 
-                                  lat: useRealGps && realLat !== null ? realLat : schoolLat + gpsOffsetLat, 
-                                  lng: useRealGps && realLon !== null ? realLon : schoolLon + gpsOffsetLon 
-                                }}
-                                defaultZoom={15}
-                                mapId="STUDENT_MAP_ID"
-                                internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-                                style={{ width: "100%", height: "100%" }}
-                                gestureHandling="cooperative"
-                                zoomControl={true}
-                                onClick={(e) => {
-                                  if (!useRealGps && e.detail.latLng) {
-                                    setGpsOffsetLat(e.detail.latLng.lat - schoolLat);
-                                    setGpsOffsetLon(e.detail.latLng.lng - schoolLon);
-                                  }
-                                }}
-                              >
-                                {/* School Target Marker */}
-                                <AdvancedMarker position={{ lat: schoolLat, lng: schoolLon }} title="SMK NEGERI 2">
-                                  <Pin background="#10b981" glyphColor="#fff" borderColor="#059669" />
-                                </AdvancedMarker>
-
-                                {/* Student Live Marker */}
-                                <AdvancedMarker
-                                  position={{ 
-                                    lat: useRealGps && realLat !== null ? realLat : schoolLat + gpsOffsetLat, 
-                                    lng: useRealGps && realLon !== null ? realLon : schoolLon + gpsOffsetLon 
-                                  }}
-                                  title={username}
-                                  draggable={!useRealGps}
-                                  onDragEnd={(e) => {
-                                    if (!useRealGps && e.latLng) {
-                                      setGpsOffsetLat(e.latLng.lat() - schoolLat);
-                                      setGpsOffsetLon(e.latLng.lng() - schoolLon);
-                                    }
-                                  }}
-                                >
-                                  <Pin background="#4285F4" glyphColor="#fff" borderColor="#2563eb" />
-                                </AdvancedMarker>
-
-                                <MapCircle center={{ lat: schoolLat, lng: schoolLon }} radius={schoolRadius} />
-                              </Map>
-                            </APIProvider>
-                          </div>
-                        </MapErrorBoundary>
-                      ) : (
-                        <RadarFallbackMap
-                          useRealGps={useRealGps}
-                          realLat={realLat}
-                          realLon={realLon}
-                          schoolLat={schoolLat}
-                          schoolLon={schoolLon}
-                          gpsOffsetLat={gpsOffsetLat}
-                          gpsOffsetLon={gpsOffsetLon}
-                          setGpsOffsetLat={setGpsOffsetLat}
-                          setGpsOffsetLon={setGpsOffsetLon}
-                          username={username}
-                          schoolRadius={schoolRadius}
-                        />
-                      )}
+                      <InteractiveAttendanceMap
+                        useRealGps={useRealGps}
+                        realLat={realLat}
+                        realLon={realLon}
+                        schoolLat={schoolLat}
+                        schoolLon={schoolLon}
+                        gpsOffsetLat={gpsOffsetLat}
+                        gpsOffsetLon={gpsOffsetLon}
+                        setGpsOffsetLat={setGpsOffsetLat}
+                        setGpsOffsetLon={setGpsOffsetLon}
+                        userLabel={username || "Siswa SMK Negeri 2 Konawe"}
+                        schoolRadius={schoolRadius}
+                        gpsAccuracy={gpsAccuracy}
+                        isGpsLoading={isGpsLoading}
+                        onRefreshGps={startRealGpsTracking}
+                        userRoleType="siswa"
+                      />
                     </div>
 
                     {/* Offset adjusters for simulation */}
@@ -2114,7 +1979,7 @@ export function StudentAttendance({
                       🚨 PERINGATAN INTEGRASI:
                     </span>
                     <p>
-                      Sistem kehadiran SIMPATI menerapkan <strong>Dual-Verifikasi</strong>. Jika siswa <strong>tidak mengisi absen mandiri</strong> atau tidak mendapat penilaian dari Guru Mapel di pergantian jam, status otomatis terhitung sebagai <strong>ALFA (Tidak Hadir)</strong>. Absensi Guru bersifat real dan mutlak.
+                      Sistem kehadiran SIHADIR menerapkan <strong>Dual-Verifikasi</strong>. Jika siswa <strong>tidak mengisi absen mandiri</strong> atau tidak mendapat penilaian dari Guru Mapel di pergantian jam, status otomatis terhitung sebagai <strong>ALFA (Tidak Hadir)</strong>. Absensi Guru bersifat real dan mutlak.
                     </p>
                   </div>
                 </div>
@@ -2299,7 +2164,17 @@ export function StudentAttendance({
                               <AlertCircle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
                               <div className="text-left">
                                 <span className="block font-black text-[10px] uppercase text-rose-900 leading-none mb-0.5">⏱️ Absen Masuk Belum Dibuka</span>
-                                Tombol absen masuk baru terbuka pada pukul <strong>07:00 pagi</strong>.
+                                Tombol absen masuk baru terbuka pada pukul <strong>06:30 WITA</strong>. Batas tepat waktu pukul <strong>{isFriday ? "07:20" : "07:15"} WITA</strong> dan batas akhir absen masuk adalah pukul <strong>09:30 WITA</strong>.
+                              </div>
+                            </div>
+                          )}
+
+                          {isClockInCutOffPassed && (
+                            <div className="p-3 bg-amber-50 text-amber-900 rounded-xl border border-amber-200 text-xs font-bold flex items-center gap-2">
+                              <AlertTriangle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
+                              <div className="text-left">
+                                <span className="block font-black text-[10px] uppercase text-amber-900 leading-none mb-0.5">⚠️ Batas Waktu Absen Masuk (09:30 WITA) Terlewati</span>
+                                Batas normal absen masuk telah berakhir. Anda tetap dapat mengirimkan absensi mandiri, namun status wajib diverifikasi oleh Guru Piket agar tidak terhitung Alfa.
                               </div>
                             </div>
                           )}
@@ -2422,7 +2297,17 @@ export function StudentAttendance({
                               <AlertCircle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
                               <div className="text-left">
                                 <span className="block font-black text-[10px] uppercase text-amber-900 leading-none mb-0.5">⏱️ Absen Pulang Belum Dibuka</span>
-                                Tombol absen pulang baru akan terbuka mulai pukul <strong>{liveDateTime.getDay() === 5 ? "11:00 siang (Khusus Hari Jumat)" : "13:15 siang"}</strong>.
+                                Tombol absen pulang baru akan terbuka mulai pukul <strong>{liveDateTime.getDay() === 5 ? "11:00 WITA (Khusus Hari Jumat)" : "13:15 WITA"}</strong>. Batas akhir absen pulang adalah pukul <strong>14:30 WITA</strong>.
+                              </div>
+                            </div>
+                          )}
+
+                          {isClockOutCutOffPassed && (
+                            <div className="p-3 bg-rose-50 text-rose-900 rounded-xl border border-rose-200 text-xs font-bold flex items-center gap-2">
+                              <AlertCircle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
+                              <div className="text-left">
+                                <span className="block font-black text-[10px] uppercase text-rose-900 leading-none mb-0.5">🔒 Batas Akhir Absen Pulang (14:30 WITA) Telah Lewat</span>
+                                Batas waktu absensi pulang untuk hari ini telah berakhir pada pukul 14:30 WITA. Sesi presensi hari berjalan telah diarsipkan.
                               </div>
                             </div>
                           )}
@@ -2571,11 +2456,22 @@ export function StudentAttendance({
           </p>
         </div>
 
-        <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 flex items-center gap-3">
-          <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
-          <div className="text-left font-mono">
-            <div className="text-[10px] text-gray-400 uppercase leading-none font-bold">Rata-Rata Kehadiran Kelas</div>
-            <div className="text-lg font-extrabold text-white leading-none mt-1">{attendanceRate}%</div>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsShareLinkModalOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-3.5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer border border-emerald-400/30"
+          >
+            <Share2 className="h-4 w-4 shrink-0 text-emerald-100" />
+            <span>Bagikan Link Absen Siswa</span>
+          </button>
+
+          <div className="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 flex items-center gap-3">
+            <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
+            <div className="text-left font-mono">
+              <div className="text-[10px] text-gray-400 uppercase leading-none font-bold">Rata-Rata Kehadiran Kelas</div>
+              <div className="text-lg font-extrabold text-white leading-none mt-1">{attendanceRate}%</div>
+            </div>
           </div>
         </div>
       </div>
@@ -3605,6 +3501,118 @@ export function StudentAttendance({
                   className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2 rounded-xl transition-all cursor-pointer"
                 >
                   OK
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Bagikan Link Presensi Siswa */}
+      <AnimatePresence>
+        {isShareLinkModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4"
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <Share2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-800">Bagikan Tautan Presensi Siswa</h3>
+                    <p className="text-xs text-slate-500">Tautan langsung akses portal presensi mandiri siswa SMK Negeri 2 Konawe.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsShareLinkModalOpen(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Share URL Box */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Tautan Langsung Presensi Siswa:
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}${window.location.pathname}?mode=absen_siswa`}
+                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-mono text-slate-700 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = `${window.location.origin}${window.location.pathname}?mode=absen_siswa`;
+                      navigator.clipboard.writeText(link);
+                      setCopyLinkSuccess(true);
+                      setTimeout(() => setCopyLinkSuccess(false), 2500);
+                    }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-extrabold text-white transition-all shrink-0 cursor-pointer shadow-sm ${
+                      copyLinkSuccess ? "bg-emerald-600" : "bg-indigo-600 hover:bg-indigo-700"
+                    }`}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>{copyLinkSuccess ? "Tersalin! ✓" : "Salin Link"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Direct WhatsApp Share Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const link = `${window.location.origin}${window.location.pathname}?mode=absen_siswa`;
+                    const waText = encodeURIComponent(
+                      `*LINK PRESENSI HARIAN SISWA SMK NEGERI 2 KONAWE* 📲\n\n` +
+                      `Halo siswa-siswi SMK Negeri 2 Konawe, silakan lakukan presensi masuk/pulang hari ini melalui tautan resmi:\n` +
+                      `👉 ${link}\n\n` +
+                      `*Langkah Pengisian:*\n` +
+                      `1. Buka tautan di atas melalui browser HP (Chrome/Safari).\n` +
+                      `2. Pilih Jurusan, Kelas, dan Nama Lengkap Anda.\n` +
+                      `3. Masukkan NISN Anda sebagai kata sandi.\n` +
+                      `4. Lakukan pengambilan foto selfie berseragam rapi & pastikan GPS diaktifkan.\n` +
+                      `5. Klik "Simpan Presensi". Hasil presensi otomatis terekap langsung di dashboard Guru Pengajar & Admin Tata Usaha SMK Negeri 2 Konawe!`
+                    );
+                    window.open(`https://api.whatsapp.com/send?text=${waText}`, "_blank");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Send className="h-4 w-4" />
+                  <span>Kirim Tautan ke Grup WhatsApp Siswa / Kelas</span>
+                </button>
+              </div>
+
+              {/* Informative Guidance */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs text-slate-600">
+                <p className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+                  Bagaimana data presensi siswa terekap ke Guru & Admin TU?
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
+                  <li>Siswa mengisi presensi dari ponsel masing-masing menggunakan tautan di atas.</li>
+                  <li>Sistem menyinkronkan data secara otomatis ke <strong>Cloud Firestore</strong>.</li>
+                  <li>Guru Pengajar dan Admin Tata Usaha dapat langsung memantau bukti selfie, koordinat GPS, dan status masuk/pulang di menu <strong>Rekap Laporan</strong> dan tabel <strong>Dual-Verifikasi</strong> secara <em>real-time</em>.</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsShareLinkModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                >
+                  Tutup
                 </button>
               </div>
             </motion.div>

@@ -153,7 +153,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
   // List of pre-registered/custom WA groups saved in localStorage
   const [waGroups, setWaGroups] = useState<{name: string, target: string, desc?: string}[]>(() => {
     const defaults = [
-      { name: "Grup Admin Tata Usaha SMKN 2 (Baru)", target: "120363155477246592@g.us", desc: "Grup WhatsApp Tata Usaha aktif baru Anda" }
+      { name: "Grup Admin Tata Usaha SMK 2 (Baru)", target: "120363155477246592@g.us", desc: "Grup WhatsApp Tata Usaha aktif baru Anda" }
     ];
 
     const raw = localStorage.getItem("sihadir_wa_groups");
@@ -585,7 +585,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
            (countSakit + countIzin + countAlpa + countTerlambat + countBolos === 0 ? `_Semua siswa hadir tepat waktu._\n` : "") +
            `\n*📝 CATATAN SITUASI KELAS:* \n` +
            `"${classNotes}"\n\n` +
-           `_Laporan Resmi Ketua Kelas disinkronkan otomatis dengan SIHADIR SMKN 2 Konawe._`;
+           `_Laporan Resmi Ketua Kelas disinkronkan otomatis dengan SIHADIR SMK Negeri 2 Konawe._`;
   };
 
   const handleSaveReport = () => {

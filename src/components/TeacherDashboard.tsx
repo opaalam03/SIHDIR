@@ -96,6 +96,25 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
           }
         }
 
+        const isTriana = (u.includes("daniel") || u.includes("triana")) && !u.includes("eva");
+        if (isTriana) {
+          parsed.fullName = "TRIANA DANIEL, S.Pd.";
+          parsed.nip = "19920113 201701 2 025";
+          parsed.subject = "Bahasa Inggris";
+          if (!parsed.classesTaught || parsed.classesTaught.includes("TAV")) {
+            parsed.classesTaught = "X TSM, XI TSM B, XI TSM A, XI TKR B, XII TSM A, X TKR A, XI DKV, XI DPIB";
+          }
+        }
+        const isEva = u.includes("eva") || u.includes("syahtriana") || u.includes("evasyatriana");
+        if (isEva) {
+          parsed.fullName = "EVASYAHTRIANA, S.Si";
+          parsed.nip = "19930909 201801 2 009";
+          parsed.subject = "IPAS";
+          if (!parsed.classesTaught || parsed.classesTaught.includes("TKR")) {
+            parsed.classesTaught = "X TSM, XI TAV, X DKV, X DPIB";
+          }
+        }
+
         return parsed;
       } catch (e) {
         console.error("Error reading teacher profile", e);
@@ -111,7 +130,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
         classesTaught: "Semua Kelas X, XI & XII",
         birthInfo: "Konawe, 5 Mei 1989",
         whatsapp: "081234567806",
-        address: "Jl. Poros Utama SMKN 2 Konawe, Unaaha",
+        address: "Jl. Poros Utama SMK Negeri 2 Konawe, Unaaha",
         subject: "Admin Utama",
         additionalDuty: ["Administrator Utama"]
       };
@@ -172,11 +191,33 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
         subject: "Bimbingan Konseling (BK)",
         additionalDuty: ["Guru BK"]
       };
+    } else if ((cleanUser.includes("daniel") || cleanUser.includes("triana")) && !cleanUser.includes("eva") && !cleanUser.includes("syah")) {
+      return {
+        fullName: "TRIANA DANIEL, S.Pd.",
+        nip: "19920113 201701 2 025",
+        classesTaught: "X TSM, XI TSM B, XI TSM A, XI TKR B, XII TSM A, X TKR A, XI DKV, XI DPIB",
+        birthInfo: "Konawe, 13 Januari 1992",
+        whatsapp: "081234567834",
+        address: "Jl. Poros Unaaha No. 34, Konawe",
+        subject: "Bahasa Inggris",
+        additionalDuty: ["Wali Kelas XI TSM B", "Guru Mapel Bahasa Inggris"]
+      };
+    } else if (cleanUser.includes("eva") || cleanUser.includes("syahtriana") || cleanUser.includes("evasyatriana")) {
+      return {
+        fullName: "EVASYAHTRIANA, S.Si",
+        nip: "19930909 201801 2 009",
+        classesTaught: "X TSM, XI TAV, X DKV, X DPIB",
+        birthInfo: "Konawe, 9 September 1993",
+        whatsapp: "081234567811",
+        address: "Jl. Poros Unaaha No. 11, Konawe",
+        subject: "IPAS",
+        additionalDuty: ["Wali Kelas XI DPIB", "Guru Mapel IPAS"]
+      };
     }
 
     // Generic fallback
     return {
-      fullName: username || "Guru SMKN 2 Konawe",
+      fullName: username || "Guru SMK Negeri 2 Konawe",
       nip: "19910523 201802 1 023",
       classesTaught: "XI TKR A",
       birthInfo: "Konawe, 23 Mei 1991",
@@ -462,7 +503,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
       id: "ann-1",
       title: "Implementasi Sistem Presensi Digital & Dual-Verifikasi KBM",
       category: "Pengumuman Mutlak",
-      content: "Diberitahukan kepada seluruh Guru dan Staf SMKN 2 Konawe bahwa presensi harian wajib diisi setiap pagi sebelum jam 07.15 WITA. Admin Utama akan memantau rekapitulasi kehadiran dan jurnal mengajar secara berkala.",
+      content: "Diberitahukan kepada seluruh Guru dan Staf SMK Negeri 2 Konawe bahwa presensi harian wajib diisi setiap pagi sebelum jam 07.15 WITA. Admin Utama akan memantau rekapitulasi kehadiran dan jurnal mengajar secara berkala.",
       publisherName: "ARHAM AMIRUDDIN, S.Pd.Gr (Admin Utama)",
       publisherRole: "Administrator Utama",
       publisherRoleKey: "admin",
@@ -677,6 +718,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
           </div>
 
           <div className="flex gap-2">
+
             {!isEditing ? (
               <button
                 type="button"
@@ -833,7 +875,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                 </label>
                 <div className="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 font-black text-amber-950 flex items-center gap-2 shadow-2xs">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-600 animate-pulse"></span>
-                  <span>Kepala Sekolah SMKN 2 Konawe</span>
+                  <span>Kepala Sekolah SMK Negeri 2 Konawe</span>
                 </div>
                 <p className="text-[10px] text-amber-800 font-semibold mt-1.5">
                   Sebagai Kepala Sekolah, Anda adalah penanggung jawab utama manajemen, supervisi KBM, dan kebijakan seluruh unit sekolah.
@@ -1051,7 +1093,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                 Papan Pengumuman & Informasi Resmi Sekolah
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Penerimaan data informasi mutlak dan kebijakan resmi untuk pemilik akun Guru & Staf SMKN 2 Konawe.
+                Penerimaan data informasi mutlak dan kebijakan resmi untuk pemilik akun Guru & Staf SMK Negeri 2 Konawe.
               </p>
             </div>
           </div>

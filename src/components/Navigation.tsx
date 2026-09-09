@@ -254,14 +254,15 @@ export function Navigation({
       case "ketua_kelas":
         items = [
           { id: "ketua-kelas-dashboard", label: `Dasbor & Scan QR Kelas ${userCaptainClass ? `(${userCaptainClass})` : ""}`, icon: ClipboardList },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "student-attendance", label: "Presensi Harian Siswa", icon: Users },
-          { id: "student-profile", label: "Biodata & Profil Saya", icon: GraduationCap },
           { id: "refleksi-siswa", label: "Refleksi Harian Siswa", icon: MessageSquare }
         ];
         break;
       case "admin":
         items = [
           { id: "profil-guru", label: "Dasbor Admin Utama", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "student-attendance", label: "Presensi Mapel & Jadwal Guru", icon: Users },
           { id: "ketua-kelas-dashboard", label: "Jurnal KBM & Monitoring Guru", icon: ClipboardList },
@@ -272,16 +273,17 @@ export function Navigation({
         break;
       case "tu":
         items = [
-          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP Siswa", icon: ShieldAlert },
+          { id: "profil-guru", label: "Profil Admin TU", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "rekap-laporan", label: "Rekap Laporan & Scanner QR TU", icon: ClipboardList },
           { id: "arsip-surat", label: "Arsip Surat Digital TU", icon: FileText },
-          { id: "master-data", label: "Data Master (Lihat)", icon: Settings2 },
-          { id: "profil-guru", label: "Profil Admin TU", icon: User }
+          { id: "master-data", label: "Data Master (Lihat)", icon: Settings2 }
         ];
         break;
       case "kurikulum":
         items = [
           { id: "profil-guru", label: "Dasbor Waka Kurikulum", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "student-attendance", label: "Presensi Mapel & Jadwal Guru", icon: Users },
           { id: "ketua-kelas-dashboard", label: "Jurnal KBM & Monitoring Guru", icon: ClipboardList },
@@ -291,6 +293,7 @@ export function Navigation({
       case "kesiswaan":
         items = [
           { id: "profil-guru", label: "Dasbor Waka Kesiswaan", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "student-attendance", label: "Presensi Mapel & Jadwal Guru", icon: Users },
           { id: "ketua-kelas-dashboard", label: "Jurnal KBM & Monitoring Guru", icon: ClipboardList },
@@ -300,16 +303,18 @@ export function Navigation({
         break;
       case "piket":
         items = [
-          { id: "kredit-pelanggaran", label: "Catat Poin Pelanggaran Siswa", icon: ShieldAlert },
           { id: "guru-piket-dashboard", label: "Menu Kerja & Scan QR Piket", icon: ShieldAlert },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
+          { id: "kredit-pelanggaran", label: "Catat Poin Pelanggaran Siswa", icon: ShieldAlert },
           { id: "profil-guru", label: "Profil Guru Piket", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin }
         ];
         break;
       case "wali":
         items = [
-          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran Siswa Binaan", icon: ShieldAlert },
           { id: "kerjaan-wali-kelas", label: "Menu Kerjaan Wali Kelas", icon: Users },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
+          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran Siswa Binaan", icon: ShieldAlert },
           { id: "profil-guru", label: "Profil Wali Kelas", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "parent-report", label: "Laporan WA Ortu", icon: MessageSquare }
@@ -317,45 +322,49 @@ export function Navigation({
         break;
       case "guru_wali":
         items = [
-          { id: "profil-guru", label: "Profil Guru Wali", icon: User },
           { id: "kerjaan-guru-wali", label: "Menu Kerja Guru Wali", icon: HeartHandshake },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
+          { id: "profil-guru", label: "Profil Guru Wali", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin }
         ];
         break;
       case "guru":
         items = [
           { id: "profil-guru", label: "Dasbor & Profil Guru", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin }
         ];
         break;
       case "bk":
         items = [
+          { id: "kelas-bimbingan", label: "Menu Kerja & Scan QR BK", icon: HeartHandshake },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "profil-guru", label: "Profil Guru BK", icon: User },
           { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP Siswa", icon: ShieldAlert },
-          { id: "kelas-bimbingan", label: "Menu Kerja & Scan QR BK", icon: HeartHandshake },
           { id: "rekap-laporan", label: "Rekap Laporan Siswa BK", icon: ClipboardList }
         ];
         break;
       case "kepsek":
         items = [
           { id: "profil-guru", label: "Dasbor Kepala Sekolah", icon: User },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "rekap-laporan", label: "Rekap Laporan Sekolah", icon: ClipboardList }
         ];
         break;
       case "siswa": {
-        const studentItems = [
-          { id: "student-profile", label: "Edit Biodata & Profil Siswa", icon: GraduationCap },
+        items = [
           { id: "student-attendance", label: "Murid Absen Disini", icon: ClipboardList },
+          { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "refleksi-siswa", label: "Refleksi Harian Siswa", icon: MessageSquare }
         ];
         if (isUserClassCaptain) {
-          studentItems.unshift({ 
+          items.unshift({ 
             id: "ketua-kelas-dashboard", 
             label: `Dasbor Ketua Kelas (${userCaptainClass || "Tugas Tambahan"})`, 
             icon: ClipboardList 
           });
         }
-        return studentItems;
+        break;
       }
       default:
         return [];
@@ -377,7 +386,7 @@ export function Navigation({
             <div className="flex items-center justify-center w-16 h-16 shrink-0 transition-transform hover:scale-105 duration-200">
               <img 
                 src="https://i.ibb.co.com/TMkWkNY4/LOGO-SMKN-2-KONAWE-BARU.png" 
-                alt="Logo SMKN 2" 
+                alt="Logo SMK 2" 
                 className="w-full h-full object-cover rounded-full drop-shadow-md"
                 style={{ clipPath: "circle(50% at 50% 50%)" }}
                 onError={(e) => {
@@ -391,7 +400,7 @@ export function Navigation({
                 SIHADIR
               </h1>
               <span className={`text-[13px] font-bold block mt-1 ${isWhiteTheme ? "text-slate-500" : "text-gray-300"}`}>Absensi Digital</span>
-              <p className="text-[14px] text-orange-500 font-extrabold mt-1 uppercase tracking-wider">SMKN 2 KONAWE</p>
+              <p className="text-[14px] text-orange-500 font-extrabold mt-1 uppercase tracking-wider">SMK NEGERI 2 KONAWE</p>
             </div>
           </div>
 
@@ -468,7 +477,7 @@ export function Navigation({
             </button>
           )}
           <div className={`p-3 rounded-lg border text-center ${isWhiteTheme ? "bg-slate-50 border-slate-200 text-slate-700" : "bg-black/30 border-white/5"}`}>
-            <p className={`text-[12px] font-bold leading-tight ${isWhiteTheme ? "text-slate-500" : "text-[#f1f1f1]"}`}>SMKN 2 Konawe 2026/2027</p>
+            <p className={`text-[12px] font-bold leading-tight ${isWhiteTheme ? "text-slate-500" : "text-[#f1f1f1]"}`}>SMK Negeri 2 Konawe 2026/2027</p>
           </div>
         </div>
 
@@ -485,7 +494,7 @@ export function Navigation({
         <div className="flex items-center gap-3">
           <div>
             <span className={`text-sm font-black block leading-none ${isWhiteTheme ? "text-slate-900" : "text-white"}`}>SIHADIR</span>
-            <span className={`text-[9px] uppercase font-black block mt-1.5 ${isWhiteTheme ? "text-slate-500" : "text-gray-400"}`}>SMKN 2 KONAWE</span>
+            <span className={`text-[9px] uppercase font-black block mt-1.5 ${isWhiteTheme ? "text-slate-500" : "text-gray-400"}`}>SMK NEGERI 2 KONAWE</span>
             <span className={`text-[8px] uppercase font-bold block ${isWhiteTheme ? "text-slate-400" : "text-gray-500"}`}>2026/2027</span>
           </div>
         </div>

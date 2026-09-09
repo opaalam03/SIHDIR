@@ -35,7 +35,7 @@ interface KelasBimbinganManagerProps {
   currentRole?: string;
 }
 
-// Full list of standard classes at SMKN 2 Konawe (No TKJ)
+// Full list of standard classes at SMK Negeri 2 Konawe (No TKJ)
 const DEFAULT_ALL_CLASSES = [
   // KELAS X
   "X TKR A", "X TKR B", "X TSM", "X TAV", "X DPIB", "X DKV", "X TB",
@@ -481,7 +481,7 @@ export const KelasBimbinganManager: React.FC<KelasBimbinganManagerProps> = ({
             <button
               onClick={handleResetDefault}
               type="button"
-              title="Reset ke pembagian resmi standar SMKN 2 Konawe"
+              title="Reset ke pembagian resmi standar SMK Negeri 2 Konawe"
               className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-700 shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-400" />

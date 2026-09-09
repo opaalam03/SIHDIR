@@ -22,6 +22,9 @@ import {
   Upload,
   Image as ImageIcon
 } from "lucide-react";
+import { dbService } from "../firebase";
+import { notifyStudentAttendanceInstant } from "../services/whatsappFonnteService";
+import { AttendanceScheduleInfoCard } from "./AttendanceScheduleInfoCard";
 
 export type QrScanRole = "Ketua Kelas" | "Guru Piket" | "Guru BK" | "Admin Tata Usaha" | "Umum";
 
@@ -224,7 +227,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
         foundTeacher = {
           name: m.nama || m.name || "Guru",
           nip: m.nip || m.qrCode || targetCode,
-          dept: m.mapel || m.subject || m.role || m.jabatan || "Pengajar / Personel SMKN 2 Konawe",
+          dept: m.mapel || m.subject || m.role || m.jabatan || "Pengajar / Personel SMK Negeri 2 Konawe",
           id: m.id,
           qrCode: m.qrCode
         };
@@ -260,6 +263,19 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       .replace(/_/g, " ")
       .trim();
 
+    // Parse structured card QR payload (Nama Siswa, NISN, Jurusan, Sekolah)
+    let payloadNisn = "";
+    let payloadName = "";
+    let payloadMajor = "";
+    const nisnMatch = cleanCode.match(/NISN\s*[:=]\s*([0-9A-Za-z]+)/i);
+    if (nisnMatch) payloadNisn = nisnMatch[1].trim();
+
+    const nameMatch = cleanCode.match(/Nama\s*[:=]\s*([^\n\r]+)/i);
+    if (nameMatch) payloadName = nameMatch[1].trim();
+
+    const jurMatch = cleanCode.match(/Jurusan\s*[:=]\s*([^\n\r]+)/i);
+    if (jurMatch) payloadMajor = jurMatch[1].trim();
+
     let foundStudent: { name: string; nis?: string; class?: string } | null = null;
     if (Array.isArray(studentsList)) {
       const match = studentsList.find((s: any) => {
@@ -274,6 +290,14 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
         const sNisnNorm = normalize(sNisn);
         const sIdNorm = normalize(sId);
         const sQrNorm = normalize(sQr);
+
+        // Check structured QR payload match
+        if (payloadNisn && (sNisnNorm === normalize(payloadNisn) || sIdNorm === normalize(payloadNisn) || sNisNorm === normalize(payloadNisn))) {
+          return true;
+        }
+        if (payloadName && (sNameNorm === normalize(payloadName) || sNameNorm.includes(normalize(payloadName)) || normalize(payloadName).includes(sNameNorm))) {
+          return true;
+        }
 
         // Check exact ID match or number match (e.g. S099 vs 099)
         const idMatchesNumber = extractedNumber && (
@@ -306,9 +330,16 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       if (match) {
         const m = match as any;
         foundStudent = {
-          name: m.nama || m.name || "Siswa",
-          nis: m.nis || targetCode,
-          class: m.kelas || m.className || inferredClass || defaultClassName || "SMKN 2 Konawe"
+          name: m.nama || m.name || payloadName || "Siswa",
+          nis: m.nisn || m.nis || payloadNisn || targetCode,
+          class: m.kelas || m.className || payloadMajor || inferredClass || defaultClassName || "SMK Negeri 2 Konawe"
+        };
+      } else if (payloadName || payloadNisn) {
+        // Fallback directly from QR payload if student not yet in local storage
+        foundStudent = {
+          name: payloadName || "Siswa",
+          nis: payloadNisn || targetCode,
+          class: payloadMajor || "SMK Negeri 2 Konawe"
         };
       }
     }
@@ -429,7 +460,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
           attLogs.unshift({
             id: "att-qr-" + Date.now(),
             studentName: personInfo.name,
-            className: personInfo.detail.replace("Kelas ", "") || defaultClassName || "SMKN 2 Balikpapan",
+            className: personInfo.detail.replace("Kelas ", "") || defaultClassName || "SMK Negeri 2 Konawe",
             date: todayStr,
             status: status === "Terlambat" ? "Hadir" : status,
             clockIn: scanMode === "Masuk" ? nowTimeStr : undefined,
@@ -439,6 +470,33 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
           });
         }
         localStorage.setItem("simpati_saved_attendance_logs", JSON.stringify(attLogs));
+
+        // Also sync to student_self_attendance in Cloud Firestore so it appears in live recap immediately
+        const studentCls = personInfo.detail.replace("Kelas ", "") || defaultClassName || "XI TKR A";
+        const selfRecord = {
+          id: `qr-${todayStr}-${personInfo.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+          studentName: personInfo.name,
+          className: studentCls,
+          date: todayStr,
+          clockIn: scanMode === "Masuk" ? nowTimeStr : "--:--",
+          clockOut: scanMode === "Pulang" ? nowTimeStr : null,
+          status: status === "Terlambat" ? "Hadir" : status,
+          reason: `Verifikasi QR Scanner (${role})`,
+          photoLabel: "Terverifikasi QR Scanner"
+        };
+        dbService.saveRecord("student_self_attendance", selfRecord.id, selfRecord);
+
+        // Instantly notify Admin TU and Guru BK via Fonnte WA Gateway
+        notifyStudentAttendanceInstant({
+          studentName: personInfo.name,
+          nis: (personInfo as any).nis || undefined,
+          className: studentCls,
+          status: status === "Terlambat" ? "Terlambat" : status,
+          clockIn: nowTimeStr,
+          method: "Scan Barcode / QR Kios",
+          recordedBy: `Kios Scanner Mandiri (${role})`,
+          notes: `Verifikasi Presensi QR / Barcode Siswa`
+        }).catch(err => console.warn("Failed real-time notification to TU & BK:", err));
       } else if (personInfo.type === "Guru") {
         const rawTeachers = localStorage.getItem("simpati_teacher_attendance_logs");
         let teacherLogs = rawTeachers ? JSON.parse(rawTeachers) : [];
@@ -453,8 +511,10 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
             clockOut: scanMode === "Pulang" ? nowTimeStr : teacherLogs[existingIdx].clockOut,
             qrScanned: true
           };
+          const targetLog = teacherLogs[existingIdx];
+          dbService.saveRecord("teacher_attendance_logs", targetLog.id, targetLog);
         } else {
-          teacherLogs.unshift({
+          const newTeacherLog = {
             id: "t-qr-" + Date.now(),
             teacherName: personInfo.name,
             date: todayStr,
@@ -462,7 +522,9 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
             clockIn: scanMode === "Masuk" ? nowTimeStr : undefined,
             clockOut: scanMode === "Pulang" ? nowTimeStr : undefined,
             qrScanned: true
-          });
+          };
+          teacherLogs.unshift(newTeacherLog);
+          dbService.saveRecord("teacher_attendance_logs", newTeacherLog.id, newTeacherLog);
         }
         localStorage.setItem("simpati_teacher_attendance_logs", JSON.stringify(teacherLogs));
       }
@@ -818,6 +880,14 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
               <span>Verifikasi / Cek</span>
             </button>
           </div>
+
+          {/* Informasi Aturan Waktu Absen Masuk & Pulang */}
+          <AttendanceScheduleInfoCard 
+            id="qr-modal-schedule-info"
+            variant="compact" 
+            highlightMode={scanMode === "Masuk" ? "masuk" : scanMode === "Pulang" ? "pulang" : "all"} 
+            role="siswa" 
+          />
 
           {/* Last Scan Result Alert Banner */}
           {lastScanResult && (

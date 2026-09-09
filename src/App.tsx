@@ -12,6 +12,7 @@ import { KarakterAnalisis } from "./components/KarakterDanPkl";
 import { StudentAttendance } from "./components/StudentAttendance";
 import { KomunikasiOrangTua } from "./components/KomunikasiOrangTua";
 import { GuruChat } from "./components/AiCompanionChat";
+import { SchoolChatMessenger } from "./components/SchoolChatMessenger";
 import { LoginScreen } from "./components/LoginScreen";
 import { MasterDataManager } from "./components/MasterDataManager";
 import { QuickRoleSwitcher } from "./components/QuickRoleSwitcher";
@@ -33,6 +34,8 @@ import { getStudentCaptainClass } from "./data/classCaptains";
 import { MOCK_STUDENTS } from "./mockData";
 import { SIHADIR_THEMES, ThemeId } from "./utils/themeConfig";
 import { DraggableThemeWidget } from "./components/DraggableThemeWidget";
+import { DigitalClockWidget } from "./components/DigitalClockWidget";
+import { startAttendanceAutomations, stopAttendanceAutomations } from "./services/whatsappFonnteService";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -45,7 +48,9 @@ export default function App() {
     return localStorage.getItem("sihadir_role") || "guru";
   });
   const [activeTab, setActiveTab] = useState<string>(() => {
-    return localStorage.getItem("sihadir_active_tab") || "student-attendance";
+    const saved = localStorage.getItem("sihadir_active_tab");
+    if (saved === "student-profile") return "student-attendance";
+    return saved || "student-attendance";
   });
   const [isAutomotive, setIsAutomotive] = useState<boolean>(true);
   const [, setStorageTrigger] = useState<number>(0);
@@ -93,6 +98,15 @@ export default function App() {
     };
   }, []);
 
+  // Initialize automated WhatsApp Fonnte Attendance Engine
+  // (Automated period transition report for teachers & 09:00 AM report for TU)
+  useEffect(() => {
+    startAttendanceAutomations();
+    return () => {
+      stopAttendanceAutomations();
+    };
+  }, []);
+
   const handleThemeChange = (newTheme: ThemeId) => {
     setAppTheme(newTheme);
     localStorage.setItem("sihadir_bg_theme", newTheme);
@@ -113,7 +127,7 @@ export default function App() {
     } else if (role === "bk") {
       defaultTab = "profil-guru";
     } else if (role === "tu") {
-      defaultTab = "rekap-laporan";
+      defaultTab = "profil-guru";
     } else if (role === "wali") {
       defaultTab = "kerjaan-wali-kelas";
     } else if (role === "guru_wali") {
@@ -130,6 +144,12 @@ export default function App() {
     localStorage.setItem("sihadir_username", username);
     localStorage.setItem("sihadir_role", role);
     
+    // Sync active teacher name so teacher attendance never defaults to wrong person
+    const activeTeacher = (role === "admin" || username === "admin" || username.toLowerCase().includes("arham"))
+      ? "ARHAM AMIRUDDIN, S.Pd.Gr"
+      : username;
+    localStorage.setItem("sihadir_active_teacher_name", activeTeacher);
+    
     // Set appropriate default tab
     let defaultTab = "profil-guru";
     if (role === "siswa") {
@@ -141,7 +161,7 @@ export default function App() {
     } else if (role === "bk") {
       defaultTab = "profil-guru";
     } else if (role === "tu") {
-      defaultTab = "rekap-laporan";
+      defaultTab = "profil-guru";
     } else if (role === "wali") {
       defaultTab = "kerjaan-wali-kelas";
     } else if (role === "guru_wali") {
@@ -159,6 +179,12 @@ export default function App() {
     localStorage.setItem("sihadir_username", username);
     localStorage.setItem("sihadir_role", role);
     
+    // Sync active teacher name so teacher attendance never defaults to wrong person
+    const activeTeacher = (role === "admin" || username === "admin" || username.toLowerCase().includes("arham"))
+      ? "ARHAM AMIRUDDIN, S.Pd.Gr"
+      : username;
+    localStorage.setItem("sihadir_active_teacher_name", activeTeacher);
+    
     // Set default tab based on logged-in role
     let defaultTab = "profil-guru";
     if (role === "siswa") {
@@ -170,7 +196,7 @@ export default function App() {
     } else if (role === "bk") {
       defaultTab = "profil-guru";
     } else if (role === "tu") {
-      defaultTab = "rekap-laporan";
+      defaultTab = "profil-guru";
     } else if (role === "wali") {
       defaultTab = "kerjaan-wali-kelas";
     } else if (role === "guru_wali") {
@@ -189,6 +215,7 @@ export default function App() {
     localStorage.removeItem("sihadir_username");
     localStorage.removeItem("sihadir_role");
     localStorage.removeItem("sihadir_active_tab");
+    localStorage.removeItem("sihadir_active_teacher_name");
   };
 
   const handleSetTab = (tab: string) => {
@@ -266,6 +293,19 @@ export default function App() {
         return <KomunikasiOrangTua username={authUsername} currentRole={currentRole} />;
       case "guru-chat":
         return <GuruChat isAutomotive={isAutomotive} />;
+      case "chat-sekolah":
+        return (
+          <SchoolChatMessenger 
+            currentUser={{
+              id: currentRole === "siswa" ? (matchedStudentProfile?.id || authUsername) : authUsername,
+              name: displayUserRealName,
+              role: currentRole,
+              roleTitle: displayRoleTitle,
+              avatar: activeUserPhoto,
+              kelas: matchedStudentProfile?.class || userCaptainClass || ""
+            }}
+          />
+        );
 
       // Siswa tabs
       case "nilai-siswa":
@@ -461,6 +501,9 @@ export default function App() {
         setActiveTab("student-attendance");
       }
     }
+    if (currentRole === "tu" && activeTab === "kredit-pelanggaran") {
+      setActiveTab("profil-guru");
+    }
   }, [currentRole, userCaptainClass, authUsername, activeTab]);
 
 
@@ -534,7 +577,7 @@ export default function App() {
             <div className="hidden">
               <img 
                 src="https://i.ibb.co.com/TMkWkNY4/LOGO-SMKN-2-KONAWE-BARU.png" 
-                alt="Logo SMKN 2" 
+                alt="Logo SMK 2" 
                 className="w-10 h-10 object-cover rounded-full"
                 style={{ clipPath: "circle(50% at 50% 50%)" }}
                 onError={(e) => {
@@ -560,7 +603,7 @@ export default function App() {
             </div>
             <div>
               <p className={`text-[11px] uppercase tracking-wider font-bold ${themeStyle.subText}`}>
-                SISTEM INFORMASI HARIAN ABSENSI DIGITAL MURID, GURU & STAF SMKN 2 KONAWE
+                SISTEM INFORMASI HARIAN ABSENSI DIGITAL MURID, GURU & STAF SMK NEGERI 2 KONAWE
               </p>
             </div>
           </div>
@@ -615,6 +658,14 @@ export default function App() {
                 </span>
               </div>
             </div>
+
+            {/* Jam Digital Resmi Sudut Kanan Atas Setiap Akun */}
+            <DigitalClockWidget 
+              size="lg" 
+              variant={themeStyle.isLight ? "light" : "header"} 
+              className="shrink-0"
+              id="header-digital-clock"
+            />
           </div>
         </header>
 
@@ -634,7 +685,7 @@ export default function App() {
             </div>
           </div>
           <div className="text-[10px] font-bold tracking-tighter uppercase font-mono text-white/90">
-            SMKN 2 Konawe 2026/2027
+            SMK Negeri 2 Konawe 2026/2027
           </div>
         </footer>
       </div>
@@ -675,7 +726,7 @@ export default function App() {
               </div>
               <div>
                 <h3 className="text-sm font-black text-rose-900 leading-snug">{piketAlertModal.title}</h3>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SIHADIR SMKN 2 KONAWE</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">SIHADIR SMK NEGERI 2 KONAWE</span>
               </div>
             </div>
 

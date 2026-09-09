@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Copy, Check, Send, Printer, FileText, CheckCircle2, User, BookOpen, Award, MessageSquare } from "lucide-react";
-import { OFFICIAL_SMKN2_SCHEDULES } from "../data/translatedSchedules";
+import { OFFICIAL_SMK2_SCHEDULES } from "../data/translatedSchedules";
 
 export interface StudentReportItem {
   id: string;
@@ -34,7 +34,7 @@ export function IndividualStudentReportModal({
   if (!isOpen || !student) return null;
 
   // 1. Extract subjects for this class from schedule data
-  const classSchedules = OFFICIAL_SMKN2_SCHEDULES.filter(
+  const classSchedules = OFFICIAL_SMK2_SCHEDULES.filter(
     s => s.className.trim().toUpperCase() === className.trim().toUpperCase()
   );
 
@@ -119,7 +119,7 @@ export function IndividualStudentReportModal({
   // 2. Generate Narrative WhatsApp Text
   const generateNarrativeText = () => {
     let txt = `📢 *REKAPITULASI LAPORAN BELAJAR SISWA*\n`;
-    txt += `*SMK SIMPATI PUSAT KEUNGGULAN*\n`;
+    txt += `*SMK NEGERI 2 KONAWE*\n`;
     txt += `----------------------------------------\n`;
     txt += `👤 *IDENTITAS SISWA:*\n`;
     txt += `• Nama Siswa: *${student.name}*\n`;
@@ -298,7 +298,7 @@ export function IndividualStudentReportModal({
                 {/* Header Kop */}
                 <div className="border-b-2 border-slate-900 pb-4 text-center space-y-1">
                   <h2 className="text-lg font-black text-slate-900 tracking-tight uppercase">
-                    SMK SIMPATI PUSAT KEUNGGULAN
+                    SMK NEGERI 2 KONAWE
                   </h2>
                   <p className="text-[11px] text-slate-600 font-bold uppercase tracking-wider">
                     LAPORAN CAPAIAN HASIL BELAJAR & KEDISIPLINAN SISWA

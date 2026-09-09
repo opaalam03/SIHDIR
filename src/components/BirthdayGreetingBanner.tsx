@@ -192,7 +192,7 @@ export function BirthdayGreetingBanner() {
                     {bt.name} <span className="font-medium text-slate-500 dark:text-slate-400">({bt.role})</span>
                   </p>
                   <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed max-w-3xl">
-                    "Selamat Ulang Tahun yang ke-<strong>{bt.age}</strong>! 🎂✨ Semoga sehat selalu, panjang umur, dan senantiasa diberi kemudahan serta keberkahan dalam melaksanakan aktivitas keseharian mendidik putra-putri SMKN 2 Konawe."
+                    "Selamat Ulang Tahun yang ke-<strong>{bt.age}</strong>! 🎂✨ Semoga sehat selalu, panjang umur, dan senantiasa diberi kemudahan serta keberkahan dalam melaksanakan aktivitas keseharian mendidik putra-putri SMK Negeri 2 Konawe."
                   </p>
 
                   {/* Send WhatsApp Wishes Button */}
@@ -200,7 +200,7 @@ export function BirthdayGreetingBanner() {
                     <div className="mt-2.5 flex flex-wrap items-center gap-2">
                       <a
                         href={`https://wa.me/${bt.whatsApp.replace(/[^0-9]/g, "").replace(/^0/, "62")}?text=${encodeURIComponent(
-                          `Selamat Ulang Tahun ke-${bt.age} Bapak/Ibu ${bt.name}! 🎉🎂 Semoga sehat selalu, panjang umur, dan senantiasa diberikan kemudahan & kelancaran dalam beraktivitas. Salam hangat dari keluarga besar SMKN 2 Konawe.`
+                          `Selamat Ulang Tahun ke-${bt.age} Bapak/Ibu ${bt.name}! 🎉🎂 Semoga sehat selalu, panjang umur, dan senantiasa diberikan kemudahan & kelancaran dalam beraktivitas. Salam hangat dari keluarga besar SMK Negeri 2 Konawe.`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
