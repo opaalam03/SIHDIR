@@ -46,7 +46,6 @@ import { getStudentCaptainClass } from "../data/classCaptains";
 import { getMasterGuruWaliData } from "../data/guruWaliMasterData";
 import { InteractiveAttendanceMap } from "./InteractiveAttendanceMap";
 import { notifyStudentAttendanceInstant, notifyClassAttendanceSummary } from "../services/whatsappFonnteService";
-import { AttendanceScheduleInfoCard } from "./AttendanceScheduleInfoCard";
 
 // Haversine formula to calculate distance in meters
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -1499,182 +1498,8 @@ export function StudentAttendance({
           </div>
         </div>
 
-        {/* ALARM & PENGINGAT ABSENSI MANDIRI */}
-        <div className="bg-white p-5 rounded-2xl border border-indigo-150 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-50 text-rose-600 rounded-xl animate-pulse">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-800">Sistem Alarm & Pengingat Absensi Pintar</h3>
-                <p className="text-xs text-slate-500">Mencegah lupa absen masuk & keluar dengan sirine digital dan alarm otomatis harian.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="inline-flex items-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isAlarmEnabled}
-                  onChange={(e) => {
-                    setIsAlarmEnabled(e.target.checked);
-                    if (!e.target.checked) {
-                      setAlarmTriggeredIn(false);
-                      setAlarmTriggeredOut(false);
-                    }
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                <span className="ms-2 text-xs font-bold text-slate-700">Alarm {isAlarmEnabled ? "Aktif" : "Nonaktif"}</span>
-              </label>
-
-              <button
-                type="button"
-                onClick={playAlarmSound}
-                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-black px-2.5 py-1.5 rounded-lg border border-indigo-200 transition-colors cursor-pointer"
-              >
-                🔊 Tes Suara
-              </button>
-            </div>
-          </div>
-
-          {/* Configuration Inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Set Batas Alarm Absen Masuk (Clock-In)</label>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={alarmHourIn}
-                  onChange={(e) => {
-                    setAlarmHourIn(e.target.value);
-                    setDismissedAlarmIn(false);
-                  }}
-                  className="bg-white border border-slate-200 text-xs font-bold rounded-lg px-2.5 py-2 w-full focus:outline-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => { setAlarmHourIn("07:15"); setDismissedAlarmIn(false); }}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-2 rounded-lg transition-colors"
-                >
-                  Reset
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Alarm berbunyi jika jam ini tercapai & Anda belum Clock-In.</p>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Set Batas Alarm Absen Keluar (Clock-Out)</label>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={alarmHourOut}
-                  onChange={(e) => {
-                    setAlarmHourOut(e.target.value);
-                    setDismissedAlarmOut(false);
-                  }}
-                  className="bg-white border border-slate-200 text-xs font-bold rounded-lg px-2.5 py-2 w-full focus:outline-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => { setAlarmHourOut("14:00"); setDismissedAlarmOut(false); }}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-2 rounded-lg transition-colors"
-                >
-                  Reset
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Alarm berbunyi jika jam ini tercapai & Anda belum Clock-Out.</p>
-            </div>
-          </div>
-
-          {/* Active Alarm Alerts */}
-          <AnimatePresence>
-            {alarmTriggeredIn && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gradient-to-r from-red-600 via-red-500 to-rose-600 text-white p-4 rounded-xl border border-red-400 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3 animate-pulse"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 p-2 rounded-lg">
-                    <svg className="h-5 w-5 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <h4 className="text-xs font-black uppercase tracking-wider">⚠️ ALARM DARURAT: BELUM ABSEN MASUK!</h4>
-                    <p className="text-[11px] opacity-90 font-medium">Sudah melewati pukul {alarmHourIn}. Segera ambil selfie berseragam dan klik "Kirim Absen Masuk"!</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const targetEl = document.getElementById("student-attendance-personal-workspace");
-                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="bg-white text-rose-700 hover:bg-rose-50 text-[10px] font-black px-3.5 py-1.5 rounded-lg uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-                  >
-                    Absen Sekarang
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDismissedAlarmIn(true)}
-                    className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/20 transition-all cursor-pointer"
-                  >
-                    Tunda (Snooze)
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {alarmTriggeredOut && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 text-white p-4 rounded-xl border border-amber-400 shadow-md flex flex-col sm:flex-row justify-between items-center gap-3 animate-pulse"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/20 p-2 rounded-lg">
-                    <svg className="h-5 w-5 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <h4 className="text-xs font-black uppercase tracking-wider">⚠️ ALARM DARURAT: BELUM ABSEN KELUAR!</h4>
-                    <p className="text-[11px] opacity-90 font-medium">Sesi belajar selesai (batas: {alarmHourOut}). Lengkapi kepulangan Anda sebelum terekam Alfa!</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const targetEl = document.getElementById("student-attendance-personal-workspace");
-                      if (targetEl) targetEl.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="bg-white text-amber-700 hover:bg-amber-50 text-[10px] font-black px-3.5 py-1.5 rounded-lg uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-                  >
-                    Absen Pulang
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDismissedAlarmOut(true)}
-                    className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-white/20 transition-all cursor-pointer"
-                  >
-                    Tunda (Snooze)
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* PRESENSI MANDIRI SISWA WIDGET */}
-        <div id="student-attendance-personal-workspace" className="bg-white p-6 rounded-2xl border border-indigo-150 shadow-sm space-y-6">
+        <div id="student-self-attendance-form-card" className="bg-white p-6 rounded-2xl border border-indigo-150 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
@@ -1686,9 +1511,6 @@ export function StudentAttendance({
               </div>
             </div>
           </div>
-
-          {/* INFORMASI JADWAL & BATAS WAKTU ABSENSI */}
-          <AttendanceScheduleInfoCard role="siswa" variant="full" />
 
           {(() => {
             const todayStr = new Date().toISOString().split("T")[0];

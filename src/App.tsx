@@ -116,10 +116,11 @@ export default function App() {
 
   // Auto-switch tabs to a permitted one if we transition roles to avoid black views
   const handleRoleChange = (role: string) => {
-    setCurrentRole(role);
-    localStorage.setItem("sihadir_role", role);
+    const normalizedRole = role === "murid" ? "siswa" : role;
+    setCurrentRole(normalizedRole);
+    localStorage.setItem("sihadir_role", normalizedRole);
     let defaultTab = "profil-guru";
-    if (role === "siswa") {
+    if (normalizedRole === "siswa") {
       defaultTab = "student-attendance";
     } else if (role === "ketua_kelas") {
       defaultTab = "ketua-kelas-dashboard";
@@ -139,11 +140,12 @@ export default function App() {
   };
 
   const handleQuickSwitch = (username: string, role: string) => {
+    const normalizedRole = role === "murid" ? "siswa" : role;
     setAuthUsername(username);
-    setCurrentRole(role);
+    setCurrentRole(normalizedRole);
     localStorage.setItem("sihadir_authenticated", "true");
     localStorage.setItem("sihadir_username", username);
-    localStorage.setItem("sihadir_role", role);
+    localStorage.setItem("sihadir_role", normalizedRole);
     
     // Sync active teacher name so teacher attendance never defaults to wrong person
     const activeTeacher = (role === "admin" || username === "admin" || username.toLowerCase().includes("arham"))
@@ -153,7 +155,7 @@ export default function App() {
     
     // Set appropriate default tab
     let defaultTab = "profil-guru";
-    if (role === "siswa") {
+    if (normalizedRole === "siswa") {
       defaultTab = "student-attendance";
     } else if (role === "ketua_kelas") {
       defaultTab = "ketua-kelas-dashboard";
@@ -173,12 +175,13 @@ export default function App() {
   };
 
   const handleLoginSuccess = (username: string, role: string) => {
+    const normalizedRole = role === "murid" ? "siswa" : role;
     setIsAuthenticated(true);
     setAuthUsername(username);
-    setCurrentRole(role);
+    setCurrentRole(normalizedRole);
     localStorage.setItem("sihadir_authenticated", "true");
     localStorage.setItem("sihadir_username", username);
-    localStorage.setItem("sihadir_role", role);
+    localStorage.setItem("sihadir_role", normalizedRole);
     
     // Sync active teacher name so teacher attendance never defaults to wrong person
     const activeTeacher = (role === "admin" || username === "admin" || username.toLowerCase().includes("arham"))
@@ -188,7 +191,7 @@ export default function App() {
     
     // Set default tab based on logged-in role
     let defaultTab = "profil-guru";
-    if (role === "siswa") {
+    if (normalizedRole === "siswa") {
       defaultTab = "student-attendance";
     } else if (role === "ketua_kelas") {
       defaultTab = "ketua-kelas-dashboard";

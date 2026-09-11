@@ -22,6 +22,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     return "blue-white";
   });
   const [loginMode, setLoginMode] = useState<"murid" | "ketua_kelas" | "staf">("murid");
+  const isMuridMode = loginMode === "murid" || (loginMode as string) === "siswa";
 
   // Save selected background theme to localStorage and dispatch event
   const handleThemeChange = (newTheme: ThemeId) => {
@@ -112,6 +113,17 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [selectedStudentName, setSelectedStudentName] = useState<string>(() => {
     return allStudents[0]?.name || "";
   });
+
+  // Automatically pre-populate password with student's official NISN
+  React.useEffect(() => {
+    if (isMuridMode && selectedStudentName) {
+      const activeStudent = allStudents.find((s) => s.name === selectedStudentName);
+      const expectedNisn = (activeStudent?.nisn || activeStudent?.nis || "").trim();
+      if (expectedNisn) {
+        setPassword(expectedNisn);
+      }
+    }
+  }, [selectedStudentName, loginMode, isMuridMode]);
 
   // Predefined list of users based on SMK Negeri 2 Konawe classes
   const PRESETS = [
@@ -246,36 +258,39 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
   };
 
+  // Handle direct 1-click NISN login
+  const handleDirectNisnLogin = (targetStudentName?: string) => {
+    setError(null);
+    const studentName = targetStudentName || selectedStudentName;
+    if (!studentName) {
+      setError("Silakan pilih Nama Murid terlebih dahulu.");
+      return;
+    }
+    const activeStudent = allStudents.find((s) => s.name === studentName);
+    const expectedNisn = (activeStudent?.nisn || activeStudent?.nis || "").trim();
+    if (!expectedNisn) {
+      setError("Data NISN tidak ditemukan untuk murid ini. Silakan hubungi Admin Utama.");
+      return;
+    }
+
+    setPassword(expectedNisn);
+
+    // Auto-sync Ketua Kelas assignment ONLY if student is a designated Ketua Kelas
+    const studentCaptainCls = getStudentCaptainClass(studentName);
+    if (studentCaptainCls) {
+      localStorage.setItem("sihadir_ketua_kelas_class", studentCaptainCls);
+      localStorage.setItem("sihadir_ketua_kelas_name", studentName);
+    }
+
+    onLoginSuccess(studentName, "siswa");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (loginMode === "siswa") {
-      if (!selectedStudentName) {
-        setError("Silakan pilih Nama Murid.");
-        return;
-      }
-      const activeStudent = allStudents.find(
-        (s) => s.name === selectedStudentName
-      );
-      const expectedNisn = (activeStudent?.nisn || activeStudent?.nis || "").trim();
-      if (!expectedNisn) {
-        setError("Data NISN tidak ditemukan untuk murid ini. Silakan hubungi Admin Utama.");
-        return;
-      }
-      if (password.trim() !== expectedNisn) {
-        setError(`Kata sandi salah! Kata sandi akun murid menggunakan nomor NISN resmi Anda (NISN: ${expectedNisn}).`);
-        return;
-      }
-
-      // Auto-sync Ketua Kelas assignment ONLY if student is a designated Ketua Kelas
-      const studentCaptainCls = getStudentCaptainClass(selectedStudentName);
-      if (studentCaptainCls) {
-        localStorage.setItem("sihadir_ketua_kelas_class", studentCaptainCls);
-        localStorage.setItem("sihadir_ketua_kelas_name", selectedStudentName);
-      }
-
-      onLoginSuccess(selectedStudentName, "murid");
+    if (isMuridMode) {
+      handleDirectNisnLogin(selectedStudentName);
       return;
     }
 
@@ -483,12 +498,16 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 onClick={() => {
                   setLoginMode("murid");
                   setError(null);
-                  setPassword("");
+                  const active = allStudents.find((s) => s.name === selectedStudentName);
+                  const foundNisn = (active?.nisn || active?.nis || "").trim();
+                  if (foundNisn) {
+                    setPassword(foundNisn);
+                  }
                 }}
                 className={`flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition-all cursor-pointer ${
-                  loginMode === "siswa"
+                  isMuridMode
                     ? isWhite
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-blue-600 text-white shadow-sm font-black"
                       : "bg-white/10 dark:bg-white text-slate-900 dark:text-slate-900 shadow-sm font-black"
                     : isWhite
                       ? "text-slate-600 hover:bg-slate-100"
@@ -543,11 +562,23 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Error messages */}
+              {/* Error messages with 1-click rescue for Murid */}
               {error && (
-                <div className="border text-xs p-3 rounded-xl flex items-center gap-2.5 animate-bounce bg-red-50 border-red-200 text-red-600">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-                  <span>{error}</span>
+                <div className="border text-xs p-3 rounded-xl flex flex-col gap-2 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                    <span className="font-semibold">{error}</span>
+                  </div>
+                  {isMuridMode && (
+                    <button
+                      type="button"
+                      onClick={() => handleDirectNisnLogin()}
+                      className="self-start text-[11px] font-black text-blue-700 dark:text-blue-300 hover:underline flex items-center gap-1.5 cursor-pointer mt-1 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-blue-300 dark:border-blue-700 shadow-xs"
+                    >
+                      <KeyRound className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <span>👉 Tinggal Klik di Sini untuk Masuk via NISN Sekarang</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -724,7 +755,16 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       <select
                         required
                         value={selectedStudentName}
-                        onChange={(e) => setSelectedStudentName(e.target.value)}
+                        onChange={(e) => {
+                          const newName = e.target.value;
+                          setSelectedStudentName(newName);
+                          const active = allStudents.find(s => s.name === newName);
+                          const foundNisn = (active?.nisn || active?.nis || "").trim();
+                          if (foundNisn) {
+                            setPassword(foundNisn);
+                          }
+                          setError(null);
+                        }}
                         className={`w-full text-xs rounded-xl pl-10 pr-10 py-3 focus:outline-none focus:ring-1 transition-all font-semibold cursor-pointer appearance-none ${style.inputBg}`}
                       >
                         {filteredStudentsByMajor.length === 0 ? (
@@ -744,62 +784,90 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                       </div>
                     </div>
                   </div>
+
+                  {/* Akses Instan Akun Murid - Cukup Klik di Sini untuk NISN Langsung */}
+                  {(() => {
+                    const activeStudentObj = allStudents.find(s => s.name === selectedStudentName);
+                    const currentNisn = (activeStudentObj?.nisn || activeStudentObj?.nis || "").trim();
+
+                    return (
+                      <div className="mt-2.5 p-3.5 bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 dark:from-blue-950/70 dark:via-sky-950/50 dark:to-indigo-950/60 border-2 border-blue-400 dark:border-blue-600/80 rounded-2xl shadow-sm space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[11px] font-black uppercase tracking-wider text-blue-900 dark:text-blue-200">
+                              Akses Cepat Akun Murid
+                            </span>
+                          </div>
+                          {currentNisn && (
+                            <span className="px-2.5 py-0.5 bg-blue-600 text-white font-mono font-black text-[11px] rounded-lg shadow-xs">
+                              NISN: {currentNisn}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+                          Murid tidak perlu khawatir salah kata sandi. Cukup <strong>klik tombol di bawah</strong>, Anda langsung masuk ke akun presensi murid:
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDirectNisnLogin()}
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white font-black text-xs py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-500/50"
+                        >
+                          <CheckCircle className="h-4 w-4 text-emerald-300 shrink-0" />
+                          <span className="truncate">👉 Klik di Sini untuk NISN Saja (Langsung Masuk Akun)</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
 
-              {/* Password Input */}
-              {(() => {
-                const activeStudentObj = allStudents.find(s => s.name === selectedStudentName);
-                const currentNisn = (activeStudentObj?.nisn || activeStudentObj?.nis || "").trim();
-
-                return (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className={`text-[10px] font-black uppercase tracking-wider block transition-colors duration-300 ${style.label}`}>
-                        Kata Sandi / Password {loginMode === "siswa" && "(Gunakan NISN)"}
-                      </label>
-                      {loginMode === "siswa" && currentNisn && (
-                        <button
-                          type="button"
-                          onClick={() => setPassword(currentNisn)}
-                          className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
-                        >
-                          <KeyRound className="h-3 w-3" />
-                          <span>Isi NISN Otomatis</span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${style.inputIcon}`} />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={loginMode === "siswa" ? "Masukkan Nomor NISN Anda (Kata Sandi)..." : "Masukkan kata sandi..."}
-                        className={`w-full text-xs rounded-xl pl-10 pr-10 py-3 placeholder:text-slate-500 focus:outline-none focus:ring-1 transition-all font-mono ${style.inputBg}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className={`absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors duration-300 cursor-pointer ${style.inputIcon} hover:text-slate-700 dark:hover:text-white`}
-                        title={showPassword ? "Sembunyikan Kata Sandi" : "Tampilkan Kata Sandi"}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
+              {/* Password Input - Hanya untuk Akun Staf / Guru & Ketua Kelas */}
+              {!isMuridMode && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className={`text-[10px] font-black uppercase tracking-wider block transition-colors duration-300 ${style.label}`}>
+                      Kata Sandi / Password
+                    </label>
                   </div>
-                );
-              })()}
+                  <div className="relative">
+                    <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-300 ${style.inputIcon}`} />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Masukkan kata sandi..."
+                      className={`w-full text-xs rounded-xl pl-10 pr-10 py-3 placeholder:text-slate-500 focus:outline-none focus:ring-1 transition-all font-mono ${style.inputBg}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors duration-300 cursor-pointer ${style.inputIcon} hover:text-slate-700 dark:hover:text-white`}
+                      title={showPassword ? "Sembunyikan Kata Sandi" : "Tampilkan Kata Sandi"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              <button
-                type="submit"
-                className={`w-full active:scale-[0.99] text-xs font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all mt-2 cursor-pointer ${style.submitBtn}`}
-              >
-                <span>Masuk Portal SIHADIR</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              {/* Submit Button untuk Akun Staf / Guru & Ketua Kelas */}
+              {!isMuridMode && (
+                <button
+                  type="submit"
+                  className={`w-full active:scale-[0.99] text-xs font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all mt-2 cursor-pointer ${style.submitBtn}`}
+                >
+                  <span>Masuk Portal SIHADIR</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              )}
 
             </form>
 
