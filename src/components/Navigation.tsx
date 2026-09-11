@@ -97,15 +97,15 @@ export function Navigation({
   const allRoles = [
     { id: "tu", label: isSaktiOrAdeliaUser ? "Admin Tata Usaha (TU)" : "Staf Tata Usaha", desc: "Rekap & Arsip Laporan Kehadiran Murid" },
     { id: "admin", label: "Administrator Utama", desc: "Akses Penuh Semua Modul, Pengaturan & Data Master" },
-    { id: "siswa", label: "Akses Siswa (Murid)", desc: "Lihat Rekap Presensi & Konsultasi" },
+    { id: "siswa", label: "Akses Murid", desc: "Lihat Rekap Presensi & Konsultasi" },
     { id: "bk", label: "Bimbingan Konseling (BK)", desc: "Analisis Karakter & Rekap Presensi" },
     { id: "guru", label: "Guru Mata Pelajaran", desc: "Modul Ajar, Soal & Jurnal" },
-    { id: "piket", label: "Guru Piket", desc: "Monitor KBM, Absen Kelas, Izin Siswa & Jurnal" },
+    { id: "piket", label: "Guru Piket", desc: "Monitor KBM, Absen Kelas, Izin Murid & Jurnal" },
     { id: "guru_wali", label: "Guru Wali", desc: "Layanan Pembimbingan & Presensi" },
     { id: "kepsek", label: "Kepala Sekolah", desc: "Statistik, Kehadiran & Audit Kurikulum" },
     { id: "ketua_kelas", label: "Ketua Kelas", desc: "Laporan harian mandiri & broadcast WA" },
     { id: "wali", label: "Wali Kelas", desc: "Absensi & Laporan OrangTua (WA)" },
-    { id: "kesiswaan", label: "Waka Kesiswaan", desc: "Kedisiplinan & Tata Tertib Siswa" },
+    { id: "kesiswaan", label: "Waka Kesiswaan", desc: "Kedisiplinan & Tata Tertib Murid" },
     { id: "kurikulum", label: "Waka Kurikulum", desc: "Atur Kurikulum, Data Master & Monitor" }
   ].sort((a, b) => a.label.localeCompare(b.label, "id"));
 
@@ -218,12 +218,12 @@ export function Navigation({
 
       // Only allow student who is genuinely a designated Ketua Kelas to access both roles
       if (isUserClassCaptain) {
-        allowedRoleIds.add("siswa");
+        allowedRoleIds.add("murid");
         allowedRoleIds.add("ketua_kelas");
       } else {
         allowedRoleIds.delete("ketua_kelas");
         if (currentRole === "siswa" || currentRole === "ketua_kelas") {
-          allowedRoleIds.add("siswa");
+          allowedRoleIds.add("murid");
         }
       }
       
@@ -255,8 +255,8 @@ export function Navigation({
         items = [
           { id: "ketua-kelas-dashboard", label: `Dasbor & Scan QR Kelas ${userCaptainClass ? `(${userCaptainClass})` : ""}`, icon: ClipboardList },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
-          { id: "student-attendance", label: "Presensi Harian Siswa", icon: Users },
-          { id: "refleksi-siswa", label: "Refleksi Harian Siswa", icon: MessageSquare }
+          { id: "student-attendance", label: "Presensi Harian Murid", icon: Users },
+          { id: "refleksi-siswa", label: "Refleksi Harian Murid", icon: MessageSquare }
         ];
         break;
       case "admin":
@@ -297,7 +297,7 @@ export function Navigation({
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "student-attendance", label: "Presensi Mapel & Jadwal Guru", icon: Users },
           { id: "ketua-kelas-dashboard", label: "Jurnal KBM & Monitoring Guru", icon: ClipboardList },
-          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP (0-100)", icon: ShieldAlert },
+          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP Murid", icon: ShieldAlert },
           { id: "rekap-laporan", label: "Rekap Laporan Kedisiplinan", icon: ClipboardList }
         ];
         break;
@@ -305,7 +305,6 @@ export function Navigation({
         items = [
           { id: "guru-piket-dashboard", label: "Menu Kerja & Scan QR Piket", icon: ShieldAlert },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
-          { id: "kredit-pelanggaran", label: "Catat Poin Pelanggaran Siswa", icon: ShieldAlert },
           { id: "profil-guru", label: "Profil Guru Piket", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin }
         ];
@@ -314,7 +313,7 @@ export function Navigation({
         items = [
           { id: "kerjaan-wali-kelas", label: "Menu Kerjaan Wali Kelas", icon: Users },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
-          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran Siswa Binaan", icon: ShieldAlert },
+          { id: "kredit-pelanggaran", label: "Poin Pelanggaran Murid Perwalian", icon: ShieldAlert },
           { id: "profil-guru", label: "Profil Wali Kelas", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin },
           { id: "parent-report", label: "Laporan WA Ortu", icon: MessageSquare }
@@ -324,6 +323,7 @@ export function Navigation({
         items = [
           { id: "kerjaan-guru-wali", label: "Menu Kerja Guru Wali", icon: HeartHandshake },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
+          { id: "kredit-pelanggaran", label: "Poin Pelanggaran Murid Binaan", icon: ShieldAlert },
           { id: "profil-guru", label: "Profil Guru Wali", icon: User },
           { id: "absensi-guru", label: "Guru absen disini", icon: MapPin }
         ];
@@ -340,8 +340,8 @@ export function Navigation({
           { id: "kelas-bimbingan", label: "Menu Kerja & Scan QR BK", icon: HeartHandshake },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
           { id: "profil-guru", label: "Profil Guru BK", icon: User },
-          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP Siswa", icon: ShieldAlert },
-          { id: "rekap-laporan", label: "Rekap Laporan Siswa BK", icon: ClipboardList }
+          { id: "kredit-pelanggaran", label: "Kredit Pelanggaran & SP Murid", icon: ShieldAlert },
+          { id: "rekap-laporan", label: "Rekap Laporan Murid BK", icon: ClipboardList }
         ];
         break;
       case "kepsek":
@@ -355,7 +355,7 @@ export function Navigation({
         items = [
           { id: "student-attendance", label: "Murid Absen Disini", icon: ClipboardList },
           { id: "chat-sekolah", label: "Kolom Chatting Sihadir", icon: MessageSquare },
-          { id: "refleksi-siswa", label: "Refleksi Harian Siswa", icon: MessageSquare }
+          { id: "refleksi-siswa", label: "Refleksi Harian Murid", icon: MessageSquare }
         ];
         if (isUserClassCaptain) {
           items.unshift({ 

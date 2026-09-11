@@ -50,9 +50,30 @@
         "updatedAt": { "type": "string", "description": "ISO timestamp" }
       },
       "required": ["id", "className", "date"]
+    },
+    "MasterTeacher": {
+      "title": "MasterTeacher",
+      "description": "Master teacher record including profile photo, duties, and subjects",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique teacher ID" },
+        "name": { "type": "string", "description": "Teacher full name" },
+        "nip": { "type": "string", "description": "Civil servant ID" },
+        "nuptk": { "type": "string", "description": "Educator ID" },
+        "subject": { "type": "string", "description": "Subject taught" },
+        "role": { "type": "string", "description": "Primary role" },
+        "photoUrl": { "type": "string", "description": "Profile picture data or URL" },
+        "whatsApp": { "type": "string", "description": "WhatsApp contact number" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["id", "name"]
     }
   },
   "firestore": {
+    "/master_teachers/{id}": {
+      "schema": "MasterTeacher",
+      "description": "Store master teacher data and profile photos"
+    },
     "/student_self_attendance/{id}": {
       "schema": "StudentSelfAttendance",
       "description": "Store individual student self-clock-in attendance records"

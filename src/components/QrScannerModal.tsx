@@ -40,7 +40,7 @@ interface ScanHistoryItem {
   id: string;
   code: string;
   name: string;
-  roleType: "Siswa" | "Guru" | "Personel TU" | "Lainnya";
+  roleType: "Murid" | "Guru" | "Personel TU" | "Lainnya";
   classOrDept: string;
   time: string;
   date: string;
@@ -263,7 +263,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       .replace(/_/g, " ")
       .trim();
 
-    // Parse structured card QR payload (Nama Siswa, NISN, Jurusan, Sekolah)
+    // Parse structured card QR payload (Nama Murid, NISN, Jurusan, Sekolah)
     let payloadNisn = "";
     let payloadName = "";
     let payloadMajor = "";
@@ -330,14 +330,14 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
       if (match) {
         const m = match as any;
         foundStudent = {
-          name: m.nama || m.name || payloadName || "Siswa",
+          name: m.nama || m.name || payloadName || "Murid",
           nis: m.nisn || m.nis || payloadNisn || targetCode,
           class: m.kelas || m.className || payloadMajor || inferredClass || defaultClassName || "SMK Negeri 2 Konawe"
         };
       } else if (payloadName || payloadNisn) {
         // Fallback directly from QR payload if student not yet in local storage
         foundStudent = {
-          name: payloadName || "Siswa",
+          name: payloadName || "Murid",
           nis: payloadNisn || targetCode,
           class: payloadMajor || "SMK Negeri 2 Konawe"
         };
@@ -356,7 +356,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
 
     if (foundStudent) {
       return {
-        type: "Siswa" as const,
+        type: "Murid" as const,
         name: foundStudent.name,
         code: foundStudent.nis || targetCode,
         detail: `Kelas ${foundStudent.class}`
@@ -366,7 +366,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
     // Fallback: If not found, extrapolate neatly
     if (targetName) {
       return {
-        type: "Siswa" as const,
+        type: "Murid" as const,
         name: targetName,
         code: targetCode,
         detail: `Terdaftar via QR (ID: ${targetCode})`
@@ -440,7 +440,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
 
     // Save to Local Storage according to role & type
     try {
-      if (personInfo.type === "Siswa") {
+      if (personInfo.type === "Murid") {
         const rawAtt = localStorage.getItem("simpati_saved_attendance_logs");
         let attLogs = rawAtt ? JSON.parse(rawAtt) : [];
         if (!Array.isArray(attLogs)) attLogs = [];
@@ -495,7 +495,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
           clockIn: nowTimeStr,
           method: "Scan Barcode / QR Kios",
           recordedBy: `Kios Scanner Mandiri (${role})`,
-          notes: `Verifikasi Presensi QR / Barcode Siswa`
+          notes: `Verifikasi Presensi QR / Barcode Murid`
         }).catch(err => console.warn("Failed real-time notification to TU & BK:", err));
       } else if (personInfo.type === "Guru") {
         const rawTeachers = localStorage.getItem("simpati_teacher_attendance_logs");
@@ -774,10 +774,10 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
             </span>
             <h3 className="text-lg font-black text-slate-900 mt-1">BUKAN HARI PIKET ANDA</h3>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              Sebagai <strong>Guru Piket</strong>, Anda hanya berwenang melakukan Scan QR Kehadiran Siswa pada HARI PIKET Anda (<strong>{piketCheck.assignedDays.join(", ")}</strong>).
+              Sebagai <strong>Guru Piket</strong>, Anda hanya berwenang melakukan Scan QR Kehadiran Murid pada HARI PIKET Anda (<strong>{piketCheck.assignedDays.join(", ")}</strong>).
             </p>
             <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl text-xs text-slate-700 font-semibold mt-2">
-              Hari ini adalah <strong>{piketCheck.todayDay}</strong>. Di luar hari piket Anda, Kios Scanner QR Kehadiran Siswa dikunci.
+              Hari ini adalah <strong>{piketCheck.todayDay}</strong>. Di luar hari piket Anda, Kios Scanner QR Kehadiran Murid dikunci.
             </div>
           </div>
           <button
@@ -810,7 +810,7 @@ export const QrScannerModal: React.FC<QrScannerModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Dekatkan kartu QR Code siswa/guru ke arah kamera
+                Dekatkan kartu QR Code murid/guru ke arah kamera
               </p>
             </div>
           </div>

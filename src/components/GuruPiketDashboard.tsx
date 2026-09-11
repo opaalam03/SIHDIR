@@ -21,7 +21,7 @@ interface PiketKbmLog {
   className: string;
   subject: string;
   regularTeacher: string;
-  status: "Lancar" | "Tugas Mandiri" | "Kelas Kosong" | "Guru Terlambat" | "Insiden Siswa";
+  status: "Lancar" | "Tugas Mandiri" | "Kelas Kosong" | "Guru Terlambat" | "Insiden Murid";
   incidentNotes: string;
   piketStaff: string;
 }
@@ -274,6 +274,42 @@ export const checkIsPiketDutyToday = (
   };
 };
 
+export interface KbmIncidentOption {
+  id: string;
+  title: string;
+  desc: string;
+  badge: string;
+  status: PiketKbmLog["status"];
+  badgeColor: string;
+}
+
+export const KBM_INCIDENT_OPTIONS: KbmIncidentOption[] = [
+  {
+    id: "lancar",
+    title: "1. KBM Tertib & Kondusif",
+    desc: "KBM berjalan tertib, kondusif, dan seluruh siswa mengikuti materi tepat waktu.",
+    badge: "Lancar",
+    status: "Lancar",
+    badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200"
+  },
+  {
+    id: "tugas_mandiri",
+    title: "2. Guru Berhalangan / Tugas Mandiri",
+    desc: "Guru berhalangan hadir / dinas luar, kelas dibimbing piket dengan modul tugas mandiri terarah.",
+    badge: "Tugas Mandiri",
+    status: "Tugas Mandiri",
+    badgeColor: "bg-amber-100 text-amber-800 border-amber-200"
+  },
+  {
+    id: "penertiban",
+    title: "3. Penertiban Siswa / Kedisiplinan",
+    desc: "Terdapat penertiban kedisiplinan (siswa izin keluar / terlambat / ke UKS) dan telah ditindaklanjuti piket.",
+    badge: "Insiden Murid",
+    status: "Insiden Murid",
+    badgeColor: "bg-rose-100 text-rose-800 border-rose-200"
+  }
+];
+
 export function GuruPiketDashboard({ username, currentRole }: { username: string; currentRole: string }) {
   // Navigation Tabs within the Piket Panel
   const [activeSubTab, setActiveSubTab] = useState<"summary" | "jadwal-piket" | "kbm-logs" | "student-passes" | "guest-book" | "substitutions">("summary");
@@ -303,7 +339,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
         subject: "Pemeliharaan Mesin Kendaraan Ringan",
         regularTeacher: "Isnawati, S.Pd.",
         status: "Tugas Mandiri",
-        incidentNotes: "Guru sedang ada rapat di Dinas Pendidikan. Siswa diberikan tugas merangkum Bab 4 di perpustakaan.",
+        incidentNotes: "Guru sedang ada rapat di Dinas Pendidikan. Murid diberikan tugas merangkum Bab 4 di perpustakaan.",
         piketStaff: username || "Guru Piket"
       },
       {
@@ -442,6 +478,53 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
   const [formKbmTeacher, setFormKbmTeacher] = useState(TEACHERS_LIST[0]);
   const [formKbmStatus, setFormKbmStatus] = useState<PiketKbmLog["status"]>("Lancar");
   const [formKbmNotes, setFormKbmNotes] = useState("");
+  const [selectedIncidentIds, setSelectedIncidentIds] = useState<string[]>([]);
+
+  // Incident template options handlers
+  const handleToggleIncidentOption = (id: string) => {
+    const isCurrentlySelected = selectedIncidentIds.includes(id);
+    const nextSelected = isCurrentlySelected
+      ? selectedIncidentIds.filter(x => x !== id)
+      : [...selectedIncidentIds, id];
+
+    setSelectedIncidentIds(nextSelected);
+
+    if (nextSelected.length === 0) {
+      setFormKbmNotes("");
+    } else if (nextSelected.length === 1) {
+      const single = KBM_INCIDENT_OPTIONS.find(o => o.id === nextSelected[0]);
+      if (single) {
+        setFormKbmNotes(single.desc);
+        setFormKbmStatus(single.status);
+      }
+    } else {
+      const combined = nextSelected
+        .map(optId => {
+          const opt = KBM_INCIDENT_OPTIONS.find(o => o.id === optId);
+          return opt ? `• ${opt.desc}` : "";
+        })
+        .filter(Boolean)
+        .join("\n");
+      setFormKbmNotes(combined);
+      if (nextSelected.includes("penertiban")) {
+        setFormKbmStatus("Insiden Murid");
+      } else if (nextSelected.includes("tugas_mandiri")) {
+        setFormKbmStatus("Tugas Mandiri");
+      }
+    }
+  };
+
+  const handleSelectAllIncidents = () => {
+    const allIds = KBM_INCIDENT_OPTIONS.map(o => o.id);
+    setSelectedIncidentIds(allIds);
+    const combinedAll = KBM_INCIDENT_OPTIONS.map(o => `• ${o.desc}`).join("\n");
+    setFormKbmNotes(combinedAll);
+  };
+
+  const handleClearIncidentSelection = () => {
+    setSelectedIncidentIds([]);
+    setFormKbmNotes("");
+  };
 
   // Student Pass Form
   const [formPassName, setFormPassName] = useState("");
@@ -492,7 +575,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
         const randomAvatar = mockAvatars[Math.floor(Math.random() * mockAvatars.length)];
         setFormPassPhoto(randomAvatar);
         setIsCapturing(false);
-        triggerAlert("Simulasi Kamera", "Berhasil mengambil foto bukti surat/siswa via kamera virtual.", "info");
+        triggerAlert("Simulasi Kamera", "Berhasil mengambil foto bukti surat/murid via kamera virtual.", "info");
       }, 1500);
     }
   };
@@ -552,6 +635,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
     setKbmLogs(prev => [newLog, ...prev]);
     setFormKbmSubject("");
     setFormKbmNotes("");
+    setSelectedIncidentIds([]);
     triggerAlert("Berhasil Disimpan", "Jurnal Pemantauan KBM berhasil dicatat dalam rekapitulasi harian.", "success");
   };
 
@@ -559,7 +643,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
   const handleAddStudentPass = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formPassName.trim() || !formPassReason.trim()) {
-      triggerAlert("Form Belum Lengkap", "Harap masukkan nama siswa dan alasan pemberian izin.", "warning");
+      triggerAlert("Form Belum Lengkap", "Harap masukkan nama murid dan alasan pemberian izin.", "warning");
       return;
     }
 
@@ -582,16 +666,16 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
     setFormPassReason("");
     setFormPassPhone("");
     setFormPassPhoto(null);
-    triggerAlert("Surat Izin Diterbitkan", `Surat ${formPassType} berhasil dibuat untuk ${formPassName}. Silakan bagikan via WhatsApp ke wali siswa.`, "success");
+    triggerAlert("Surat Izin Diterbitkan", `Surat ${formPassType} berhasil dibuat untuk ${formPassName}. Silakan bagikan via WhatsApp ke wali murid.`, "success");
   };
 
   // Send WhatsApp Broadcast Template for Student Permission
   const sendStudentPassWA = (pass: StudentPermissionPass) => {
     const message = `*SIHADIR SMK NEGERI 2 KONAWE - SURAT IZIN GURU PIKET*%0A%0A` +
-      `Yth. Orang Tua / Wali dari siswa:*%0A` +
+      `Yth. Orang Tua / Wali dari murid:*%0A` +
       `👤 Nama: *${pass.studentName}*%0A` +
       `🏫 Kelas: *${pass.className}*%0A%0A` +
-      `Menerangkan bahwa siswa tersebut telah diberikan izin oleh Guru Piket untuk:*%0A` +
+      `Menerangkan bahwa murid tersebut telah diberikan izin oleh Guru Piket untuk:*%0A` +
       `🎫 Jenis Izin: *${pass.type}*%0A` +
       `⏰ Jam Keluar/Masuk: *${pass.time} WITA*%0A` +
       `📝 Alasan/Keterangan: *${pass.reason}*%0A` +
@@ -684,8 +768,8 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
       `🏫 Mengajar di Kelas: *${sub.className}*%0A` +
       `⏰ Waktu/Jam: *${sub.period}*%0A%0A` +
       `Berdasarkan kesepakatan Guru Piket harian, memohon kesediaan Bapak/Ibu untuk mengawasi kelas tersebut dengan memberikan arahan tugas:*%0A` +
-      `📝 Materi / Tugas Siswa: *"${sub.givenTask}"*%0A%0A` +
-      `Terima kasih atas bantuan dan dedikasi Bapak/Ibu dalam menjaga proses belajar mandiri siswa tetap tertib.`;
+      `📝 Materi / Tugas Murid: *"${sub.givenTask}"*%0A%0A` +
+      `Terima kasih atas bantuan dan dedikasi Bapak/Ibu dalam menjaga proses belajar mandiri murid tetap tertib.`;
 
     const waUrl = `https://wa.me/?text=${message}`;
     window.open(waUrl, "_blank");
@@ -759,7 +843,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
               if (!currentCheck.isDutyToday) {
                 triggerAlert(
                   "⛔ AKSES SCAN QR KEHADIRAN DITOLAK",
-                  `Maaf, Anda (${username || 'Guru Piket'}) hanya berwenang melakukan Scan QR Kehadiran Siswa pada HARI PIKET Anda (${currentCheck.assignedDays.join(", ")}).\n\nHari ini adalah hari ${currentCheck.todayDay}. Di luar hari piket Anda, Kios Scanner QR Kehadiran Siswa dikunci.\n\nJika Anda bertugas menggantikan rekan guru lain hari ini, Anda dapat memilih/menyetel 'Setel Hari Piket' pada kontrol status di bawah.`,
+                  `Maaf, Anda (${username || 'Guru Piket'}) hanya berwenang melakukan Scan QR Kehadiran Murid pada HARI PIKET Anda (${currentCheck.assignedDays.join(", ")}).\n\nHari ini adalah hari ${currentCheck.todayDay}. Di luar hari piket Anda, Kios Scanner QR Kehadiran Murid dikunci.\n\nJika Anda bertugas menggantikan rekan guru lain hari ini, Anda dapat memilih/menyetel 'Setel Hari Piket' pada kontrol status di bawah.`,
                   "warning"
                 );
                 return;
@@ -815,11 +899,11 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
             <p className="text-xs font-semibold leading-relaxed">
               {dutyCheck.isDutyToday ? (
                 <span>
-                  🟢 Anda dapat melakukan Scan QR Kehadiran Siswa karena hari ini (<strong>{dutyCheck.todayDay}</strong>) adalah jadwal piket Anda (<strong>{dutyCheck.assignedDays.join(", ")}</strong>).
+                  🟢 Anda dapat melakukan Scan QR Kehadiran Murid karena hari ini (<strong>{dutyCheck.todayDay}</strong>) adalah jadwal piket Anda (<strong>{dutyCheck.assignedDays.join(", ")}</strong>).
                 </span>
               ) : (
                 <span>
-                  🔴 Hari ini (<strong>{dutyCheck.todayDay}</strong>) BUKAN jadwal piket Anda (Jadwal Anda: <strong>{dutyCheck.assignedDays.join(", ")}</strong>). Fitur Scan QR Kehadiran Siswa khusus Guru Piket dikunci.
+                  🔴 Hari ini (<strong>{dutyCheck.todayDay}</strong>) BUKAN jadwal piket Anda (Jadwal Anda: <strong>{dutyCheck.assignedDays.join(", ")}</strong>). Fitur Scan QR Kehadiran Murid khusus Guru Piket dikunci.
                 </span>
               )}
             </p>
@@ -844,7 +928,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
             }}
             className="bg-white border border-slate-300 text-slate-900 text-xs font-extrabold rounded-xl px-2.5 py-1.5 focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs"
           >
-            <option value="">Otomatis (Sesuai SK Official)</option>
+            <option value="">Otomatis (Jadwal Resmi Tim Piket)</option>
             <option value="Senin">Senin (Seluruh Dewan Guru)</option>
             <option value="Selasa">Selasa</option>
             <option value="Rabu">Rabu</option>
@@ -878,7 +962,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
           }`}
         >
           <Calendar className="h-4 w-4" />
-          <span>Pemetaan Tim Piket (SK Official)</span>
+          <span>Pemetaan Tim Piket</span>
         </button>
         <button
           onClick={() => setActiveSubTab("kbm-logs")}
@@ -1000,7 +1084,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                 <ul className="text-xs text-slate-700 space-y-3 font-medium">
                   <li className="flex gap-2 items-start">
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shrink-0">1</span>
-                    <span>Hadir di lobi/pintu gerbang sekolah mulai pukul 07:00 untuk memantau kehadiran siswa terlambat.</span>
+                    <span>Hadir di lobi/pintu gerbang sekolah mulai pukul 07:00 untuk memantau kehadiran murid terlambat.</span>
                   </li>
                   <li className="flex gap-2 items-start">
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shrink-0">2</span>
@@ -1008,7 +1092,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                   </li>
                   <li className="flex gap-2 items-start">
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shrink-0">3</span>
-                    <span>Menerbitkan Surat Izin Keluar Sekolah bermaterai foto siswa sebagai bukti sah meninggalkan sekolah saat jam aktif.</span>
+                    <span>Menerbitkan Surat Izin Keluar Sekolah bermaterai foto murid sebagai bukti sah meninggalkan sekolah saat jam aktif.</span>
                   </li>
                   <li className="flex gap-2 items-start">
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shrink-0">4</span>
@@ -1075,7 +1159,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
           </motion.div>
         )}
 
-        {/* TAB 1.5: JADWAL & PEMETAAN TIM PIKET RESMI (SK KEPSEK) */}
+        {/* TAB 1.5: JADWAL & PEMETAAN TIM PIKET */}
         {activeSubTab === "jadwal-piket" && (
           <motion.div
             key="jadwal-piket"
@@ -1084,36 +1168,14 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            {/* Banner SK Header */}
-            <div className="bg-gradient-to-r from-amber-600 via-amber-700 to-amber-900 text-white p-6 rounded-3xl shadow-lg space-y-2 border border-amber-500/30">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-amber-500/30 pb-3">
-                <div>
-                  <span className="bg-white text-amber-900 font-black text-[10px] uppercase px-2.5 py-1 rounded-md shadow-xs">
-                    SK Kepala Sekolah
-                  </span>
-                  <h3 className="text-lg font-black tracking-tight mt-1.5">
-                    PEMBAGIAN TUGAS TAMBAHAN PETUGAS PIKET SMK NEGERI 2 KONAWE
-                  </h3>
-                  <p className="text-xs text-amber-100 font-medium">
-                    Tahun Pelajaran 2026-2027 • Keputusan No. 521.3 / .... / 800 / VII / 2026 (22 Juli 2026)
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const activeTeam = JADWAL_PIKET_SMK2_KONAWE.find(j => j.day === selectedScheduleDay) || JADWAL_PIKET_SMK2_KONAWE[4];
-                    sendPiketScheduleWA(activeTeam);
-                  }}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md cursor-pointer transition-all shrink-0"
-                >
-                  <Send className="h-4 w-4" />
-                  <span>Broadcast WA Tim Hari Ini</span>
-                </button>
-              </div>
-
-              <p className="text-xs text-amber-100/90 leading-relaxed font-medium pt-1">
-                Seluruh petugas piket pada hari yang bersangkutan secara otomatis terintegrasi ke dalam satu akun kerja Guru Piket. Untuk hari <strong>Senin</strong>, tugas piket dilaksanakan oleh <strong>Seluruh Guru SMK Negeri 2 Konawe</strong> secara kolektif.
+            {/* Header Pemetaan Tim Piket */}
+            <div className="bg-white p-4.5 rounded-2xl border border-slate-200 shadow-xs space-y-0.5">
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-amber-600" />
+                <span>Jadwal & Pemetaan Tim Piket Harian</span>
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Pilih hari di bawah untuk melihat daftar nama rekan guru yang bertugas piket.
               </p>
             </div>
 
@@ -1158,29 +1220,18 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
               const activeItem = JADWAL_PIKET_SMK2_KONAWE.find(j => j.day.toLowerCase().replace("'", "") === selectedScheduleDay.toLowerCase().replace("'", "")) || JADWAL_PIKET_SMK2_KONAWE[4];
               return (
                 <div id="detail-tim-piket" className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-5 scroll-mt-6">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b pb-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-indigo-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md">
-                          Tim Piket Hari {activeItem.day}
-                        </span>
-                        <span className="text-xs font-bold text-slate-400">•</span>
-                        <span className="text-xs font-bold text-slate-500">{activeItem.totalCount}</span>
-                      </div>
-                      <h3 className="text-lg font-black text-slate-900 mt-1">
-                        {activeItem.teamName}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium">{activeItem.description}</p>
+                  <div className="border-b pb-4 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md">
+                        Tim Piket Hari {activeItem.day}
+                      </span>
+                      <span className="text-xs font-bold text-slate-400">•</span>
+                      <span className="text-xs font-bold text-slate-500">{activeItem.totalCount}</span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => sendPiketScheduleWA(activeItem)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
-                    >
-                      <Share2 className="h-4 w-4" />
-                      <span>Kirim Laporan Tim WA</span>
-                    </button>
+                    <h3 className="text-lg font-black text-slate-900 mt-1">
+                      {activeItem.teamName}
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">{activeItem.description}</p>
                   </div>
 
                   {/* List of Personnel mapped */}
@@ -1372,19 +1423,104 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                     <option value="Tugas Mandiri">Guru Absen (Tugas Mandiri)</option>
                     <option value="Kelas Kosong">Guru Absen (Kelas Kosong)</option>
                     <option value="Guru Terlambat">Guru Terlambat Hadir</option>
-                    <option value="Insiden Siswa">Terdapat Kejadian Siswa</option>
+                    <option value="Insiden Murid">Terdapat Kejadian Murid</option>
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider">Catatan Detail Kejadian</label>
-                  <textarea
-                    rows={3}
-                    value={formKbmNotes}
-                    onChange={(e) => setFormKbmNotes(e.target.value)}
-                    placeholder="Contoh: Jam 1 guru belum hadir, kelas dialihkan ke modul latihan mandiri oleh piket."
-                    className="w-full bg-slate-50 border rounded-xl p-2.5 focus:bg-white transition-all"
-                  />
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider">
+                      Catatan Detail Kejadian
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={handleSelectAllIncidents}
+                        className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2 py-0.5 rounded-lg transition-all cursor-pointer active:scale-95"
+                        title="Pilih seluruh opsi kejadian sekaligus"
+                      >
+                        Pilih Semua (3)
+                      </button>
+                      {selectedIncidentIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearIncidentSelection}
+                          className="text-[10px] font-bold text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-1.5 py-0.5 rounded-lg transition-all cursor-pointer"
+                          title="Kosongkan pilihan"
+                        >
+                          Bersihkan
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight">
+                    Klik opsi di bawah (bisa dipilih salah satunya atau kombinasi keseluruhan):
+                  </p>
+
+                  {/* 3 Opsi Pilihan Kejadian Cepat */}
+                  <div className="space-y-1.5">
+                    {KBM_INCIDENT_OPTIONS.map((opt) => {
+                      const isSelected = selectedIncidentIds.includes(opt.id);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => handleToggleIncidentOption(opt.id)}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
+                            isSelected
+                              ? "bg-indigo-50/90 border-indigo-300 ring-2 ring-indigo-400/30 shadow-xs"
+                              : "bg-slate-50 hover:bg-slate-100/90 border-slate-200"
+                          }`}
+                        >
+                          <div className={`mt-0.5 h-4 w-4 rounded-md flex items-center justify-center shrink-0 border transition-all ${
+                            isSelected
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-2xs"
+                              : "bg-white border-slate-300"
+                          }`}>
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className={`text-[11px] font-extrabold ${isSelected ? "text-indigo-950" : "text-slate-800"}`}>
+                                {opt.title}
+                              </span>
+                              <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${opt.badgeColor}`}>
+                                {opt.badge}
+                              </span>
+                            </div>
+                            <p className={`text-[10px] leading-snug mt-1 ${isSelected ? "text-indigo-900 font-semibold" : "text-slate-500 font-normal"}`}>
+                              {opt.desc}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Textarea Catatan Detail Kejadian */}
+                  <div className="space-y-1 pt-1">
+                    <div className="flex justify-between items-center text-[9px] text-slate-400 font-medium">
+                      <span>Pratinjau / Tambahan Catatan Manual:</span>
+                      {formKbmNotes && (
+                        <span className="text-indigo-600 font-bold">
+                          {selectedIncidentIds.length > 0 ? `${selectedIncidentIds.length} opsi terpilih` : "Kustom"}
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={formKbmNotes}
+                      onChange={(e) => {
+                        setFormKbmNotes(e.target.value);
+                        if (!e.target.value.trim()) {
+                          setSelectedIncidentIds([]);
+                        }
+                      }}
+                      placeholder="Pilih opsi di atas atau ketik langsung detail kejadian di sini..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400 leading-relaxed"
+                    />
+                  </div>
                 </div>
 
                 <button
@@ -1482,7 +1618,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
           </motion.div>
         )}
 
-        {/* TAB 3: IZIN KELUAR/MASUK SISWA */}
+        {/* TAB 3: IZIN KELUAR/MASUK MURID */}
         {activeSubTab === "student-passes" && (
           <motion.div
             key="student-passes"
@@ -1500,7 +1636,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
 
               <form onSubmit={handleAddStudentPass} className="space-y-3.5 text-xs font-medium">
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider">Nama Siswa</label>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider">Nama Murid</label>
                   <input
                     type="text"
                     value={formPassName}
@@ -1746,7 +1882,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                     <option value="Orang Tua / Wali Murid">Orang Tua / Wali Murid</option>
                     <option value="Dinas Pendidikan / Pengawas">Dinas Pendidikan / Pengawas</option>
                     <option value="Sales / Vendor Sekolah">Sales / Vendor Kemitraan</option>
-                    <option value="Alumni Siswa">Alumni Siswa</option>
+                    <option value="Alumni Murid">Alumni Murid</option>
                     <option value="Tamu Umum / Masyarakat">Tamu Umum / Masyarakat</option>
                   </select>
                 </div>
@@ -1933,7 +2069,7 @@ export function GuruPiketDashboard({ username, currentRole }: { username: string
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider">Instruksi Tugas Siswa</label>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-wider">Instruksi Tugas Murid</label>
                   <textarea
                     rows={2}
                     value={formSubTask}

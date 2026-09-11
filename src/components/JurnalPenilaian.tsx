@@ -49,13 +49,13 @@ const SCHEDULES: ScheduleItem[] = [
     subject: "Teknik Kendaraan Ringan (Otomotif)",
     cpCode: "CP-TKR-01",
     cpTitle: "Capaian Pembelajaran TKR Fase F",
-    cpContent: "Pada akhir Fase F (kelas XI & XII SMK), peserta didik dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI (Electronic Fuel Injection) secara mandiri.",
+    cpContent: "Pada akhir Fase F (kelas XI & XII SMK), murid dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI (Electronic Fuel Injection) secara mandiri.",
     atpCode: "ATP-TKR-01",
     atpTitle: "ATP Perbaikan Engine Kendaraan",
     atpContent: "Alur pembelajaran dimulai dengan: (1) Penerapan prinsip K3LH di bengkel industri. (2) Identifikasi komponen motor 4 tak. (3) Perawatan sistem pelumasan dan pendinginan. (4) Troubleshooting sistem bahan bakar. (5) Diagnosis kerusakan sistem Electronic Fuel Injection (EFI).",
     tpCode: "TP-TKR-01",
     tpTitle: "Diagnosis Sistem EFI menggunakan Scan Tool OBD-II",
-    tpContent: "Peserta didik mampu melakukan diagnosis kode kerusakan (DTC) menggunakan Diagnostic Scan Tool OBD-II, mengukur sensor MAF dan ECT menggunakan multimeter digital.",
+    tpContent: "Murid mampu melakukan diagnosis kode kerusakan (DTC) menggunakan Diagnostic Scan Tool OBD-II, mengukur sensor MAF dan ECT menggunakan multimeter digital.",
     modulAjar: "Modul_Ajar_Diagnosis_EFI_FaseF.pdf (Modul Utama)",
   },
   {
@@ -66,13 +66,13 @@ const SCHEDULES: ScheduleItem[] = [
     subject: "Teknik Kendaraan Ringan (Otomotif)",
     cpCode: "CP-TKR-01",
     cpTitle: "Capaian Pembelajaran TKR Fase F",
-    cpContent: "Pada akhir Fase F (kelas XI & XII SMK), peserta didik dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI.",
+    cpContent: "Pada akhir Fase F (kelas XI & XII SMK), murid dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI.",
     atpCode: "ATP-TKR-01",
     atpTitle: "ATP Perbaikan Engine Kendaraan",
     atpContent: "Alur pembelajaran dimulai dengan: (1) Penerapan prinsip K3LH di bengkel industri. (2) Identifikasi komponen motor 4 tak. (3) Perawatan sistem pelumasan dan pendinginan. (4) Troubleshooting sistem bahan bakar. (5) Diagnosis kerusakan sistem Electronic Fuel Injection (EFI).",
     tpCode: "TP-TKR-02",
     tpTitle: "Pemeliharaan & Troubleshooting Kelistrikan Bodi",
-    tpContent: "Peserta didik mampu mengidentifikasi dan memperbaiki sirkuit kelistrikan lampu sein, hazard, klakson, serta wiring diagram kelistrikan bodi otomotif sesuai standar K3.",
+    tpContent: "Murid mampu mengidentifikasi dan memperbaiki sirkuit kelistrikan lampu sein, hazard, klakson, serta wiring diagram kelistrikan bodi otomotif sesuai standar K3.",
     modulAjar: "Modul_Kelistrikan_Bodi_SMKN2_Konawe.pdf",
   },
   {
@@ -83,13 +83,13 @@ const SCHEDULES: ScheduleItem[] = [
     subject: "Pemeliharaan Sasis Sepeda Motor",
     cpCode: "CP-TSM-02",
     cpTitle: "Capaian Pembelajaran Sasis Sepeda Motor Fase F",
-    cpContent: "Pada akhir Fase F, peserta didik mampu mendiagnosis dan memperbaiki gangguan pada sistem rem hidrolik, sistem suspensi depan dan belakang, sistem kemudi, serta roda dan rantai sepeda motor secara presisi.",
+    cpContent: "Pada akhir Fase F, murid mampu mendiagnosis dan memperbaiki gangguan pada sistem rem hidrolik, sistem suspensi depan dan belakang, sistem kemudi, serta roda dan rantai sepeda motor secara presisi.",
     atpCode: "ATP-TSM-02",
     atpTitle: "ATP Sistem Rem & Suspensi Sepeda Motor",
     atpContent: "Alur pembelajaran mencakup: (1) Bongkar pasang caliper rem depan. (2) Ganti seal shockbreaker depan. (3) Diagnosis kebocoran minyak rem hidrolik. (4) Penyelarasan ketegangan rantai roda belakang.",
     tpCode: "TP-TSM-02",
     tpTitle: "Perbaikan Sistem Suspensi Depan & Ganti Oli Shock",
-    tpContent: "Peserta didik mampu melakukan pembongkaran, pembersihan, penggantian seal shock, pengisian oli shock dengan volume tepat, serta menguji performa suspensi sepeda motor.",
+    tpContent: "Murid mampu melakukan pembongkaran, pembersihan, penggantian seal shock, pengisian oli shock dengan volume tepat, serta menguji performa suspensi sepeda motor.",
     modulAjar: "Modul_Ajar_Suspensi_Sepeda_Motor.pdf",
   }
 ];
@@ -174,13 +174,13 @@ export function JurnalMengajarInput({
         subject: sch.subject,
         cpCode: "CP-TKR-01",
         cpTitle: `Capaian Pembelajaran ${sch.className}`,
-        cpContent: "Pada akhir Fase F, peserta didik dibekali keterampilan melakukan perawatan berkala dan perbaikan otomotif secara mandiri.",
+        cpContent: "Pada akhir Fase F, murid dibekali keterampilan melakukan perawatan berkala dan perbaikan otomotif secara mandiri.",
         atpCode: "ATP-TKR-01",
         atpTitle: `Alur Tujuan Pembelajaran ${sch.className}`,
         atpContent: "Alur pembelajaran mencakup identifikasi komponen, perawatan berkala, diagnosis, dan perbaikan.",
         tpCode: "TP-TKR-01",
         tpTitle: `Tujuan Pembelajaran ${sch.subject}`,
-        tpContent: `Peserta didik mampu melakukan diagnosis dan perawatan berkala sesuai SOP pada kelas ${sch.className}.`,
+        tpContent: `Murid mampu melakukan diagnosis dan perawatan berkala sesuai SOP pada kelas ${sch.className}.`,
         modulAjar: `Modul_Ajar_${sch.className.replace(/\s+/g, '_')}_FaseF.pdf`
       }));
       setCustomSchedules(prev => {
@@ -237,18 +237,18 @@ export function JurnalMengajarInput({
   // Form states for adding teaching classes
   const [showAddClassForm, setShowAddClassForm] = useState(false);
   const [newClassName, setNewClassName] = useState("");
-  const [newSubject, setNewSubject] = useState("Teknik Kendaraan Ringan (Otomotif)");
+  const [newSubject, setNewSubject] = useState("Guru Produktif Kendaraan Ringan");
   const [newDay, setNewDay] = useState("Senin");
   const [newTime, setNewTime] = useState("07:00 - 10:30 (Jam 1-4)");
   const [newCpCode, setNewCpCode] = useState("CP-TKR-01");
   const [newCpTitle, setNewCpTitle] = useState("Capaian Pembelajaran TKR Fase F");
-  const [newCpContent, setNewCpContent] = useState("Pada akhir Fase F (kelas XI & XII SMK), peserta didik dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI (Electronic Fuel Injection) secara mandiri.");
+  const [newCpContent, setNewCpContent] = useState("Pada akhir Fase F (kelas XI & XII SMK), murid dibekali keterampilan melakukan perawatan berkala dan perbaikan pada mesin (Engine), sasis (Chassis), pemindah daya (Power Train), sistem kelistrikan otomotif, K3 Lingkungan Kerja, dan troubleshoot sistem EFI (Electronic Fuel Injection) secara mandiri.");
   const [newAtpCode, setNewAtpCode] = useState("ATP-TKR-01");
   const [newAtpTitle, setNewAtpTitle] = useState("ATP Perbaikan Engine Kendaraan");
   const [newAtpContent, setNewAtpContent] = useState("Alur pembelajaran dimulai dengan: (1) Penerapan prinsip K3LH di bengkel industri. (2) Identifikasi komponen motor 4 tak. (3) Perawatan sistem pelumasan dan pendinginan. (4) Troubleshooting sistem bahan bakar. (5) Diagnosis kerusakan sistem Electronic Fuel Injection (EFI).");
   const [newTpCode, setNewTpCode] = useState("TP-TKR-01");
   const [newTpTitle, setNewTpTitle] = useState("Diagnosis Sistem EFI menggunakan Scan Tool OBD-II");
-  const [newTpContent, setNewTpContent] = useState("Peserta didik mampu melakukan diagnosis kode kerusakan (DTC) menggunakan Diagnostic Scan Tool OBD-II, mengukur sensor MAF dan ECT menggunakan multimeter digital.");
+  const [newTpContent, setNewTpContent] = useState("Murid mampu melakukan diagnosis kode kerusakan (DTC) menggunakan Diagnostic Scan Tool OBD-II, mengukur sensor MAF dan ECT menggunakan multimeter digital.");
   const [newModulAjar, setNewModulAjar] = useState("Modul_Ajar_Diagnosis_EFI_FaseF.pdf (Modul Utama)");
 
   // Interactive editing states for CP, ATP, and TP (acuan mengajar mandiri guru mapel)
@@ -464,8 +464,8 @@ export function JurnalMengajarInput({
            `🕒 *Alokasi Waktu:* ${j.scheduleTime || "-"}\n` +
            `📑 *Target Elemen/TP:* ${j.tpCode} - ${j.material}\n` +
            `📝 *Kata Kunci Pembelajaran:* ${j.shortReflection || "-"}\n\n` +
-           `👥 *REKAP PRESENSI SISWA:*\n` +
-           `  • Hadir: ${j.attendancePresent} Siswa\n` +
+           `👥 *REKAP PRESENSI MURID:*\n` +
+           `  • Hadir: ${j.attendancePresent} Murid\n` +
            `  • Absen/Sakit/Izin: ${j.attendanceAbsent && j.attendanceAbsent.length > 0 ? j.attendanceAbsent.join(", ") : "Nihil"}\n\n` +
            `📌 *REKAP JURNAL HARIAN GURU:*\n` +
            `1. *Aktivitas Pembelajaran (AI Generated):*\n` +
@@ -490,7 +490,7 @@ export function JurnalMengajarInput({
       return;
     }
 
-    const token = localStorage.getItem("simpati_fonnte_api_key") || "ypkaCVkd5uLo3fkEWtnb";
+    const token = localStorage.getItem("simpati_fonnte_api_key") || "LMJoXs8WD3g78VGgFuTM";
     
     setIsSendingTU(true);
     try {
@@ -539,7 +539,7 @@ export function JurnalMengajarInput({
     targetJournals.forEach((j, idx) => {
       text += `${idx + 1}. *Kelas ${j.className} - ${j.subject}*\n` +
               `   • Pembahasan: ${j.material}\n` +
-              `   • Kehadiran: ${j.attendancePresent} siswa hadir\n` +
+              `   • Kehadiran: ${j.attendancePresent} murid hadir\n` +
               `   • Absen: ${j.attendanceAbsent && j.attendanceAbsent.length > 0 ? j.attendanceAbsent.join(", ") : "Nihil"}\n` +
               `   • Poin Jurnal AI: ${j.points || 92}/100\n` +
               `   • Kendala: ${j.obstacles || "Tidak ada"}\n` +
@@ -555,7 +555,7 @@ export function JurnalMengajarInput({
       return;
     }
 
-    const token = localStorage.getItem("simpati_fonnte_api_key") || "ypkaCVkd5uLo3fkEWtnb";
+    const token = localStorage.getItem("simpati_fonnte_api_key") || "LMJoXs8WD3g78VGgFuTM";
     
     setIsSendingTU(true);
     try {
@@ -622,7 +622,7 @@ export function JurnalMengajarInput({
       `- Alur Tujuan (ATP): ${activeSch.atpTitle}\n` +
       `- Capaian Pembelajaran (CP): ${activeSch.cpContent}\n` +
       `- Modul Ajar: ${activeSch.modulAjar}\n` +
-      `- Kehadiran: ${studentsPresent} siswa hadir, Absen: ${studentsAbsentList.length > 0 ? studentsAbsentList.join(", ") : "Nihil"}\n` +
+      `- Kehadiran: ${studentsPresent} murid hadir, Absen: ${studentsAbsentList.length > 0 ? studentsAbsentList.join(", ") : "Nihil"}\n` +
       `- Kata Kunci dari Guru: "${shortReflection}"`;
 
     try {
@@ -665,16 +665,16 @@ export function JurnalMengajarInput({
       console.error(e);
       // Detailed Fallback based on schedule
       let fallbackDraft = {
-        activities: `Pembelajaran dimulai dengan berdoa dan pengarahan K3LH bengkel. Guru membagi siswa ke 3 kelompok (pembelajaran berdiferensiasi). Kelompok tinggi mendiagnosis kerusakan sistem menggunakan Diagnostic Scan Tool OBD-II pada mobil trainer. Kelompok sedang mengukur tegangan baterai dan resistansi sensor menggunakan multimeter digital. Kelompok bawah mengkaji sirkuit manual via wiring diagram. Kegiatan ditutup dengan pembersihan area kerja bengkel (5S).`,
-        reflectionGuru: `Modul "${activeSch.modulAjar}" sangat membantu visualisasi komponen. Dari kata kunci pembelajaran guru: "${shortReflection}", siswa terlihat aktif dalam praktik langsung. Sekitar 80% siswa berhasil membaca DTC kerusakan dengan mandiri, sedangkan sisanya masih membutuhkan asistensi dalam kalibrasi multimeter.`,
+        activities: `Pembelajaran dimulai dengan berdoa dan pengarahan K3LH bengkel. Guru membagi murid ke 3 kelompok (pembelajaran berdiferensiasi). Kelompok tinggi mendiagnosis kerusakan sistem menggunakan Diagnostic Scan Tool OBD-II pada mobil trainer. Kelompok sedang mengukur tegangan baterai dan resistansi sensor menggunakan multimeter digital. Kelompok bawah mengkaji sirkuit manual via wiring diagram. Kegiatan ditutup dengan pembersihan area kerja bengkel (5S).`,
+        reflectionGuru: `Modul "${activeSch.modulAjar}" sangat membantu visualisasi komponen. Dari kata kunci pembelajaran guru: "${shortReflection}", murid terlihat aktif dalam praktik langsung. Sekitar 80% murid berhasil membaca DTC kerusakan dengan mandiri, sedangkan sisanya masih membutuhkan asistensi dalam kalibrasi multimeter.`,
         obstacles: `Kabel probe multimeter analog mengalami interferensi longgar, dan 1 scanner diagnostik OBD-II sempat restart secara mendadak akibat daya drop.`,
         followUp: `Melakukan koordinasi dengan kepala laboratorium untuk pemeriksaan kelayakan kabel DLC scanner dan pengecasan aki trainer sebelum sesi berikutnya.`
       };
 
       if (activeSch.id === "SCH03") {
         fallbackDraft = {
-          activities: `Pendahuluan: Pengondisian siswa dan review K3 pemakaian pelindung mata. Inti: Demonstrasi pembongkaran suspensi depan sepeda motor. Siswa secara berpasangan mempraktikkan pengurasan oli shock, penggantian seal shockbreaker yang bocor, dan menakar volume oli baru dengan gelas ukur sesuai spesifikasi. Penutup: Guru memberikan tes fungsional pantulan suspensi pasca-perbaikan.`,
-          reflectionGuru: `Siswa merespons instruksi dengan teliti. Sesuai kata kunci pembelajaran: "${shortReflection}", pemahaman struktur suspensi teleskopik sudah baik, namun pengerjaan pengisian oli shock masih perlu perhatian khusus agar tidak berlebih volumenya.`,
+          activities: `Pendahuluan: Pengondisian murid dan review K3 pemakaian pelindung mata. Inti: Demonstrasi pembongkaran suspensi depan sepeda motor. Murid secara berpasangan mempraktikkan pengurasan oli shock, penggantian seal shockbreaker yang bocor, dan menakar volume oli baru dengan gelas ukur sesuai spesifikasi. Penutup: Guru memberikan tes fungsional pantulan suspensi pasca-perbaikan.`,
+          reflectionGuru: `Murid merespons instruksi dengan teliti. Sesuai kata kunci pembelajaran: "${shortReflection}", pemahaman struktur suspensi teleskopik sudah baik, namun pengerjaan pengisian oli shock masih perlu perhatian khusus agar tidak berlebih volumenya.`,
           obstacles: `Beberapa kunci ring-pas berkarat menghambat kelancaran pembongkaran penutup shockbreaker.`,
           followUp: `Mengoleskan pelumas anti-karat WD-40 ke peralatan bengkel yang korosif akhir pekan ini.`
         };
@@ -778,8 +778,8 @@ export function JurnalMengajarInput({
             <div class="meta-item"><span class="meta-label">Kelas Ampu:</span> \${j.className}</div>
             <div class="meta-item"><span class="meta-label">Tujuan Pembelajaran (TP):</span> \${j.tpCode}</div>
             <div class="meta-item"><span class="meta-label">Modul Ajar:</span> \${j.modulAjar || "-"}</div>
-            <div class="meta-item"><span class="meta-label">Kehadiran Siswa:</span> \${j.attendancePresent} Siswa Hadir</div>
-            <div class="meta-item"><span class="meta-label">Siswa Absen / Kendala BK:</span> \${j.attendanceAbsent && j.attendanceAbsent.length > 0 ? j.attendanceAbsent.join(", ") : "Nihil"}</div>
+            <div class="meta-item"><span class="meta-label">Kehadiran Murid:</span> \${j.attendancePresent} Murid Hadir</div>
+            <div class="meta-item"><span class="meta-label">Murid Absen / Kendala BK:</span> \${j.attendanceAbsent && j.attendanceAbsent.length > 0 ? j.attendanceAbsent.join(", ") : "Nihil"}</div>
           </div>
 
           <div class="section-title">I. Materi Pokok Pembahasan</div>
@@ -1039,12 +1039,13 @@ export function JurnalMengajarInput({
                         onChange={(e) => setNewSubject(e.target.value)}
                         className="w-full bg-white border rounded-xl px-2.5 py-1.5 focus:outline-none font-bold"
                       >
-                        <option value="Teknik Kendaraan Ringan (Otomotif)">Teknik Kendaraan Ringan (Otomotif)</option>
-                        <option value="Teknik Sepeda Motor (Produktif)">Teknik Sepeda Motor (Produktif)</option>
-                        <option value="Mesin Otomotif & K3">Mesin Otomotif & K3</option>
+                        <option value="Guru Produktif Kendaraan Ringan">Guru Produktif Kendaraan Ringan</option>
+                        <option value="Guru Produktif Sepeda Motor">Guru Produktif Sepeda Motor</option>
+                        <option value="Guru Produktif Bangunan">Guru Produktif Bangunan</option>
+                        <option value="Guru Produktif Audio Video">Guru Produktif Audio Video</option>
+                        <option value="Guru Produktif Komunikasi Visual">Guru Produktif Komunikasi Visual</option>
                         <option value="Pemeliharaan Mesin Kendaraan Ringan">Pemeliharaan Mesin Kendaraan Ringan</option>
                         <option value="Pemeliharaan Kelistrikan Kendaraan Ringan">Pemeliharaan Kelistrikan Kendaraan Ringan</option>
-                        <option value="Bahasa Inggris Teknik">Bahasa Inggris Teknik</option>
                       </select>
                     </div>
 
@@ -1173,7 +1174,7 @@ export function JurnalMengajarInput({
               
               <div className="border border-slate-150 rounded-2xl overflow-hidden bg-slate-50">
                 <div className="grid grid-cols-2 text-[9px] font-black uppercase bg-slate-100 text-slate-500 px-3 py-1.5 border-b border-slate-150">
-                  <span>Nama Siswa</span>
+                  <span>Nama Murid</span>
                   <span className="text-right pr-4">Status Kehadiran</span>
                 </div>
                 
@@ -1862,7 +1863,7 @@ export function JurnalMengajarInput({
 
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-t pt-2 mt-2">
                 <div className="text-[10px] text-slate-400 font-semibold flex items-center gap-2">
-                  <span>Hadir: {j.attendancePresent} siswa</span>
+                  <span>Hadir: {j.attendancePresent} murid</span>
                   <span>•</span>
                   <span>Absen: {j.attendanceAbsent && j.attendanceAbsent.length > 0 ? j.attendanceAbsent.join(", ") : "Nihil"}</span>
                   {j.modulAjar && (
@@ -2186,7 +2187,7 @@ export function PenilaianAnalisis({
       const studentObj = classStudents.find(cs => cs.id === id);
       const updatedItem: StudentScore = {
         studentId: id,
-        studentName: studentObj ? studentObj.name : "Siswa",
+        studentName: studentObj ? studentObj.name : "Murid",
         tugas: editTugas,
         praktik: editPraktik,
         projek: editProjek,
@@ -2225,7 +2226,7 @@ export function PenilaianAnalisis({
       "analisa kelemahan umum kelas, dan buat pembimbingan terstruktur.\n" +
       (isAutomotive ? "KHUSUS OTOMOTIF: Singgung kelemahan praktik tune up atau kelistrikan, serta cara remedial yang aman terkait K3." : "");
 
-    const prompt = `Analisa kelas ${selectedClass}. Total ${currentClassScores.length} siswa, lulus (KKTP >= 75) sebanyak ${currentClassScores.length - failedCount}, remedial sebanyak ${failedCount} orang: [${failedNames || "Tidak Ada"}]. Tuliskan rekomendasi tindakan konkret.`;
+    const prompt = `Analisa kelas ${selectedClass}. Total ${currentClassScores.length} murid, lulus (KKTP >= 75) sebanyak ${currentClassScores.length - failedCount}, remedial sebanyak ${failedCount} orang: [${failedNames || "Tidak Ada"}]. Tuliskan rekomendasi tindakan konkret.`;
 
     try {
       const res = await fetch("/api/gemini/generate", {
@@ -2243,11 +2244,11 @@ export function PenilaianAnalisis({
       console.error(e);
       setAlertText(
         `### Analisis Kelas ${selectedClass}\n` +
-        `Data Kelulusan: ${currentClassScores.length - failedCount} dari ${currentClassScores.length} Siswa tuntas.\n` +
+        `Data Kelulusan: ${currentClassScores.length - failedCount} dari ${currentClassScores.length} Murid tuntas.\n` +
         `Rekomendasi Remedial:\n` +
-        `- Bagi ${failedCount} siswa yang belum tuntas, wajib melakukan jadwal pembelajaran tambahan di hari jumat sore di bengkel otomotif.\n` +
+        `- Bagi ${failedCount} murid yang belum tuntas, wajib melakukan jadwal pembelajaran tambahan di hari jumat sore di bengkel otomotif.\n` +
         `- Penguatan difokuskan pada ${isAutomotive ? 'troubleshooting kelistrikan bodi serta pembacaan multimeter digital roda dua/empat.' : 'analisis soal teori terstruktur.'}\n` +
-        `- Tutor Sebaya: Mengangkat siswa berprestasi tinggi untuk membantu pendampingan praktik kelompok remidi.`
+        `- Tutor Sebaya: Mengangkat murid berprestasi tinggi untuk membantu pendampingan praktik kelompok remidi.`
       );
     } finally {
       setAnalyzing(false);
@@ -2389,7 +2390,7 @@ export function PenilaianAnalisis({
             {totalCompletenessRatio}%
           </span>
           <div className="text-[10px] text-slate-500 font-medium mt-1">
-            {currentClassScores.filter(s => s.lulus).length} dari {currentClassScores.length} siswa tuntas belajar.
+            {currentClassScores.filter(s => s.lulus).length} dari {currentClassScores.length} murid tuntas belajar.
           </div>
         </div>
 
@@ -2428,7 +2429,7 @@ export function PenilaianAnalisis({
           <table className="w-full border-collapse text-left text-xs font-medium text-slate-600">
             <thead>
               <tr className="bg-slate-50 text-slate-400 uppercase text-[9px] font-extrabold border-b">
-                <th className="py-2.5 px-4 font-bold">Nama Siswa</th>
+                <th className="py-2.5 px-4 font-bold">Nama Murid</th>
                 <th className="py-2.5 px-3 text-center">Tugas (15%)</th>
                 <th className="py-2.5 px-3 text-center">Praktik (25%)</th>
                 <th className="py-2.5 px-3 text-center">Projek (15%)</th>
@@ -2588,7 +2589,7 @@ export function PenilaianAnalisis({
                     <div className="flex"><span className="w-28 text-slate-600 font-semibold">Guru Pengampu</span><span className="mr-2">:</span><span className="font-bold text-slate-800">Guru Pengampu Mata Pelajaran</span></div>
                   </div>
                   <div className="space-y-1">
-                    <div className="flex"><span className="w-28 text-slate-600 font-semibold">Total Siswa</span><span className="mr-2">:</span><span className="font-bold text-slate-900 font-mono">{currentClassScores.length} Orang</span></div>
+                    <div className="flex"><span className="w-28 text-slate-600 font-semibold">Total Murid</span><span className="mr-2">:</span><span className="font-bold text-slate-900 font-mono">{currentClassScores.length} Orang</span></div>
                     <div className="flex"><span className="w-28 text-slate-600 font-semibold">Rerata Kelas</span><span className="mr-2">:</span><span className="font-bold text-slate-900 font-mono">{totalClassAverage}</span></div>
                     <div className="flex"><span className="w-28 text-slate-600 font-semibold">Tanggal Cetak</span><span className="mr-2">:</span><span className="font-bold text-slate-800 font-mono">{new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
                   </div>
@@ -2603,7 +2604,7 @@ export function PenilaianAnalisis({
                     <thead>
                       <tr className="bg-slate-100 text-slate-900 uppercase text-[9px] font-black border-b border-slate-400">
                         <th className="border border-slate-400 p-2 text-center w-8">No</th>
-                        <th className="border border-slate-400 p-2">Nama Siswa</th>
+                        <th className="border border-slate-400 p-2">Nama Murid</th>
                         <th className="border border-slate-400 p-2 text-center">Tugas (15%)</th>
                         <th className="border border-slate-400 p-2 text-center">Praktik (25%)</th>
                         <th className="border border-slate-400 p-2 text-center">Projek (15%)</th>
@@ -2641,7 +2642,7 @@ export function PenilaianAnalisis({
                 <div className="border border-slate-400 p-3 rounded-xl bg-slate-50 text-xs space-y-1">
                   <div className="font-bold text-slate-900">Ringkasan Evaluasi Belajar Kelas:</div>
                   <div className="text-slate-700">
-                    - Rasio Ketuntasan: <strong>{totalCompletenessRatio}%</strong> ({currentClassScores.filter(s => s.lulus).length} dari {currentClassScores.length} siswa tuntas, {currentClassScores.filter(s => !s.lulus).length} siswa wajib mengikuti remedial).
+                    - Rasio Ketuntasan: <strong>{totalCompletenessRatio}%</strong> ({currentClassScores.filter(s => s.lulus).length} dari {currentClassScores.length} murid tuntas, {currentClassScores.filter(s => !s.lulus).length} murid wajib mengikuti remedial).
                   </div>
                   {alertText && (
                     <div className="text-slate-800 font-mono text-[10px] bg-indigo-50 p-2 rounded border border-indigo-200 mt-2">

@@ -81,7 +81,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
     }
   }, [selectedClass, filteredStudents]);
 
-  const [customNote, setCustomNote] = useState("Siswa sangat rajin dalam praktikum, namun disarankan melatih kefasihan berkomunikasi saat presentasi.");
+  const [customNote, setCustomNote] = useState("Murid sangat rajin dalam praktikum, namun disarankan melatih kefasihan berkomunikasi saat presentasi.");
   const [loading, setLoading] = useState(false);
   const [generatedReport, setGeneratedReport] = useState("");
   const [copied, setCopied] = useState(false);
@@ -124,7 +124,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
   const [botChatHistory, setBotChatHistory] = useState<Array<{ sender: "user" | "bot"; text: string; timestamp: string }>>([
     { 
       sender: "bot", 
-      text: "Halo! Saya adalah SIHADIR AI Chatbot Asisten SMK Negeri 2 Konawe. 🤖✨\n\nSilakan pilih menu bantuan atau ketik langsung:\n\n📌 Ketik *INFO* - Profil SMK & Jurusan\n📌 Ketik *NILAI* - Akses nilai akademis siswa kelas XI TKR\n📌 Ketik *PRESENSI* - Ringkasan kehadiran siswa\n📌 Ketik *KONTAK* - Nomor darurat wali kelas & sekolah", 
+      text: "Halo! Saya adalah SIHADIR AI Chatbot Asisten SMK Negeri 2 Konawe. 🤖✨\n\nSilakan pilih menu bantuan atau ketik langsung:\n\n📌 Ketik *INFO* - Profil SMK & Jurusan\n📌 Ketik *NILAI* - Akses nilai akademis murid kelas XI TKR\n📌 Ketik *PRESENSI* - Ringkasan kehadiran murid\n📌 Ketik *KONTAK* - Nomor darurat wali kelas & sekolah", 
       timestamp: "20:00" 
     }
   ]);
@@ -154,7 +154,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       if (lower.includes("info")) {
         botResponse = `🏫 *PROFIL SMK NEGERI 2 KONAWE & JURUSAN TKR* \n\nSMK Negeri 2 Konawe berdiri sebagai Pusat Keunggulan dengan Kurikulum Standar Industri.\n\n📍 *Fasilitas Bengkel Otomotif:* \n- Lift Penyelaras Roda 3D (3D Wheel Alignment)\n- Engine Scanner OBD2 Pro\n- Simulator Sistem Kelistrikan Mutakhir\n- Studio Inovasi Guru Produktif\n\n📞 _Butuh informasi pendaftaran? Hubungi sekretariat SIHADIR SMK Negeri 2 Konawe._`;
       } else if (lower.includes("nilai") || lower.includes("rapor")) {
-        botResponse = `📊 *HASIL AKADEMIK SISWA (XI TKR)*\n\nSilakan masukkan salah satu nama siswa untuk verifikasi nilai:\n\n- Ketik *NILAI ADI* (Adi Saputra)\n- Ketik *NILAI BUDI* (Budi Budiman)\n- Ketik *NILAI CITRA* (Citra Lestari)\n- Ketik *NILAI GALIH* (Galih Sentosa)`;
+        botResponse = `📊 *HASIL AKADEMIK MURID (XI TKR)*\n\nSilakan masukkan salah satu nama murid untuk verifikasi nilai:\n\n- Ketik *NILAI ADI* (Adi Saputra)\n- Ketik *NILAI BUDI* (Budi Budiman)\n- Ketik *NILAI CITRA* (Citra Lestari)\n- Ketik *NILAI GALIH* (Galih Sentosa)`;
       } else if (lower.includes("adi")) {
         botResponse = `📝 *LAPORAN NILAI: ADI SAPUTRA (XI TKR)*\n\n- Rata-rata Ujian: *88.5*\n- Status Kelulusan: *TUNTAS (Sangat Baik)*\n- Praktikum Unggulan: Pemeliharaan Sasis & Transmisi Otomatis\n\n💡 _Konsisten, disiplin, dan rajin di bengkel._`;
       } else if (lower.includes("budi")) {
@@ -164,11 +164,11 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       } else if (lower.includes("galih")) {
         botResponse = `📝 *LAPORAN NILAI: GALIH SENTOSA (XI TKR)*\n\n- Rata-rata Ujian: *74.5*\n- Status Kelulusan: *REMEDIAL (Perlu Pendampingan)*\n- Praktikum Tertinggal: Pemeliharaan Sensor Sensor EFI\n\n💡 _Diharapkan hadir pada sesi kelas tambahan hari Jumat siang._`;
       } else if (lower.includes("presensi") || lower.includes("hadir") || lower.includes("absen")) {
-        botResponse = `✅ *DAFTAR PRESENSI SISWA KELAS XI TKR*\n\nPresensi Terkini Mingguan:\n- Adi Saputra: *100%* (Hadir)\n- Budi Budiman: *95%* (1 Sakit)\n- Citra Lestari: *100%* (Hadir)\n- Galih Sentosa: *88%* (1 Sinyal Buruk, 2 Terlambat)\n\n📌 _Sistem presensi kami terkoneksi langsung dengan modul GPS Geolocation SIMPATI._`;
+        botResponse = `✅ *DAFTAR PRESENSI MURID KELAS XI TKR*\n\nPresensi Terkini Mingguan:\n- Adi Saputra: *100%* (Hadir)\n- Budi Budiman: *95%* (1 Sakit)\n- Citra Lestari: *100%* (Hadir)\n- Galih Sentosa: *88%* (1 Sinyal Buruk, 2 Terlambat)\n\n📌 _Sistem presensi kami terkoneksi langsung dengan modul GPS Geolocation SIMPATI._`;
       } else if (lower.includes("kontak") || lower.includes("telepon") || lower.includes("hubungi")) {
         botResponse = `📞 *KONTAK PENTING SEKOLAH & WALI KELAS*\n\n- Wali Kelas XI TKR A: Bpk. Haerul, S.Pd. (*0812-4444-5555*)\n- Konselor BK: Ibu Cici Murni, S.Pd. (*0853-2222-3333*)\n- Hubungan Industri (Humas PKL): Bpk. Hariyadi, M.T. (*0877-2233-4455*)\n- Kantor Call Center SMK Negeri 2 Konawe: *0899-1234-5678*`;
       } else {
-        botResponse = `🤖 *SIMPATI AI Chatbot Otomatis:* \nPesan Anda "${textToSend}" telah diproses.\n\nMaaf, kata kunci tersebut belum terdaftar. Silakan pilih menu beres berikut:\n\n👉 Ketik *INFO* (Profil SMK)\n👉 Ketik *NILAI* (Nilai Siswa)\n👉 Ketik *PRESENSI* (Absensi Kelas)\n👉 Ketik *KONTAK* (No HP Pendidik)`;
+        botResponse = `🤖 *SIMPATI AI Chatbot Otomatis:* \nPesan Anda "${textToSend}" telah diproses.\n\nMaaf, kata kunci tersebut belum terdaftar. Silakan pilih menu beres berikut:\n\n👉 Ketik *INFO* (Profil SMK)\n👉 Ketik *NILAI* (Nilai Murid)\n👉 Ketik *PRESENSI* (Absensi Kelas)\n👉 Ketik *KONTAK* (No HP Pendidik)`;
       }
 
       setBotChatHistory(prev => [
@@ -292,11 +292,11 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
       );
     } else if (broadcastTemplate === "praktik") {
       setCustomBroadcastText(
-        `*PENGUMUMAN JADWAL PRAKTIK INDUSTRI (TKR)*\n\nDiberitahukan kepada seluruh Orang Tua & Siswa Kelas XI TKR,\nMulai hari Senin besok, siswa akan melakukan Uji Kompetensi Pemeliharaan Sasis & Sensor Kemudi.\n\n⚠️ Harap perhatikan:\n1. Siswa wajib memakai Wearpack bersih lengkap.\n2. Sepatu safety wajib dikenakan selama di bengkel.\n3. Membawa buku jurnal & logbook harian.\n\nMohon wali murid memantau kedisplinan berangkat di pagi hari. Terima kasih atas kerja samanya.`
+        `*PENGUMUMAN JADWAL PRAKTIK INDUSTRI (TKR)*\n\nDiberitahukan kepada seluruh Orang Tua & Murid Kelas XI TKR,\nMulai hari Senin besok, murid akan melakukan Uji Kompetensi Pemeliharaan Sasis & Sensor Kemudi.\n\n⚠️ Harap perhatikan:\n1. Murid wajib memakai Wearpack bersih lengkap.\n2. Sepatu safety wajib dikenakan selama di bengkel.\n3. Membawa buku jurnal & logbook harian.\n\nMohon wali murid memantau kedisplinan berangkat di pagi hari. Terima kasih atas kerja samanya.`
       );
     } else {
       setCustomBroadcastText(
-        `*LAPORAN STREAK DISIPLIN KELAS - SMK NEGERI 2 KONAWE*\n\nSelamat Pagi Bapak/Ibu Wali Kelas & Guru,\nBerikut statistik kepatuhan siswa dalam kurun waktu minggu ini:\n\n- Kehadiran Tepat Waktu: 96.4%\n- Kedisplinan Atribut Bengkel: 100%\n- Pengisian Logbook PKL Terverifikasi: 92%\n\nSangat membanggakan. Mari kita tingkatkan mutu pembimbingan kita sehari-hari!\n\nAsisten Sistem Digital SIHADIR`
+        `*LAPORAN STREAK DISIPLIN KELAS - SMK NEGERI 2 KONAWE*\n\nSelamat Pagi Bapak/Ibu Wali Kelas & Guru,\nBerikut statistik kepatuhan murid dalam kurun waktu minggu ini:\n\n- Kehadiran Tepat Waktu: 96.4%\n- Kedisplinan Atribut Bengkel: 100%\n- Pengisian Logbook PKL Terverifikasi: 92%\n\nSangat membanggakan. Mari kita tingkatkan mutu pembimbingan kita sehari-hari!\n\nAsisten Sistem Digital SIHADIR`
       );
     }
   }, [broadcastTemplate]);
@@ -344,7 +344,7 @@ export function KomunikasiOrangTua({ username = "", currentRole = "" }: Komunika
 async function kirimNotifikasiWA() {
   const payload = {
     target: '${selectedStudent.parentWhatsApp || '6281322220001'}',
-    message: 'Yth Bapak/Ibu Wali, Siswa ${selectedStudent.name} lulus uji kompetensi TKR dengan nilai ${selectedScore?.rataRata || 85}!'
+    message: 'Yth Bapak/Ibu Wali, Murid ${selectedStudent.name} lulus uji kompetensi TKR dengan nilai ${selectedScore?.rataRata || 85}!'
   };
 
   try {
@@ -390,7 +390,7 @@ print("Hasil:", response.json())`
               </span>
             </h3>
             <p className="text-[10px] text-gray-500 font-semibold mt-0.5 uppercase tracking-wide">
-              Penghubung Digital Wali Kelas, Pendidik, Siswa & Wali Murid SMK
+              Penghubung Digital Wali Kelas, Pendidik, Murid & Wali Murid SMK
             </p>
           </div>
         </div>
@@ -453,7 +453,7 @@ print("Hasil:", response.json())`
                   ))}
                 </select>
                 <div className="text-[10px] text-purple-800 font-bold flex justify-between items-center pt-0.5">
-                  <span>Daftar Siswa Perwalian: <strong>{filteredStudents.length} Murid</strong></span>
+                  <span>Daftar Murid Perwalian: <strong>{filteredStudents.length} Murid</strong></span>
                   {selectedClass === defaultPerwalianClass && (
                     <span className="text-emerald-800 font-black bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded text-[9px]">
                       ✓ Perwalian Aktif
@@ -464,7 +464,7 @@ print("Hasil:", response.json())`
 
               <div>
                 <label className="block text-[10px] uppercase font-black text-gray-600 mb-1.5 tracking-wider">
-                  Siswa Sasaran Laporan (Kelas {selectedClass})
+                  Murid Sasaran Laporan (Kelas {selectedClass})
                 </label>
                 <select
                   value={selectedStudentId}
@@ -607,13 +607,13 @@ print("Hasil:", response.json())`
                     </>
                   ) : (
                     <div className="text-center py-6 text-[10px] text-gray-400">
-                      Silakan generatesikan laporan siswa terlebih dahulu untuk mengaktifkan shortcut pengiriman WA.
+                      Silakan generatesikan laporan murid terlebih dahulu untuk mengaktifkan shortcut pengiriman WA.
                     </div>
                   )}
                 </div>
 
                 <div className="border-t border-gray-100 pt-2.5 text-[9px] text-gray-400 leading-normal font-medium space-y-1">
-                  <span>Nama Siswa: <strong>{selectedStudent.name}</strong></span><br />
+                  <span>Nama Murid: <strong>{selectedStudent.name}</strong></span><br />
                   <span>Wali Kelas: <strong>Haerul, S.Pd.</strong></span>
                 </div>
               </div>

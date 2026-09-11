@@ -104,7 +104,7 @@ export function KarakterAnalisis({ isAutomotive }: { isAutomotive: boolean }) {
         kepedulian: empathy,
         kemandirian: independent,
         kepemimpinan: leadership,
-        ringkasanKarakter: `Siswa menunjukkan integritas berkategori BAIK (${honest}/5). Kedisiplinan (${discipline}/5) perlu dipertahankan dengan bimbingan berkala.`,
+        ringkasanKarakter: `Murid menunjukkan integritas berkategori BAIK (${honest}/5). Kedisiplinan (${discipline}/5) perlu dipertahankan dengan bimbingan berkala.`,
         kelebihan: `Dapat bekerja sama secara kolaboratif (${cooperate}/5) dalam menyelesaikan penugasan kelompok. Memiliki empati yang menonjol terhadap kesulitan rekan kerja bangku.`,
         areaPengembangan: `Kemandirian dalam mendiagnosis masalah kelistrikan bodi tanpa terus bertanya kepada instruktur atau meniru pekerjaan rekan sasis sebelahnya.`,
         saranPembinaan: `Berikan tanggung jawab kecil yang bersifat individu (misalnya menata kelengkapan tool cabinet pasca praktikum atau memimpin sesi doa keselamatan K3 sebelum kelas).`
@@ -154,7 +154,7 @@ export function KarakterAnalisis({ isAutomotive }: { isAutomotive: boolean }) {
         {/* Star evaluation form */}
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">Pilih Siswa</label>
+            <label className="block text-xs font-bold text-slate-600 mb-1">Pilih Murid</label>
             <select
               value={selectedStudentId}
               onChange={(e) => {
@@ -244,7 +244,7 @@ export function KarakterAnalisis({ isAutomotive }: { isAutomotive: boolean }) {
           <table className="w-full border-collapse text-left text-xs bg-white text-slate-600">
             <thead className="bg-slate-50 border-b">
               <tr className="uppercase text-[9px] font-extrabold text-slate-400">
-                <th className="py-2.5 px-4">Nama Siswa</th>
+                <th className="py-2.5 px-4">Nama Murid</th>
                 <th className="py-2.5 px-3 text-center">Jujur</th>
                 <th className="py-2.5 px-3 text-center">Disiplin</th>
                 <th className="py-2.5 px-3 text-center">Tanggung Jwb</th>
@@ -273,7 +273,7 @@ export function KarakterAnalisis({ isAutomotive }: { isAutomotive: boolean }) {
 
 
 // -----------------------------------------------------------------------------
-// Component 2: PKL Monitoring & Siswa Jurnal Workspace
+// Component 2: PKL Monitoring & Murid Jurnal Workspace
 // -----------------------------------------------------------------------------
 export function PklMonitoring({ currentRole }: { currentRole: string }) {
   const [pklLogs, setPklLogs] = useState<PklLog[]>(INITIAL_PKL_LOGS);
@@ -343,10 +343,10 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
 
     const systemInstruction = 
       "Anda adalah SIMPATI AI (Pakar Supervisor Praktek Kerja Lapangan SMK).\n" +
-      "Berikan evaluasi terhadap rekapitulasi data jurnal PKL siswa, temukan potensi inefisiensi, dan susun rekomendasi aksi yang realistis.";
+      "Berikan evaluasi terhadap rekapitulasi data jurnal PKL murid, temukan potensi inefisiensi, dan susun rekomendasi aksi yang realistis.";
 
-    let logsText = pklLogs.map(p => `Siswa: ${p.studentName}, Jurnal: ${p.journalText}, Nilai Instruktur: ${p.nilaiIndustri}/100, Waktu: ${p.clockIn}-${p.clockOut}`).join("\n\n");
-    const prompt = `Analisa kinerja siswa PKL berikut:\n${logsText}. Tolong berikan analisis kinerja, rekapitulasi, dan rekomendasi pembinaan.`;
+    let logsText = pklLogs.map(p => `Murid: ${p.studentName}, Jurnal: ${p.journalText}, Nilai Instruktur: ${p.nilaiIndustri}/100, Waktu: ${p.clockIn}-${p.clockOut}`).join("\n\n");
+    const prompt = `Analisa kinerja murid PKL berikut:\n${logsText}. Tolong berikan analisis kinerja, rekapitulasi, dan rekomendasi pembinaan.`;
 
     try {
       const res = await fetch("/api/gemini/generate", {
@@ -380,7 +380,7 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
           <span>Sistem Monitoring Praktek Kerja Lapangan (PKL) AI</span>
         </h3>
         <p className="text-xs text-slate-500 mt-1">
-          Siswa PKL menginput absen & jurnal harian; Guru memantau aktivitas, memasukkan umpan balik industri, dan mendapat rekomendasi pembinaan berbasis kecerdasan AI.
+          Murid PKL menginput absen & jurnal harian; Guru memantau aktivitas, memasukkan umpan balik industri, dan mendapat rekomendasi pembinaan berbasis kecerdasan AI.
         </p>
       </div>
 
@@ -388,7 +388,7 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
         // For Student View
         <div className="border p-5 rounded-2xl bg-indigo-50/15 space-y-4">
           <h4 className="text-xs font-extrabold uppercase text-indigo-800 tracking-wider flex items-center gap-1">
-            <span>Input Kegiatan PKL Harian Siswa</span>
+            <span>Input Kegiatan PKL Harian Murid</span>
           </h4>
 
           {success && (
@@ -470,7 +470,7 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
         <div className="bg-slate-50 border p-4 rounded-xl flex items-center justify-between gap-4">
           <div>
             <h4 className="text-xs font-bold text-slate-800">Evaluasi & Rekomendasi Supervisi PKL Harian</h4>
-            <p className="text-[11px] text-slate-500">Analisa logbook siswa secara komprehensif, saring koordinasi dengan pimpinan sekolah.</p>
+            <p className="text-[11px] text-slate-500">Analisa logbook murid secara komprehensif, saring koordinasi dengan pimpinan sekolah.</p>
           </div>
           
           <button
@@ -498,7 +498,7 @@ export function PklMonitoring({ currentRole }: { currentRole: string }) {
 
       {/* Grid displaying cards of PKL activities logged */}
       <div className="space-y-4">
-        <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">Lembar Kendali Absensi & Jurnal PKL Siswa</h4>
+        <h4 className="text-xs font-extrabold uppercase text-slate-500 tracking-wider">Lembar Kendali Absensi & Jurnal PKL Murid</h4>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {pklLogs.map((log) => (

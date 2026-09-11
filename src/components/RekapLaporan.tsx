@@ -195,8 +195,8 @@ const SEED_JURNAL_MENGAJAR: JurnalMengajar[] = [
     material: "Kalibrasi Sensor MAF & Troubleshooting Injeksi EFI",
     attendancePresent: 28,
     attendanceAbsent: ["Bagus (Sakit)", "Dedi (Izin)"],
-    activities: "Praktikum di bengkel utama. Siswa secara mandiri melakukan diagnosa menggunakan scanner OBD-II Launch X431.",
-    reflectionGuru: "Siswa sangat antusias melakukan kalibrasi sensor, namun beberapa butuh pendampingan ekstra.",
+    activities: "Praktikum di bengkel utama. Murid secara mandiri melakukan diagnosa menggunakan scanner OBD-II Launch X431.",
+    reflectionGuru: "Murid sangat antusias melakukan kalibrasi sensor, namun beberapa butuh pendampingan ekstra.",
     obstacles: "Kabel scanner longgar, menyebabkan interupsi beberapa kali.",
     followUp: "Melakukan pengecekan ketat adapter OBD sebelum sesi praktikum berikutnya.",
     createdAt: new Date().toISOString()
@@ -244,7 +244,7 @@ const SEED_GURU_PIKET: GuruPiketLog[] = [
     shift: "Pagi (07.00 - 12.00)",
     classroomCheck: "Pemantauan berkala seluruh ruang teori & bengkel otomotif. Kelas XI TKR A & B terpantau tertib melaksanakan praktikum EFI.",
     hygieneCondition: "Sangat Bersih & Rapi. Area bengkel utama telah dibersihkan pasca praktikum pertama.",
-    securityCondition: "Sangat Aman & Kondusif. Tidak ada siswa berkeliaran di luar saat jam pelajaran berlangsung.",
+    securityCondition: "Sangat Aman & Kondusif. Tidak ada murid berkeliaran di luar saat jam pelajaran berlangsung.",
     incidentNotes: "Nihil kejadian menonjol. Gerbang sekolah dikunci rapat pukul 07.30."
   }
 ];
@@ -256,7 +256,7 @@ const SEED_GURU_WALI: GuruWaliLog[] = [
     className: "XI TKR A",
     waliName: "Isnawati, S.Pd.",
     developmentNotes: "Melakukan briefing pagi mengenai kebersihan toolbox bengkel dan kewajiban wearpack lengkap.",
-    specialCase: "Siswa Kurniawan terpantau terlambat 15 menit, diarahkan ke BK untuk bimbingan preventif.",
+    specialCase: "Murid Kurniawan terpantau terlambat 15 menit, diarahkan ke BK untuk bimbingan preventif.",
     parentCoordination: "Telah menghubungi orang tua Bagus Setiawan untuk konfirmasi surat dokter perihal izin sakit."
   }
 ];
@@ -299,7 +299,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   };
 
   // Form input states for Quick Addition (Wali Kelas / Guru Wali / BK)
-  const [activeTabPanel, setActiveTabPanel] = useState<"rekap" | "rekap-siswa" | "rekap-guru" | "rekap-tu" | "rekap-piket" | "quick-submit" | "fonnte-config" | "firebase-config" | "rekap-masuk-pulang" | "rekap-refleksi">("rekap");
+  const [activeTabPanel, setActiveTabPanel] = useState<"rekap" | "rekap-murid" | "rekap-guru" | "rekap-tu" | "rekap-piket" | "quick-submit" | "fonnte-config" | "firebase-config" | "rekap-masuk-pulang" | "rekap-refleksi">("rekap");
   const [toast, setToast] = useState<string | null>(null);
 
   // Share Student Attendance Link Modal state
@@ -468,8 +468,8 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   // Quick addition fields for Guru Wali / Wali Kelas
   const [waliName, setWaliName] = useState("Wali Kelas XI TKR A");
   const [waliClassName, setWaliClassName] = useState("XI TKR A");
-  const [waliDevNotes, setWaliDevNotes] = useState("Siswa kelas diberikan pembinaan berkala mengenai pemeliharaan wearpack.");
-  const [waliSpecialCase, setWaliSpecialCase] = useState("Semua siswa mengikuti KBM dengan baik.");
+  const [waliDevNotes, setWaliDevNotes] = useState("Murid kelas diberikan pembinaan berkala mengenai pemeliharaan wearpack.");
+  const [waliSpecialCase, setWaliSpecialCase] = useState("Semua murid mengikuti KBM dengan baik.");
   const [waliParentCoordination, setWaliParentCoordination] = useState("Tidak ada kasus yang mendesak.");
 
   // Chatbot State
@@ -477,7 +477,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   const [chatMessages, setChatMessages] = useState<{ sender: "user" | "bot"; text: string; time: string }[]>([
     {
       sender: "bot",
-      text: "Halo Bapak/Ibu Guru! Saya SIHADIR, asisten pemantau disiplin, kehadiran, dan bimbingan siswa di SMK Negeri 2 Konawe. Saya mengumpulkan data absensi guru, jurnal mengajar harian, laporan wali kelas (siswa sakit/izin), serta penanganan Guru BK secara realtime. Ada yang bisa saya bantu menganalisis rekapitulasi laporan hari ini?",
+      text: "Halo Bapak/Ibu Guru! Saya SIHADIR, asisten pemantau disiplin, kehadiran, dan bimbingan murid di SMK Negeri 2 Konawe. Saya mengumpulkan data absensi guru, jurnal mengajar harian, laporan wali kelas (murid sakit/izin), serta penanganan Guru BK secara realtime. Ada yang bisa saya bantu menganalisis rekapitulasi laporan hari ini?",
       time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
     }
   ]);
@@ -631,8 +631,8 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
   // --- STUDENT ATTENDANCE RECAP MANAGEMENT HELPERS ---
   const handleDeleteClassRecord = (logId: string, studentName: string) => {
     triggerConfirm(
-      "Hapus Catatan Presensi Siswa",
-      `Apakah Anda yakin ingin menghapus catatan presensi siswa ${studentName}?`,
+      "Hapus Catatan Presensi Murid",
+      `Apakah Anda yakin ingin menghapus catatan presensi murid ${studentName}?`,
       () => {
         const updated = studentLogs.map(log => {
           if (log.id === logId) {
@@ -670,8 +670,8 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
 
   const handleDeleteSelfLog = (id: string, studentName: string) => {
     triggerConfirm(
-      "Hapus Presensi Mandiri Siswa",
-      `Apakah Anda yakin ingin menghapus log presensi mandiri siswa ${studentName}?`,
+      "Hapus Presensi Mandiri Murid",
+      `Apakah Anda yakin ingin menghapus log presensi mandiri murid ${studentName}?`,
       () => {
         const updated = selfAttendanceLogs.filter(log => log.id !== id);
         saveSelfAttendanceLogs(updated);
@@ -712,8 +712,8 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
 
   const handleDeleteReflection = (id: string, studentName: string) => {
     triggerConfirm(
-      "Hapus Refleksi Siswa",
-      `Apakah Anda yakin ingin menghapus catatan refleksi dari siswa ${studentName}?`,
+      "Hapus Refleksi Murid",
+      `Apakah Anda yakin ingin menghapus catatan refleksi dari murid ${studentName}?`,
       () => {
         const savedRefl = localStorage.getItem("simpati_student_reflections");
         const reflList: any[] = savedRefl ? JSON.parse(savedRefl) : [];
@@ -977,17 +977,17 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     });
 
     if (absentCount > 0) {
-      list.push(`⚠️ PANTAUAN SISWA: Terdeteksi ${absentCount} siswa tidak hadir tanpa keterangan (ALFA). Mohon perhatian Wali Kelas & BK!`);
+      list.push(`⚠️ PANTAUAN MURID: Terdeteksi ${absentCount} murid tidak hadir tanpa keterangan (ALFA). Mohon perhatian Wali Kelas & BK!`);
     }
 
     if (sickCount > 1) {
-      list.push(`ℹ️ LAPORAN KESEHATAN: Sebanyak ${sickCount} siswa hari ini sakit. Wali kelas memantau kondisi siswa tersebut.`);
+      list.push(`ℹ️ LAPORAN KESEHATAN: Sebanyak ${sickCount} murid hari ini sakit. Wali kelas memantau kondisi murid tersebut.`);
     }
 
     // BK active cases
     const activeBk = bkLogs.filter(b => b.status === "Dalam Bimbingan");
     if (activeBk.length > 0) {
-      list.push(`⚖️ TINDAKAN BK: Terdeteksi ${activeBk.length} siswa sedang dalam bimbingan aktif hari ini.`);
+      list.push(`⚖️ TINDAKAN BK: Terdeteksi ${activeBk.length} murid sedang dalam bimbingan aktif hari ini.`);
     }
 
     return list;
@@ -1000,7 +1000,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     const signals: Array<{
       id: string;
       time: string;
-      category: "guru" | "jurnal" | "siswa" | "bk";
+      category: "guru" | "jurnal" | "murid" | "bk";
       title: string;
       description: string;
       meta: string;
@@ -1032,7 +1032,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
         time: "08:15",
         category: "jurnal",
         title: `Jurnal Pembelajaran: Kelas ${j.className}`,
-        description: `Materi "${j.material}" diisi oleh Guru. Kehadiran: ${j.attendancePresent} siswa hadir, ${j.attendanceAbsent?.length || 0} berhalangan.`,
+        description: `Materi "${j.material}" diisi oleh Guru. Kehadiran: ${j.attendancePresent} murid hadir, ${j.attendanceAbsent?.length || 0} berhalangan.`,
         meta: j.subject,
         rawDraftText: `📝 *JURNAL BELAJAR GURU*\nTanggal: ${j.date}\nKelas: ${j.className}\nMata Pelajaran: ${j.subject}\nMateri: ${j.material}\nSiswa Hadir: ${j.attendancePresent}\nSiswa Absen: ${j.attendanceAbsent?.join(", ") || "-"}\nTindak Lanjut AI: ${j.followUp || "Stabil"}\n`
       });
@@ -1045,11 +1045,11 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
           signals.push({
             id: `sig-s-${log.id}-${r.id}`,
             time: "07:45",
-            category: "siswa",
+            category: "murid",
             title: `Pantauan Wali Kelas: ${r.name} (${r.status})`,
-            description: `Siswa dari kelas ${log.className} dilaporkan memiliki status ketidakhadiran: [${r.status}].`,
+            description: `Murid dari kelas ${log.className} dilaporkan memiliki status ketidakhadiran: [${r.status}].`,
             meta: `Kelas ${log.className} • ${log.subject}`,
-            rawDraftText: `📢 *LAPORAN WALI KELAS - KETIDAKHADIRAN SISWA*\nTanggal: ${log.date}\nKelas: ${log.className}\nNama Siswa: ${r.name}\nKeterangan: ${r.status}\n_Telah diverifikasi oleh Wali Kelas untuk rekapitulasi sekolah._\n`
+            rawDraftText: `📢 *LAPORAN WALI KELAS - KETIDAKHADIRAN MURID*\nTanggal: ${log.date}\nKelas: ${log.className}\nNama Murid: ${r.name}\nKeterangan: ${r.status}\n_Telah diverifikasi oleh Wali Kelas untuk rekapitulasi sekolah._\n`
           });
         }
       });
@@ -1099,9 +1099,9 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       signals.push({
         id: `sig-wali-${w.id}`,
         time: "12:00",
-        category: "siswa",
+        category: "murid",
         title: `Laporan Wali Kelas ${w.className}: ${w.waliName}`,
-        description: `Pembinaan: "${w.developmentNotes}". Kasus Siswa: "${w.specialCase}". Hubungan Ortu: "${w.parentCoordination}".`,
+        description: `Pembinaan: "${w.developmentNotes}". Kasus Murid: "${w.specialCase}". Hubungan Ortu: "${w.parentCoordination}".`,
         meta: `Kelas: ${w.className}`,
         rawDraftText: `👤 *LAPORAN WALI KELAS / GURU WALI*\nTanggal: ${w.date}\nKelas: ${w.className}\nWali Kelas: ${w.waliName}\nPembinaan: ${w.developmentNotes}\nKasus Khusus: ${w.specialCase}\nKoordinasi Orang Tua: ${w.parentCoordination}\n`
       });
@@ -1172,10 +1172,10 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
            `${activePiket.length > 0 ? activePiket.join("\n") : "  - Belum ada laporan guru piket diunggah hari ini."}\n\n` +
            `👤 *5. LAPORAN PEMBINAAN WALI KELAS (GURU WALI):*\n` +
            `${activeWali.length > 0 ? activeWali.join("\n") : "  - Belum ada laporan pembinaan kelas diunggah hari ini."}\n\n` +
-           `📢 *6. LAPORAN WALI KELAS (KETIDAKHADIRAN SISWA):*\n` +
-           `  - 🤒 *Siswa Sakit:* ${sickStudents.length > 0 ? sickStudents.join(", ") : "Tidak ada"}\n` +
-           `  - ✉️ *Siswa Izin:* ${permissionStudents.length > 0 ? permissionStudents.join(", ") : "Tidak ada"}\n` +
-           `  - ❌ *Siswa Alfa:* ${absentStudents.length > 0 ? absentStudents.join(", ") : "Tidak ada"}\n\n` +
+           `📢 *6. LAPORAN WALI KELAS (KETIDAKHADIRAN MURID):*\n` +
+           `  - 🤒 *Murid Sakit:* ${sickStudents.length > 0 ? sickStudents.join(", ") : "Tidak ada"}\n` +
+           `  - ✉️ *Murid Izin:* ${permissionStudents.length > 0 ? permissionStudents.join(", ") : "Tidak ada"}\n` +
+           `  - ❌ *Murid Alfa:* ${absentStudents.length > 0 ? absentStudents.join(", ") : "Tidak ada"}\n\n` +
            `⚖️ *7. LAPORAN PEMANTAUAN & TINDAKAN GURU BK:*\n` +
            `${activeBk.length > 0 ? activeBk.map(item => `  • ${item}`).join("\n") : "  - Kondisi kondusif, belum ada rujukan bimbingan hari ini."}\n\n` +
            `📊 *8. REKAPITULASI KEPATUHAN & DISIPLIN SEKOLAH:*\n` +
@@ -1224,7 +1224,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
 
     if (formType === "sakit-izin") {
       if (!newStudentName.trim()) {
-        triggerToast("Harap isi nama siswa!");
+        triggerToast("Harap isi nama murid!");
         return;
       }
 
@@ -1254,20 +1254,20 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       }
 
       saveStudentLogs(updatedLogs);
-      triggerToast(`Berhasil menambahkan laporan ketidakhadiran siswa: ${newStudentName} (${newStatus})`);
+      triggerToast(`Berhasil menambahkan laporan ketidakhadiran murid: ${newStudentName} (${newStatus})`);
 
       // Trigger SIHADIR AI notification message in bot
       setChatMessages(prev => [
         ...prev,
         {
           sender: "bot",
-          text: `📢 Laporan Wali Kelas Diterima: Siswa bernama *${newStudentName}* (${newClassName}) dicatat *${newStatus}* harian. Keterangan: "${newReason}". Laporan WA otomatis dan analisis rekap harian kini telah disinkronkan.`,
+          text: `📢 Laporan Wali Kelas Diterima: Murid bernama *${newStudentName}* (${newClassName}) dicatat *${newStatus}* harian. Keterangan: "${newReason}". Laporan WA otomatis dan analisis rekap harian kini telah disinkronkan.`,
           time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
         }
       ]);
 
       // Automatically broadcast via Fonnte WA in background
-      const waMsg = `*📢 SIHADIR AUTOMATED BROADCAST*\n\nLaporan baru ketidakhadiran siswa diinput oleh Wali Kelas:\nNama: *${newStudentName}*\nKelas: *${newClassName}*\nStatus Kehadiran: *${newStatus}*\nAlasan/Keterangan: *${newReason || "Tidak ada keterangan"}*\nTanggal: *${todayStr}*\n\n_Status laporan telah diperbarui di sistem. Terima kasih._`;
+      const waMsg = `*📢 SIHADIR AUTOMATED BROADCAST*\n\nLaporan baru ketidakhadiran murid diinput oleh Wali Kelas:\nNama: *${newStudentName}*\nKelas: *${newClassName}*\nStatus Kehadiran: *${newStatus}*\nAlasan/Keterangan: *${newReason || "Tidak ada keterangan"}*\nTanggal: *${todayStr}*\n\n_Status laporan telah diperbarui di sistem. Terima kasih._`;
       triggerAutoWA(waMsg);
 
       // Reset
@@ -1275,7 +1275,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     } else if (formType === "bk-case") {
       // BK Counseling Case
       if (!newBkStudent.trim()) {
-        triggerToast("Harap isi nama siswa rujukan!");
+        triggerToast("Harap isi nama murid rujukan!");
         return;
       }
 
@@ -1292,20 +1292,20 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
 
       const updatedBk = [newCase, ...bkLogs];
       saveBkLogs(updatedBk);
-      triggerToast(`Berhasil menyimpan data tindakan Guru BK untuk siswa: ${newBkStudent}`);
+      triggerToast(`Berhasil menyimpan data tindakan Guru BK untuk murid: ${newBkStudent}`);
 
       // Trigger SIHADIR AI notification
       setChatMessages(prev => [
         ...prev,
         {
           sender: "bot",
-          text: `⚖️ Laporan Tindakan Guru BK Baru: Siswa *${newBkStudent}* (${newBkClass}) sedang ditindak dengan metode *${newBkAction}* untuk kasus *${newBkCase}*. Status penanganan: [${newBkStatus}].`,
+          text: `⚖️ Laporan Tindakan Guru BK Baru: Murid *${newBkStudent}* (${newBkClass}) sedang ditindak dengan metode *${newBkAction}* untuk kasus *${newBkCase}*. Status penanganan: [${newBkStatus}].`,
           time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
         }
       ]);
 
       // Automatically broadcast via Fonnte WA in background
-      const waMsg = `*📢 SIHADIR BK REPORT BROADCAST*\n\nLaporan kasus rujukan konseling siswa baru:\nNama Siswa: *${newBkStudent}*\nKelas: *${newBkClass}*\nKasus/Pelanggaran: *${newBkCase}*\nTindakan Guru BK: *${newBkAction}*\nStatus Kasus: *${newBkStatus}*\nPelapor: *Guru / Staf Pelapor*\nTanggal: *${todayStr}*\n\n_Laporan ini tersinkronisasi otomatis dengan dasbor bimbingan konseling SIHADIR._`;
+      const waMsg = `*📢 SIHADIR BK REPORT BROADCAST*\n\nLaporan kasus rujukan konseling murid baru:\nNama Murid: *${newBkStudent}*\nKelas: *${newBkClass}*\nKasus/Pelanggaran: *${newBkCase}*\nTindakan Guru BK: *${newBkAction}*\nStatus Kasus: *${newBkStatus}*\nPelapor: *Guru / Staf Pelapor*\nTanggal: *${todayStr}*\n\n_Laporan ini tersinkronisasi otomatis dengan dasbor bimbingan konseling SIHADIR._`;
       triggerAutoWA(waMsg);
 
       // Reset
@@ -1365,7 +1365,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
         ...prev,
         {
           sender: "bot",
-          text: `👤 Laporan Wali Kelas Baru: Kelas *${waliClassName}* oleh Wali *${waliName}*. Pembinaan: "${waliDevNotes}". Kasus Siswa: "${waliSpecialCase}". Hubungan Ortu: "${waliParentCoordination}".`,
+          text: `👤 Laporan Wali Kelas Baru: Kelas *${waliClassName}* oleh Wali *${waliName}*. Pembinaan: "${waliDevNotes}". Kasus Murid: "${waliSpecialCase}". Hubungan Ortu: "${waliParentCoordination}".`,
           time: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
         }
       ]);
@@ -1375,8 +1375,8 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       triggerAutoWA(waMsg);
 
       // Reset
-      setWaliDevNotes("Siswa kelas diberikan pembinaan berkala mengenai pemeliharaan wearpack.");
-      setWaliSpecialCase("Semua siswa mengikuti KBM dengan baik.");
+      setWaliDevNotes("Murid kelas diberikan pembinaan berkala mengenai pemeliharaan wearpack.");
+      setWaliSpecialCase("Semua murid mengikuti KBM dengan baik.");
       setWaliParentCoordination("Tidak ada kasus yang mendesak.");
     }
 
@@ -1565,7 +1565,7 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
     const sHadir = filteredSs.filter(s => s.status === "Hadir" && s.clockIn).length;
     const sPulang = filteredSs.filter(s => s.status === "Hadir" && s.clockOut).length;
 
-    let text = `📢 *REKAP PRESENSI MASUK & PULANG TU, GURU & SISWA - SMK NEGERI 2 KONAWE*\n` +
+    let text = `📢 *REKAP PRESENSI MASUK & PULANG TU, GURU & MURID - SMK NEGERI 2 KONAWE*\n` +
                `---------------------------------------------\n` +
                `📅 *Tanggal:* ${dateStr}\n\n` +
                `💼 *1. RINGKASAN PRESENSI ADMIN & STAF TU:*\n` +
@@ -1574,9 +1574,9 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
                `⏱️ *2. RINGKASAN PRESENSI GURU MAPEL:*\n` +
                `  - Guru Masuk (Clock-In): ${tHadir} Orang\n` +
                `  - Guru Pulang (Clock-Out): ${tPulang} Orang\n\n` +
-               `🎓 *3. RINGKASAN PRESENSI SISWA MANDIRI:*\n` +
-               `  - Siswa Masuk (Clock-In): ${sHadir} Orang\n` +
-               `  - Siswa Pulang (Clock-Out): ${sPulang} Orang\n\n` +
+               `🎓 *3. RINGKASAN PRESENSI MURID MANDIRI:*\n` +
+               `  - Murid Masuk (Clock-In): ${sHadir} Orang\n` +
+               `  - Murid Pulang (Clock-Out): ${sPulang} Orang\n\n` +
                `📌 *DETAIL PRESENSI ADMIN TU & STAF TU:*\n`;
 
     if (tuLogs.length === 0) {
@@ -1596,9 +1596,9 @@ export function RekapLaporan({ currentRole, username }: { currentRole?: string; 
       });
     }
 
-    text += `\n👤 *DETAIL PRESENSI SISWA MANDIRI:*\n`;
+    text += `\n👤 *DETAIL PRESENSI MURID MANDIRI:*\n`;
     if (filteredSs.length === 0) {
-      text += `  (Tidak ada data presensi siswa)\n`;
+      text += `  (Tidak ada data presensi murid)\n`;
     } else {
       filteredSs.forEach(s => {
         text += `  • *${s.studentName}* (${s.className}): Masuk: ${s.clockIn || "-"} | Pulang: ${s.clockOut || "Belum Pulang"}\n`;
@@ -1791,12 +1791,12 @@ ${activeTeachers || "Tidak ada guru absen harian tercatat."}
 2. JURNAL MENGAJAR GURU:
 ${activeJournals || "Belum ada guru mengunggah jurnal mengajar hari ini."}
 
-3. STATUS KETIDAKHADIRAN SISWA (WALI KELAS):
-- Siswa Sakit (Sakit): ${sickStudents.join(", ") || "Nihil"}
-- Siswa Izin (Izin): ${permissionStudents.join(", ") || "Nihil"}
-- Siswa Alfa (Alfa): ${absentStudents.join(", ") || "Nihil"}
+3. STATUS KETIDAKHADIRAN MURID (WALI KELAS):
+- Murid Sakit (Sakit): ${sickStudents.join(", ") || "Nihil"}
+- Murid Izin (Izin): ${permissionStudents.join(", ") || "Nihil"}
+- Murid Alfa (Alfa): ${absentStudents.join(", ") || "Nihil"}
 
-4. STATUS BIMBINGAN SISWA & GURU BK:
+4. STATUS BIMBINGAN MURID & GURU BK:
 ${activeBkStr || "Nihil, semua murid kondusif."}
 
 5. AKTIF PERINGATAN (WARNING ALERTS):
@@ -1810,7 +1810,7 @@ Pertanyaan Guru: "${userMsg}"
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: "Anda adalah SIHADIR AI, asisten AI sekolah SMK Negeri 2 Konawe yang cerdas, sopan, terhormat, dan mendidik. Jawab pertanyaan guru dengan akurat bersumber dari data realtime yang diberikan. Berikan rekomendasi bimbingan, apresiasi disiplin guru, atau ingatkan siswa sakit/alfa dengan format poin-poin yang elegan."
+          systemInstruction: "Anda adalah SIHADIR AI, asisten AI sekolah SMK Negeri 2 Konawe yang cerdas, sopan, terhormat, dan mendidik. Jawab pertanyaan guru dengan akurat bersumber dari data realtime yang diberikan. Berikan rekomendasi bimbingan, apresiasi disiplin guru, atau ingatkan murid sakit/alfa dengan format poin-poin yang elegan."
         })
       });
 
@@ -1896,7 +1896,7 @@ Pertanyaan Guru: "${userMsg}"
             <span>Pusat Integrasi & Rekap Laporan Sekolah</span>
           </h2>
           <p className="text-xs text-slate-300 max-w-2xl">
-            Sistem pengumpulan rekap harian otomatis dari data presensi guru, jurnal mengajar, ketidakhadiran siswa (wali kelas), serta penindakan rujukan oleh Guru BK.
+            Sistem pengumpulan rekap harian otomatis dari data presensi guru, jurnal mengajar, ketidakhadiran murid (wali kelas), serta penindakan rujukan oleh Guru BK.
           </p>
         </div>
         
@@ -1907,7 +1907,7 @@ Pertanyaan Guru: "${userMsg}"
             className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer border border-emerald-400/30"
           >
             <Share2 className="h-3.5 w-3.5" />
-            <span>Bagikan Link Absen Siswa</span>
+            <span>Bagikan Link Absen Murid</span>
           </button>
 
           <button
@@ -1945,7 +1945,7 @@ Pertanyaan Guru: "${userMsg}"
                 </span>
               </h4>
               <p className="text-[10px] text-amber-700">
-                Peringatan kedisiplinan guru & absensi siswa harian yang terdeteksi secara otomatis dari formulir yang di-submit:
+                Peringatan kedisiplinan guru & absensi murid harian yang terdeteksi secara otomatis dari formulir yang di-submit:
               </p>
 
               <div className="mt-3 space-y-1.5">
@@ -1998,7 +1998,7 @@ Pertanyaan Guru: "${userMsg}"
             <Heart className="h-5 w-5 animate-pulse" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 block uppercase">Sakit & Izin Siswa</span>
+            <span className="text-[10px] font-bold text-slate-400 block uppercase">Sakit & Izin Murid</span>
             <span className="text-lg font-black text-slate-900">
               🤒 {getSakitCount()} S | ✉️ {getIzinCount()} I
             </span>
@@ -2048,15 +2048,15 @@ Pertanyaan Guru: "${userMsg}"
             </button>
 
             <button
-              onClick={() => setActiveTabPanel("rekap-siswa")}
+              onClick={() => setActiveTabPanel("rekap-murid")}
               className={`pb-2.5 text-xs font-black uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
-                activeTabPanel === "rekap-siswa" 
+                activeTabPanel === "rekap-murid" 
                   ? "border-indigo-600 text-indigo-700 font-extrabold" 
                   : "border-transparent text-slate-400 hover:text-slate-600 font-medium"
               }`}
             >
               <Users className="h-4 w-4" />
-              <span>Rekap Absensi Siswa</span>
+              <span>Rekap Absensi Murid</span>
             </button>
 
             <button
@@ -2116,7 +2116,7 @@ Pertanyaan Guru: "${userMsg}"
               }`}
             >
               <Sparkles className="h-4 w-4 text-amber-500 animate-pulse" />
-              <span>Rekap Refleksi Siswa</span>
+              <span>Rekap Refleksi Murid</span>
             </button>
 
             {(isSuperAdmin || isExecutiveAdmin) && (
@@ -2240,7 +2240,7 @@ Pertanyaan Guru: "${userMsg}"
                                 <span className={`w-1.5 h-1.5 rounded-full ${
                                   sig.category === "guru" ? "bg-emerald-500" :
                                   sig.category === "jurnal" ? "bg-indigo-500" :
-                                  sig.category === "siswa" ? "bg-rose-500" : "bg-amber-500"
+                                  sig.category === "murid" ? "bg-rose-500" : "bg-amber-500"
                                 }`} />
                                 <span className="font-black text-slate-800 text-xs">{sig.title}</span>
                               </div>
@@ -2268,10 +2268,10 @@ Pertanyaan Guru: "${userMsg}"
                     <div className="space-y-0.5">
                       <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider flex items-center gap-1.5">
                         <Users className="h-4 w-4 text-indigo-500" />
-                        <span>Daftar Siswa Sedang Ditindaklanjuti Guru BK</span>
+                        <span>Daftar Murid Sedang Ditindaklanjuti Guru BK</span>
                       </h3>
                       <p className="text-[10px] text-slate-500">
-                        Memantau siswa yang dirujuk ke Guru BK untuk bimbingan preventif dan penertiban perilaku harian.
+                        Memantau murid yang dirujuk ke Guru BK untuk bimbingan preventif dan penertiban perilaku harian.
                       </p>
                     </div>
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded-full">
@@ -2326,10 +2326,10 @@ Pertanyaan Guru: "${userMsg}"
               </motion.div>
             )}
 
-            {/* TAB 1B: REKAP ABSENSI SISWA (SEMUA KELAS - ARSIP & SELFIE) */}
-            {activeTabPanel === "rekap-siswa" && (
+            {/* TAB 1B: REKAP ABSENSI MURID (SEMUA KELAS - ARSIP & SELFIE) */}
+            {activeTabPanel === "rekap-murid" && (
               <motion.div
-                key="tab-rekap-siswa"
+                key="tab-rekap-murid"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -2401,7 +2401,7 @@ Pertanyaan Guru: "${userMsg}"
                             key={idx}
                             onClick={() => {
                               setSelectedClassFilter(sch.className);
-                              triggerToast(`Jadwal dipilih: ${sch.className} - ${sch.subjectName} (${sch.day}). Menyaring laporan siswa.`);
+                              triggerToast(`Jadwal dipilih: ${sch.className} - ${sch.subjectName} (${sch.day}). Menyaring laporan murid.`);
                             }}
                             className={`text-left p-3 rounded-xl border text-[11px] leading-tight transition-all flex flex-col justify-between hover:scale-[1.01] cursor-pointer ${
                               isSelected
@@ -2432,7 +2432,7 @@ Pertanyaan Guru: "${userMsg}"
 
                   <div className="bg-indigo-50/70 border border-indigo-100/80 rounded-xl px-3.5 py-2 flex items-center gap-2 text-[10px] text-indigo-900 font-semibold">
                     <Sparkles className="h-3.5 w-3.5 text-indigo-600 shrink-0" />
-                    <span>Memilih jadwal otomatis mengonfigurasi Kelas & Mata Pelajaran serta menampilkan daftar siswa terkait.</span>
+                    <span>Memilih jadwal otomatis mengonfigurasi Kelas & Mata Pelajaran serta menampilkan daftar murid terkait.</span>
                   </div>
                 </div>
 
@@ -2444,10 +2444,10 @@ Pertanyaan Guru: "${userMsg}"
                     </div>
                     <div>
                       <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">
-                        Sistem Informasi Rekap Kehadiran Siswa (SIHADIR Siswa)
+                        Sistem Informasi Rekap Kehadiran Murid (SIHADIR Murid)
                       </h3>
                       <p className="text-[10px] text-slate-400">
-                        Mengonsolidasikan laporan absensi kelas dari guru piket/wali kelas serta absensi mandiri siswa berfoto & GPS.
+                        Mengonsolidasikan laporan absensi kelas dari guru piket/wali kelas serta absensi mandiri murid berfoto & GPS.
                       </p>
                     </div>
                   </div>
@@ -2486,14 +2486,14 @@ Pertanyaan Guru: "${userMsg}"
                       />
                     </div>
 
-                    {/* Cari Nama Siswa */}
+                    {/* Cari Nama Murid */}
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cari Nama Siswa:</label>
+                      <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Cari Nama Murid:</label>
                       <input
                         type="text"
                         value={studentSearchQuery}
                         onChange={(e) => setStudentSearchQuery(e.target.value)}
-                        placeholder="Ketik nama siswa..."
+                        placeholder="Ketik nama murid..."
                         className="w-full bg-slate-950 border border-slate-800 py-2 px-3 text-xs rounded-xl font-medium text-slate-100 placeholder-slate-500 focus:outline-indigo-500 transition-all"
                       />
                     </div>
@@ -2516,7 +2516,7 @@ Pertanyaan Guru: "${userMsg}"
                   )}
                 </div>
 
-                {/* Sub-Tabs Selector inside Rekap Siswa */}
+                {/* Sub-Tabs Selector inside Rekap Murid */}
                 <div className="flex bg-slate-100 p-1 rounded-xl gap-1 border border-slate-200">
                   <button
                     onClick={() => setRekapSiswaSubTab("arsip-kelas")}
@@ -2542,7 +2542,7 @@ Pertanyaan Guru: "${userMsg}"
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                   >
-                    🤳 Selfie Mandiri Siswa ({
+                    🤳 Selfie Mandiri Murid ({
                       selfAttendanceLogs.filter(log => {
                         const matchClass = selectedClassFilter === "Semua Kelas" || log.className === selectedClassFilter;
                         const matchDate = !selectedDateFilter || log.date === selectedDateFilter;
@@ -2625,7 +2625,7 @@ Pertanyaan Guru: "${userMsg}"
                               <table className="w-full text-left border-collapse">
                                 <thead>
                                   <tr className="border-b border-slate-100 text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                                    <th className="py-2 px-1">Nama Siswa</th>
+                                    <th className="py-2 px-1">Nama Murid</th>
                                     <th className="py-2 text-center">Status Kehadiran</th>
                                     <th className="py-2 text-right">Ubah Presensi Cepat (Piket/Wali)</th>
                                   </tr>
@@ -2679,12 +2679,12 @@ Pertanyaan Guru: "${userMsg}"
                   </div>
                 )}
 
-                {/* TAB CONTENT 2: 🤳 SELFIE MANDIRI SISWA (REAL-TIME GPS & PHOTO) */}
+                {/* TAB CONTENT 2: 🤳 SELFIE MANDIRI MURID (REAL-TIME GPS & PHOTO) */}
                 {rekapSiswaSubTab === "presensi-mandiri" && (
                   <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                       <span className="text-xs font-black uppercase text-slate-900 tracking-wider block">
-                        Log Real-Time Presensi Mandiri Siswa (Wearpack & Selfie Live)
+                        Log Real-Time Presensi Mandiri Murid (Wearpack & Selfie Live)
                       </span>
                     </div>
 
@@ -2703,7 +2703,7 @@ Pertanyaan Guru: "${userMsg}"
                           <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100 text-[9px] font-black uppercase text-slate-400 tracking-wider">
                               <th className="p-3">Foto Selfie</th>
-                              <th className="p-3">Siswa & Kelas</th>
+                              <th className="p-3">Murid & Kelas</th>
                               <th className="p-3">Tanggal & Waktu</th>
                               <th className="p-3">Status</th>
                               <th className="p-3">Alasan/Keterangan</th>
@@ -3238,7 +3238,7 @@ Pertanyaan Guru: "${userMsg}"
                       <span>Formulir Pengisian Laporan Tambahan Harian</span>
                     </h3>
                     <p className="text-[10px] text-slate-500">
-                      Wali Kelas, Guru Wali, maupun Guru BK dapat mengisi laporan tambahan sakit/izin siswa atau rujukan kasus di bawah ini.
+                      Wali Kelas, Guru Wali, maupun Guru BK dapat mengisi laporan tambahan sakit/izin murid atau rujukan kasus di bawah ini.
                     </p>
                   </div>
                   
@@ -3289,7 +3289,7 @@ Pertanyaan Guru: "${userMsg}"
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700">Nama Siswa Berhalangan:</label>
+                          <label className="font-bold text-slate-700">Nama Murid Berhalangan:</label>
                           <input 
                             type="text"
                             value={newStudentName}
@@ -3353,7 +3353,7 @@ Pertanyaan Guru: "${userMsg}"
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700">Nama Siswa Dirujuk:</label>
+                          <label className="font-bold text-slate-700">Nama Murid Dirujuk:</label>
                           <input 
                             type="text"
                             value={newBkStudent}
@@ -3380,7 +3380,7 @@ Pertanyaan Guru: "${userMsg}"
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700">Jenis Kasus Siswa:</label>
+                          <label className="font-bold text-slate-700">Jenis Kasus Murid:</label>
                           <input 
                             type="text"
                             value={newBkCase}
@@ -3480,7 +3480,7 @@ Pertanyaan Guru: "${userMsg}"
                           >
                             <option value="Aman & Kondusif">Aman & Kondusif</option>
                             <option value="Tertib Terkendali">Tertib Terkendali</option>
-                            <option value="Ada Teguran Siswa">Ada Teguran Siswa</option>
+                            <option value="Ada Teguran Murid">Ada Teguran Murid</option>
                             <option value="Rawan (Butuh Koordinasi Keamanan)">Rawan (Butuh Koordinasi Keamanan)</option>
                           </select>
                         </div>
@@ -3541,7 +3541,7 @@ Pertanyaan Guru: "${userMsg}"
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="font-bold text-slate-700">Kasus Khusus / Masalah Siswa (Jika Ada):</label>
+                          <label className="font-bold text-slate-700">Kasus Khusus / Masalah Murid (Jika Ada):</label>
                           <input 
                             type="text"
                             value={waliSpecialCase}
@@ -3646,6 +3646,23 @@ Pertanyaan Guru: "${userMsg}"
                         Gunakan format nomor lokal Indonesia (misalnya <code className="bg-slate-100 px-1 py-0.5 rounded">08xxx</code> atau <code className="bg-slate-100 px-1 py-0.5 rounded">628xxx</code>), atau tempelkan ID Group WhatsApp untuk penyiaran grup.
                       </span>
                     </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-slate-700 block flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                        <span>ID Saluran / Grup WhatsApp SMK Negeri 2 Konawe (Presensi Masuk & Pulang Guru):</span>
+                      </label>
+                      <input 
+                        type="text"
+                        defaultValue={localStorage.getItem("simpati_fonnte_school_channel_target") || localStorage.getItem("simpati_fonnte_school_target") || "120363223018241031@g.us"}
+                        id="fonnte-school-channel-input"
+                        placeholder="Contoh: 120363223018241031@g.us (ID Saluran / Grup)"
+                        className="border border-emerald-200 bg-emerald-50/20 rounded-xl p-3 w-full text-slate-800 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-xs"
+                      />
+                      <span className="text-[10px] text-slate-400 block">
+                        Laporan presensi masuk dan presensi pulang harian guru akan terbit otomatis dan tercatat pada saluran/grup resmi ini.
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
@@ -3662,11 +3679,16 @@ Pertanyaan Guru: "${userMsg}"
                       onClick={() => {
                         const keyEl = document.getElementById("fonnte-api-key-input") as HTMLInputElement;
                         const targetEl = document.getElementById("fonnte-target-input") as HTMLInputElement;
+                        const channelEl = document.getElementById("fonnte-school-channel-input") as HTMLInputElement;
                         if (keyEl && targetEl) {
                           setFonnteApiKey(keyEl.value.trim());
                           setFonnteTarget(targetEl.value.trim());
                           localStorage.setItem("simpati_fonnte_api_key", keyEl.value.trim());
                           localStorage.setItem("simpati_fonnte_target", targetEl.value.trim());
+                          if (channelEl) {
+                            localStorage.setItem("simpati_fonnte_school_channel_target", channelEl.value.trim());
+                            localStorage.setItem("simpati_fonnte_school_target", channelEl.value.trim());
+                          }
                           triggerToast("Pengaturan Fonnte WhatsApp Gateway berhasil disimpan!");
                           setActiveTabPanel("rekap");
                         }
@@ -3871,7 +3893,7 @@ Pertanyaan Guru: "${userMsg}"
                         <span>Filter Rekap Presensi Masuk & Pulang</span>
                       </h3>
                       <p className="text-[11px] text-slate-500">
-                        Pantau kedisiplinan jam kedatangan dan kepulangan seluruh guru dan siswa mandiri.
+                        Pantau kedisiplinan jam kedatangan dan kepulangan seluruh guru dan murid mandiri.
                       </p>
                     </div>
 
@@ -3891,7 +3913,7 @@ Pertanyaan Guru: "${userMsg}"
                         onChange={(e) => setMpClassFilter(e.target.value)}
                         className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-slate-50 text-slate-700 font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                       >
-                        <option value="Semua Kelas">Semua Kelas Siswa</option>
+                        <option value="Semua Kelas">Semua Kelas Murid</option>
                         {Array.from(new Set(selfAttendanceLogs.map(s => s.className))).filter(Boolean).map(cls => (
                           <option key={cls} value={cls}>{cls}</option>
                         ))}
@@ -3953,17 +3975,17 @@ Pertanyaan Guru: "${userMsg}"
                   </div>
 
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Siswa Masuk</span>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Murid Masuk</span>
                     <span className="text-xl font-black text-slate-900 block mt-1">
-                      {selfAttendanceLogs.filter(s => (!mpDateFilter || s.date === mpDateFilter) && s.status === "Hadir" && s.clockIn).length} Siswa
+                      {selfAttendanceLogs.filter(s => (!mpDateFilter || s.date === mpDateFilter) && s.status === "Hadir" && s.clockIn).length} Murid
                     </span>
                     <span className="text-[9px] text-slate-500 block mt-0.5">Mandiri Logged</span>
                   </div>
 
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 shadow-2xs">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Siswa Pulang</span>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Murid Pulang</span>
                     <span className="text-xl font-black text-indigo-700 block mt-1">
-                      {selfAttendanceLogs.filter(s => (!mpDateFilter || s.date === mpDateFilter) && s.status === "Hadir" && s.clockOut).length} Siswa
+                      {selfAttendanceLogs.filter(s => (!mpDateFilter || s.date === mpDateFilter) && s.status === "Hadir" && s.clockOut).length} Murid
                     </span>
                     <span className="text-[9px] text-indigo-500 block mt-0.5">Sudah Checkout</span>
                   </div>
@@ -4109,7 +4131,7 @@ Pertanyaan Guru: "${userMsg}"
                     </div>
                   </div>
 
-                  {/* GRID PANEL 2 & PANEL 3: GURU & SISWA */}
+                  {/* GRID PANEL 2 & PANEL 3: GURU & MURID */}
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     
                     {/* GURU TABLE PANEL */}
@@ -4204,13 +4226,13 @@ Pertanyaan Guru: "${userMsg}"
                       </div>
                     </div>
 
-                  {/* SISWA TABLE PANEL */}
+                  {/* MURID TABLE PANEL */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <div className="flex items-center gap-2">
                         <Users className="h-4.5 w-4.5 text-indigo-600" />
                         <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
-                          Absensi Masuk & Pulang Siswa Mandiri
+                          Absensi Masuk & Pulang Murid Mandiri
                         </h4>
                       </div>
                       <span className="bg-indigo-50 text-indigo-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
@@ -4222,7 +4244,7 @@ Pertanyaan Guru: "${userMsg}"
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                            <th className="pb-3 pl-2">Nama Siswa</th>
+                            <th className="pb-3 pl-2">Nama Murid</th>
                             <th className="pb-3 text-center">Kelas</th>
                             <th className="pb-3 text-center">Jam Masuk</th>
                             <th className="pb-3 text-center">Jam Pulang</th>
@@ -4291,7 +4313,7 @@ Pertanyaan Guru: "${userMsg}"
                           {selfAttendanceLogs.filter(s => (!mpDateFilter || s.date === mpDateFilter) && (mpClassFilter === "Semua Kelas" || s.className === mpClassFilter)).length === 0 && (
                             <tr>
                               <td colSpan={5} className="py-8 text-center text-slate-400 font-medium italic">
-                                Belum ada logs presensi mandiri siswa tercatat pada tanggal {mpDateFilter} {mpClassFilter !== "Semua Kelas" ? `kelas ${mpClassFilter}` : ""}
+                                Belum ada logs presensi mandiri murid tercatat pada tanggal {mpDateFilter} {mpClassFilter !== "Semua Kelas" ? `kelas ${mpClassFilter}` : ""}
                               </td>
                             </tr>
                           )}
@@ -4307,7 +4329,7 @@ Pertanyaan Guru: "${userMsg}"
             </motion.div>
             )}
 
-            {/* TAB 1E: REKAP REFLEKSI HARIAN SISWA */}
+            {/* TAB 1E: REKAP REFLEKSI HARIAN MURID */}
             {activeTabPanel === "rekap-refleksi" && (() => {
               const reflList: any[] = studentReflections;
 
@@ -4348,10 +4370,10 @@ Pertanyaan Guru: "${userMsg}"
                       <div className="space-y-1">
                         <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                           <Sparkles className="h-4.5 w-4.5 text-indigo-600 animate-pulse" />
-                          <span>Filter Rekap Refleksi Harian Siswa</span>
+                          <span>Filter Rekap Refleksi Harian Murid</span>
                         </h3>
                         <p className="text-[10px] text-slate-500">
-                          Pantau kepuasan, perasaan, dan keluhan pembelajaran siswa secara langsung.
+                          Pantau kepuasan, perasaan, dan keluhan pembelajaran murid secara langsung.
                         </p>
                       </div>
 
@@ -4385,7 +4407,7 @@ Pertanyaan Guru: "${userMsg}"
 
                         {/* Search Input */}
                         <div className="space-y-1">
-                          <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wide">Cari Siswa</span>
+                          <span className="text-[9px] font-black uppercase text-slate-400 block tracking-wide">Cari Murid</span>
                           <input
                             type="text"
                             placeholder="Cari nama..."
@@ -4405,7 +4427,7 @@ Pertanyaan Guru: "${userMsg}"
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Refleksi Masuk</span>
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-2xl font-black text-slate-900">{totalCount}</span>
-                        <span className="text-xs font-bold text-slate-500">Siswa</span>
+                        <span className="text-xs font-bold text-slate-500">Murid</span>
                       </div>
                       <div className="text-[9px] text-slate-500">Pada filter kelas & tanggal terpilih</div>
                     </div>
@@ -4488,7 +4510,7 @@ Pertanyaan Guru: "${userMsg}"
                                         type="button"
                                         onClick={() => handleDeleteReflection(item.id, item.studentName)}
                                         className="text-rose-400 hover:text-rose-600 p-0.5 cursor-pointer transition-colors"
-                                        title="Hapus refleksi siswa"
+                                        title="Hapus refleksi murid"
                                       >
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </button>
@@ -4986,7 +5008,7 @@ Pertanyaan Guru: "${userMsg}"
                         <span>Sinkronisasi Data Dapodik</span>
                       </div>
                       <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                        Pembaruan berkala database siswa, kualifikasi pendidik, inventaris sarana prasarana sekolah, serta integrasi SIHADIR Realtime.
+                        Pembaruan berkala database murid, kualifikasi pendidik, inventaris sarana prasarana sekolah, serta integrasi SIHADIR Realtime.
                       </p>
                     </div>
                   </div>
@@ -5290,7 +5312,7 @@ Pertanyaan Guru: "${userMsg}"
                         <span>Konfigurasi WhatsApp Gateway & Otomatisasi Terjadwal</span>
                       </h3>
                       <p className="text-xs text-slate-300 max-w-2xl font-medium leading-relaxed">
-                        Kelola token Fonnte, target Grup WA Guru (laporan pergantian jam), Grup WA Tata Usaha (laporan 09.00 pagi), serta nomor darurat Admin TU dan Guru BK untuk notifikasi langsung saat siswa scan QR atau absensi manual.
+                        Kelola token Fonnte, target Grup WA Guru (laporan pergantian jam), Grup WA Tata Usaha (laporan 09.00 pagi), serta nomor darurat Admin TU dan Guru BK untuk notifikasi langsung saat murid scan QR atau absensi manual.
                       </p>
                     </div>
 
@@ -5329,7 +5351,7 @@ Pertanyaan Guru: "${userMsg}"
                     <div className="bg-purple-900/30 border border-purple-700/40 rounded-2xl p-3 space-y-1">
                       <div className="flex items-center gap-2 text-purple-300 font-bold text-[11px]">
                         <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
-                        <span>Notifikasi Instan Siswa</span>
+                        <span>Notifikasi Instan Murid</span>
                       </div>
                       <p className="text-[10px] text-slate-300">
                         Realtime ke <strong>WA Admin TU & Guru BK</strong> saat scan barcode / manual.
@@ -5385,7 +5407,7 @@ Pertanyaan Guru: "${userMsg}"
                         type="text"
                         value={fonnteApiKey}
                         onChange={(e) => setFonnteApiKey(e.target.value)}
-                        placeholder="Contoh: ypkaCVkd5uLo3fkEWtnb"
+                        placeholder="Contoh: LMJoXs8WD3g78VGgFuTM"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                       <p className="text-[10px] text-slate-400 leading-relaxed">
@@ -5482,7 +5504,7 @@ Pertanyaan Guru: "${userMsg}"
                     </div>
                   </div>
 
-                  {/* CARD 4: NOTIFIKASI INSTAN SISWA (ADMIN TU & GURU BK) */}
+                  {/* CARD 4: NOTIFIKASI INSTAN MURID (ADMIN TU & GURU BK) */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                       <div className="flex items-center gap-2.5">
@@ -5494,7 +5516,7 @@ Pertanyaan Guru: "${userMsg}"
                             4. Nomor WA Admin TU & Guru BK
                           </h4>
                           <p className="text-[11px] text-slate-500">
-                            Penerima notifikasi instan langsung saat siswa presensi QR / manual
+                            Penerima notifikasi instan langsung saat murid presensi QR / manual
                           </p>
                         </div>
                       </div>
@@ -5546,7 +5568,7 @@ Pertanyaan Guru: "${userMsg}"
                       </div>
 
                       <p className="text-[10px] text-slate-400">
-                        Setiap kali ada siswa yang scan barcode atau dicatat izin/sakit/alfa, ringkasan instan langsung masuk ke nomor WhatsApp ini.
+                        Setiap kali ada murid yang scan barcode atau dicatat izin/sakit/alfa, ringkasan instan langsung masuk ke nomor WhatsApp ini.
                       </p>
                     </div>
                   </div>
@@ -5590,7 +5612,7 @@ Pertanyaan Guru: "${userMsg}"
                         </span>
                       </h3>
                       <p className="text-xs text-slate-300">
-                        Seluruh entri presensi siswa, guru, jurnal KBM, dan log guru piket otomatis dicadangkan dan disinkronkan secara aman.
+                        Seluruh entri presensi murid, guru, jurnal KBM, dan log guru piket otomatis dicadangkan dan disinkronkan secara aman.
                       </p>
                     </div>
                   </div>
@@ -5602,7 +5624,7 @@ Pertanyaan Guru: "${userMsg}"
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Log Siswa</span>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Log Murid</span>
                       <span className="text-lg font-black text-slate-900">{studentLogs.length} Sesi Kelas</span>
                     </div>
                     <div className="bg-slate-50 border border-slate-100 rounded-xl p-3">
@@ -5740,7 +5762,7 @@ Pertanyaan Guru: "${userMsg}"
               
               <div className="border-b border-slate-800 pb-2 flex items-center gap-2">
                 <Users className="h-4 w-4 text-indigo-400" />
-                <h4 className="text-xs font-black uppercase text-slate-100 tracking-wider">Verifikasi Foto Selfie Siswa</h4>
+                <h4 className="text-xs font-black uppercase text-slate-100 tracking-wider">Verifikasi Foto Selfie Murid</h4>
               </div>
 
               <div className="w-full h-[360px] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center">
@@ -5967,7 +5989,7 @@ Pertanyaan Guru: "${userMsg}"
         )}
       </AnimatePresence>
 
-      {/* Modal Bagikan Link Presensi Siswa */}
+      {/* Modal Bagikan Link Presensi Murid */}
       <AnimatePresence>
         {isShareLinkModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
@@ -5983,8 +6005,8 @@ Pertanyaan Guru: "${userMsg}"
                     <Share2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-800">Bagikan Tautan Presensi Siswa</h3>
-                    <p className="text-xs text-slate-500">Kirim tautan presensi mandiri ke siswa agar langsung terisi & terekap otomatis di dashboard ini.</p>
+                    <h3 className="text-base font-extrabold text-slate-800">Bagikan Tautan Presensi Murid</h3>
+                    <p className="text-xs text-slate-500">Kirim tautan presensi mandiri ke murid agar langsung terisi & terekap otomatis di dashboard ini.</p>
                   </div>
                 </div>
                 <button
@@ -5999,7 +6021,7 @@ Pertanyaan Guru: "${userMsg}"
               {/* Share URL Box */}
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                  Tautan Langsung Presensi Siswa:
+                  Tautan Langsung Presensi Murid:
                 </label>
                 <div className="flex items-center gap-2">
                   <input
@@ -6033,8 +6055,8 @@ Pertanyaan Guru: "${userMsg}"
                   onClick={() => {
                     const link = `${window.location.origin}${window.location.pathname}?mode=absen_siswa`;
                     const waText = encodeURIComponent(
-                      `*LINK PRESENSI HARIAN SISWA SMK NEGERI 2 KONAWE* 📲\n\n` +
-                      `Halo siswa-siswi SMK Negeri 2 Konawe, silakan lakukan presensi masuk/pulang hari ini melalui tautan resmi:\n` +
+                      `*LINK PRESENSI HARIAN MURID SMK NEGERI 2 KONAWE* 📲\n\n` +
+                      `Halo murid-murid SMK Negeri 2 Konawe, silakan lakukan presensi masuk/pulang hari ini melalui tautan resmi:\n` +
                       `👉 ${link}\n\n` +
                       `*Langkah Pengisian:*\n` +
                       `1. Buka tautan di atas melalui browser HP (Chrome/Safari).\n` +
@@ -6048,7 +6070,7 @@ Pertanyaan Guru: "${userMsg}"
                   className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   <Send className="h-4 w-4" />
-                  <span>Kirim Tautan ke Grup WhatsApp Siswa / Kelas</span>
+                  <span>Kirim Tautan ke Grup WhatsApp Murid / Kelas</span>
                 </button>
               </div>
 
@@ -6059,9 +6081,9 @@ Pertanyaan Guru: "${userMsg}"
                   Sinkronisasi Real-Time Cloud Firestore
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-[11px] leading-relaxed">
-                  <li>Setiap presensi yang di-submit siswa langsung terunggah ke Cloud Firestore.</li>
-                  <li>Laporan di tab <strong>Rekap Presensi Siswa</strong>, <strong>Selfie Mandiri Siswa</strong>, dan <strong>Absensi Masuk & Pulang</strong> otomatis ter-update tanpa perlu refresh halaman.</li>
-                  <li>Bukti foto selfie wearpack siswa, jam masuk, jam pulang, dan koordinat GPS tersimpan aman.</li>
+                  <li>Setiap presensi yang di-submit murid langsung terunggah ke Cloud Firestore.</li>
+                  <li>Laporan di tab <strong>Rekap Presensi Murid</strong>, <strong>Selfie Mandiri Murid</strong>, dan <strong>Absensi Masuk & Pulang</strong> otomatis ter-update tanpa perlu refresh halaman.</li>
+                  <li>Bukti foto selfie wearpack murid, jam masuk, jam pulang, dan koordinat GPS tersimpan aman.</li>
                 </ul>
               </div>
 

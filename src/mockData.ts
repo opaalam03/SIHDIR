@@ -517,16 +517,19 @@ export const MOCK_TEACHERS: Teacher[] = [
   },
   {
     id: "T37",
-    name: "RUSNI K",
+    name: "RUSNI K, S.T",
     nip: "-",
     nuptk: "-",
     subject: "Dasar Program Keahlian & Mapel Keahlian",
     classes: ["X TAV", "XI TAV", "XII TAV", "XII TKR B"],
     role: "Guru",
-    whatsApp: "-",
+    whatsApp: "085241000037",
     email: "rusni@smkn2konawe.sch.id",
     birthDate: "1990-01-01",
-    birthInfo: "Konawe",
+    birthPlace: "Konawe",
+    birthInfo: "Konawe, 1 Januari 1990",
+    address: "Unaaha, Konawe",
+    additionalDuty: ["Guru Wali Binaan Kelompok 36", "Guru Mapel Kejuruan TAV"],
     qrCode: "37_RUSNI_K_ST"
   },
   {
@@ -4437,7 +4440,7 @@ export const INITIAL_JURNAL_MENGAJAR: JurnalMengajar[] = [
   {
     id: "J01",
     date: "2026-06-18",
-    subject: "Teknik Kendaraan Ringan (Otomotif)",
+    subject: "Guru Produktif Kendaraan Ringan",
     className: "XI TKR A",
     tpCode: "TP-TKR-01",
     material: "Sistem Kelistrikan Pompa Bahan Bakar EFI & Scanner Diagnostik",

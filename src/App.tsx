@@ -29,13 +29,14 @@ import { ArsipSuratDigital } from "./components/ArsipSuratDigital";
 import { KelasBimbinganManager } from "./components/KelasBimbinganManager";
 import { StudentViolationCreditManager } from "./components/StudentViolationCreditManager";
 import { QrScannerModal } from "./components/QrScannerModal";
-import { GraduationCap, Settings2, UserCheck, Shield, QrCode, Palette } from "lucide-react";
+import { GraduationCap, Settings2, UserCheck, Shield, QrCode, MessageSquare } from "lucide-react";
 import { getStudentCaptainClass } from "./data/classCaptains";
 import { MOCK_STUDENTS } from "./mockData";
 import { SIHADIR_THEMES, ThemeId } from "./utils/themeConfig";
 import { DraggableThemeWidget } from "./components/DraggableThemeWidget";
 import { DigitalClockWidget } from "./components/DigitalClockWidget";
 import { startAttendanceAutomations, stopAttendanceAutomations } from "./services/whatsappFonnteService";
+import { getTeacherPhoto, scanAndRecoverPhotos } from "./services/teacherService";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -71,7 +72,7 @@ export default function App() {
       if (!dutyStatus.isDutyToday) {
         setPiketAlertModal({
           title: "⛔ AKSES SCAN QR KEHADIRAN DITOLAK",
-          message: `Maaf, Anda (${authUsername || 'Guru Piket'}) hanya berwenang melakukan Scan QR Kehadiran Siswa pada HARI PIKET Anda (${dutyStatus.assignedDays.join(", ")}).\n\nHari ini adalah hari ${dutyStatus.todayDay}. Di luar hari piket Anda, Kios Scanner QR Kehadiran Siswa dikunci.\n\nJika Anda bertugas menggantikan rekan guru lain hari ini, silakan sesuaikan 'Setel Hari Piket' pada menu Workspace Guru Piket.`
+          message: `Maaf, Anda (${authUsername || 'Guru Piket'}) hanya berwenang melakukan Scan QR Kehadiran Murid pada HARI PIKET Anda (${dutyStatus.assignedDays.join(", ")}).\n\nHari ini adalah hari ${dutyStatus.todayDay}. Di luar hari piket Anda, Kios Scanner QR Kehadiran Murid dikunci.\n\nJika Anda bertugas menggantikan rekan guru lain hari ini, silakan sesuaikan 'Setel Hari Piket' pada menu Workspace Guru Piket.`
         });
         return;
       }
@@ -98,9 +99,9 @@ export default function App() {
     };
   }, []);
 
-  // Initialize automated WhatsApp Fonnte Attendance Engine
-  // (Automated period transition report for teachers & 09:00 AM report for TU)
+  // Initialize automated WhatsApp Fonnte Attendance Engine & Scan/Recover Photos
   useEffect(() => {
+    scanAndRecoverPhotos();
     startAttendanceAutomations();
     return () => {
       stopAttendanceAutomations();
@@ -307,8 +308,8 @@ export default function App() {
           />
         );
 
-      // Siswa tabs
-      case "nilai-siswa":
+      // Murid tabs
+      case "nilai-murid":
         return (
           <LaporanNilaiSiswa 
             currentRole={currentRole} 
@@ -490,13 +491,13 @@ export default function App() {
     : currentRole === "kepsek" 
     ? "Kepala Sekolah" 
     : currentRole === "siswa"
-    ? (userCaptainClass ? `Siswa (Tugas Tambahan: Ketua Kelas ${userCaptainClass})` : "Siswa Terdaftar")
+    ? (userCaptainClass ? `Murid (Tugas Tambahan: Ketua Kelas ${userCaptainClass})` : "Murid Terdaftar")
     : "Guru Mata Pelajaran / Staf";
 
-  // Protection: If currentRole is ketua_kelas but user is not a designated class captain or admin, fallback to siswa
+  // Protection: If currentRole is ketua_kelas but user is not a designated class captain or admin, fallback to murid
   useEffect(() => {
     if (currentRole === "ketua_kelas" && !userCaptainClass && authUsername !== "admin" && !authUsername.toLowerCase().includes("arham")) {
-      setCurrentRole("siswa");
+      setCurrentRole("murid");
       if (activeTab === "ketua-kelas-dashboard") {
         setActiveTab("student-attendance");
       }
@@ -508,12 +509,22 @@ export default function App() {
 
 
   const activeUserPhoto = (() => {
-    // 1. If student profile matched (or role is siswa), prioritize student photoUrl
+    // 1. If user is a student, ONLY use student photoUrl (never leak teacher photos to students!)
+    if (currentRole === "siswa" || currentRole === "murid" || currentRole === "ketua_kelas") {
+      return matchedStudentProfile?.photoUrl || "";
+    }
+
     if (matchedStudentProfile?.photoUrl) {
       return matchedStudentProfile.photoUrl;
     }
-    // 2. Try teacher profile by username
+
+    // 2. Resolve teacher photo strictly by authorized identity
     if (authUsername) {
+      const isArham = authUsername.toLowerCase() === "admin" || authUsername.toLowerCase().includes("arham");
+      const targetId = isArham ? "T06" : authUsername;
+      const directPhoto = getTeacherPhoto(targetId) || getTeacherPhoto(displayUserRealName);
+      if (directPhoto) return directPhoto;
+
       const profileKey = `sihadir_teacher_profile_${authUsername.trim().toLowerCase() || "default"}`;
       const saved = localStorage.getItem(profileKey);
       if (saved) {
@@ -523,9 +534,6 @@ export default function App() {
         } catch (e) {}
       }
     }
-    // 3. Try global active teacher photo
-    const globalPhoto = localStorage.getItem("sihadir_active_teacher_photo");
-    if (globalPhoto) return globalPhoto;
 
     return "";
   })();
@@ -609,61 +617,81 @@ export default function App() {
           </div>
 
           {/* Quick Config Row - Layout Controls */}
-          <div className="flex flex-wrap items-center gap-2.5 self-start xl:self-auto">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap xl:flex-nowrap justify-end shrink-0">
             {/* Global QR Scanner Button - Only for Ketua Kelas, Guru Piket, Guru BK, Admin TU, and Admin Utama */}
             {["ketua_kelas", "piket", "bk", "tu", "admin"].includes(currentRole) && (
               <button
                 type="button"
                 onClick={handleOpenGlobalQrScanner}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-emerald-300 animate-pulse shrink-0"
+                className="h-11 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-3.5 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer border border-emerald-300 shrink-0"
                 title="Klik untuk membuka Kios Scanner QR Code Absensi"
               >
                 <QrCode className="h-4 w-4 text-slate-950" />
-                <span className="uppercase tracking-wider">BACA SCAN QR CODE</span>
+                <span className="uppercase tracking-wider">SCAN QR</span>
               </button>
             )}
 
-            {/* Tema Latar Indicator & Selector Button */}
-            <button
-              type="button"
-              onClick={() => setIsThemePickerOpen(prev => !prev)}
-              className={`flex items-center gap-1.5 p-1 px-2.5 rounded-xl border transition-all hover:scale-105 cursor-pointer shadow-sm ${themeStyle.controlBox} hover:border-sky-400`}
-              title="Klik untuk memilih variasi tema latar belakang dan warna aplikasi"
-            >
-              <div className="flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
-                <span className="text-[10px] font-extrabold uppercase tracking-wider opacity-90 hidden sm:inline">
-                  Tema:
-                </span>
-                <div className={`w-2.5 h-2.5 rounded-full ${activeThemeDef.previewClass} ring-1 ring-white/50 inline-block`} />
-                <span className="text-[10px] font-black text-sky-300">
-                  {activeThemeDef.name}
-                </span>
-              </div>
-            </button>
-
             {/* Active User Badging - Foto / Avatar di sebelah kiri nama */}
-            <div className={`flex items-center gap-2.5 px-2.5 py-1 rounded-xl border ${themeStyle.controlBox}`}>
-              <div className="w-8.5 h-8.5 rounded-full bg-white/20 border border-white/30 overflow-hidden flex items-center justify-center text-white font-extrabold text-xs uppercase font-mono shrink-0 shadow-2xs">
+            <div className={`flex items-center gap-2.5 px-3 h-11 rounded-xl border ${themeStyle.controlBox} shrink-0`}>
+              <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 overflow-hidden flex items-center justify-center text-white font-extrabold text-xs uppercase font-mono shrink-0 shadow-2xs">
                 {activeUserPhoto ? (
                   <img src={activeUserPhoto} alt={displayUserRealName} className="w-full h-full object-cover" />
                 ) : (
                   authUsername ? authUsername.substring(0, 2).toUpperCase() : "AF"
                 )}
               </div>
-              <div className="flex flex-col items-start leading-none">
-                <span className={themeStyle.userName}>{displayUserRealName}</span>
-                <span className={themeStyle.userRole}>
+              <div className="flex flex-col items-start justify-center leading-tight">
+                <span className={`${themeStyle.userName} text-xs font-black max-w-[130px] sm:max-w-[170px] truncate`}>{displayUserRealName}</span>
+                <span className={`${themeStyle.userRole} text-[10px]`}>
                   {displayRoleTitle}
                 </span>
               </div>
             </div>
 
+            {/* Kolom Chatting Sihadir - Disamping Jam dan Tanggal agar Nampak Kelihatan */}
+            <button
+              type="button"
+              id="header-btn-chat-sekolah"
+              onClick={() => {
+                setActiveTab("chat-sekolah");
+                localStorage.setItem("sihadir_active_tab", "chat-sekolah");
+              }}
+              className={`flex items-center gap-2.5 px-3.5 h-11 rounded-xl border transition-all cursor-pointer shadow-md shrink-0 hover:scale-102 ${
+                activeTab === "chat-sekolah"
+                  ? "bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 text-white border-teal-300 ring-2 ring-teal-400/50 shadow-teal-950/40"
+                  : themeStyle.isLight
+                    ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border-emerald-300/80 hover:border-emerald-400 shadow-emerald-100/50"
+                    : "bg-slate-900/95 hover:bg-slate-800/90 text-white border-emerald-500/40 hover:border-emerald-400 shadow-lg shadow-emerald-950/20 backdrop-blur-md"
+              }`}
+              title="Buka Kolom Chatting Sihadir SMK Negeri 2 Konawe (Forum Diskusi & Koordinasi KBM)"
+            >
+              <div className="relative flex items-center justify-center p-1.5 rounded-lg bg-emerald-500/20 border border-emerald-400/40 shrink-0">
+                <MessageSquare className="h-4 w-4 text-emerald-400 animate-pulse" />
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </div>
+              <div className="flex flex-col items-start justify-center leading-tight text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs font-black tracking-tight whitespace-nowrap ${activeTab === "chat-sekolah" ? "text-white" : themeStyle.isLight ? "text-emerald-950" : "text-white"}`}>
+                    Chatting Sihadir
+                  </span>
+                  <span className="bg-emerald-500 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                    ONLINE
+                  </span>
+                </div>
+                <span className={`text-[10px] font-semibold tracking-wide whitespace-nowrap ${activeTab === "chat-sekolah" ? "text-emerald-100" : themeStyle.isLight ? "text-emerald-700" : "text-emerald-300"}`}>
+                  Forum KBM & Koordinasi
+                </span>
+              </div>
+            </button>
+
             {/* Jam Digital Resmi Sudut Kanan Atas Setiap Akun */}
             <DigitalClockWidget 
               size="lg" 
               variant={themeStyle.isLight ? "light" : "header"} 
-              className="shrink-0"
+              className="shrink-0 h-11 flex justify-center !rounded-xl"
               id="header-digital-clock"
             />
           </div>

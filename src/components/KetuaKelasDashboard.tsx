@@ -139,7 +139,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
   const majorName = getMajorFromClass(className);
 
   // Fonnte target configuration
-  const [fonnteApiKey, setFonnteApiKey] = useState(() => localStorage.getItem("simpati_fonnte_api_key") || "HxwVVhAM4qJjsB1KzkeD");
+  const [fonnteApiKey, setFonnteApiKey] = useState(() => localStorage.getItem("simpati_fonnte_api_key") || "LMJoXs8WD3g78VGgFuTM");
   const [fonnteTarget, setFonnteTarget] = useState(() => {
     const stored = localStorage.getItem("simpati_fonnte_target");
     if (!stored || stored === "12036319875412356@g.us" || stored === "12036329384729384-tu@g.us" || stored === "6282271225802-1625324042@g.us") {
@@ -481,15 +481,15 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
 
   // Auto-migrate and register user's newly provided Fonnte token and group target ID
   useEffect(() => {
-    let activeKey = "HxwVVhAM4qJjsB1KzkeD";
+    let activeKey = "LMJoXs8WD3g78VGgFuTM";
     const storedApiKey = localStorage.getItem("simpati_fonnte_api_key");
     const storedTarget = localStorage.getItem("simpati_fonnte_target");
 
     // Automatically set default to user's real credentials if empty or using old demo credentials
-    if (!storedApiKey || storedApiKey === "ypkaCVkd5uLo3fkEWtnb" || storedApiKey === "azYnZj8rnnTB5cDFVwz5") {
-      localStorage.setItem("simpati_fonnte_api_key", "HxwVVhAM4qJjsB1KzkeD");
-      setFonnteApiKey("HxwVVhAM4qJjsB1KzkeD");
-      activeKey = "HxwVVhAM4qJjsB1KzkeD";
+    if (!storedApiKey || storedApiKey === "ypkaCVkd5uLo3fkEWtnb" || storedApiKey === "azYnZj8rnnTB5cDFVwz5" || storedApiKey === "HxwVVhAM4qJjsB1KzkeD") {
+      localStorage.setItem("simpati_fonnte_api_key", "LMJoXs8WD3g78VGgFuTM");
+      setFonnteApiKey("LMJoXs8WD3g78VGgFuTM");
+      activeKey = "LMJoXs8WD3g78VGgFuTM";
     } else {
       activeKey = storedApiKey;
     }
@@ -568,21 +568,21 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
            `===============================\n\n` +
            `*🟢 STATUS PENGAJARAN GURU:* \n` +
            `${teacherReport}\n` +
-           `*🔴 REKAPITULASI KEHADIRAN SISWA:*\n` +
-           `• Total Siswa: *${totalCount}*\n` +
+           `*🔴 REKAPITULASI KEHADIRAN MURID:*\n` +
+           `• Total Murid: *${totalCount}*\n` +
            `• Hadir: *${countHadir}*\n` +
            `• Sakit: *${countSakit}*\n` +
            `• Izin: *${countIzin}*\n` +
            `• Alfa (Tanpa Keterangan): *${countAlpa}*\n` +
            `• Terlambat: *${countTerlambat}*\n` +
            `• Bolos Jam Pelajaran: *${countBolos}*\n\n` +
-           `*📋 DAFTAR DETAIL SISWA:* \n` +
+           `*📋 DAFTAR DETAIL MURID:* \n` +
            (countSakit > 0 ? `*Sakit (${countSakit}):*\n${sakitList}\n` : "") +
            (countIzin > 0 ? `*Izin (${countIzin}):*\n${izinList}\n` : "") +
            (countAlpa > 0 ? `*Alfa (${countAlpa}):*\n${alpaList}\n` : "") +
            (countTerlambat > 0 ? `*Terlambat (${countTerlambat}):*\n${terlambatList}\n` : "") +
            (countBolos > 0 ? `*Bolos (${countBolos}):*\n${bolosList}\n` : "") +
-           (countSakit + countIzin + countAlpa + countTerlambat + countBolos === 0 ? `_Semua siswa hadir tepat waktu._\n` : "") +
+           (countSakit + countIzin + countAlpa + countTerlambat + countBolos === 0 ? `_Semua murid hadir tepat waktu._\n` : "") +
            `\n*📝 CATATAN SITUASI KELAS:* \n` +
            `"${classNotes}"\n\n` +
            `_Laporan Resmi Ketua Kelas disinkronkan otomatis dengan SIHADIR SMK Negeri 2 Konawe._`;
@@ -1014,7 +1014,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
                   <Users className="h-5 w-5 text-emerald-600" />
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">2. Laporan Ketidakhadiran & Perilaku Murid</h3>
-                    <p className="text-[11px] text-slate-500">Klik status kehadiran setiap siswa. Tambah alasan jika tidak hadir (sakit, izin, alpa, terlambat, atau bolos).</p>
+                    <p className="text-[11px] text-slate-500">Klik status kehadiran setiap murid. Tambah alasan jika tidak hadir (sakit, izin, alpa, terlambat, atau bolos).</p>
                   </div>
                 </div>
                 <span className="text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">
@@ -1027,19 +1027,19 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
                 <div className="bg-emerald-50 border border-emerald-100 p-2 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-emerald-700 block">Hadir</span>
                   <span className="text-sm font-black text-emerald-800 font-mono">
-                    {students.filter(s => s.status === "Hadir").length} siswa
+                    {students.filter(s => s.status === "Hadir").length} murid
                   </span>
                 </div>
                 <div className="bg-amber-50 border border-amber-100 p-2 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-amber-700 block">Sakit/Izin</span>
                   <span className="text-sm font-black text-amber-800 font-mono">
-                    {students.filter(s => s.status === "Sakit" || s.status === "Izin").length} siswa
+                    {students.filter(s => s.status === "Sakit" || s.status === "Izin").length} murid
                   </span>
                 </div>
                 <div className="bg-rose-50 border border-rose-100 p-2 rounded-2xl">
                   <span className="text-[9px] uppercase font-black text-rose-700 block">Alpa/Bolos/Telat</span>
                   <span className="text-sm font-black text-rose-800 font-mono">
-                    {students.filter(s => s.status === "Bolos" || s.status === "Alpa" || s.status === "Terlambat").length} siswa
+                    {students.filter(s => s.status === "Bolos" || s.status === "Alpa" || s.status === "Terlambat").length} murid
                   </span>
                 </div>
               </div>
@@ -1170,7 +1170,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
                     "Kondisi kelas kacau karena tdk ada guru, banyak yang keluar ke kantin, beberapa ada yang bolos.",
                     "Sementara mengerjakan tugas mandiri/kelompok dari guru secara tertib di kelas.",
                     "Guru mata pelajaran hanya memberikan catatan materi di papan tulis/buku tanpa penjelasan langsung.",
-                    "Guru mata pelajaran masuk kelas memberikan tugas dan memantau pengerjaan siswa.",
+                    "Guru mata pelajaran masuk kelas memberikan tugas dan memantau pengerjaan murid.",
                     "Sementara melakukan praktek produktif secara langsung di dalam bengkel / laboratorium sekolah.",
                     "Belajar mandiri dengan tertib, tenang, dan disiplin di dalam ruang perpustakaan sekolah.",
                     "Kelas kosong karena guru berhalangan hadir (sakit/tugas luar), namun tugas yang diberikan telah selesai dikerjakan."
@@ -1339,7 +1339,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
                     {/* Visual Statistics */}
                     <div className="md:col-span-4 space-y-4 border-r border-slate-100 pr-4">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Statistik Siswa</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Statistik Murid</span>
                         <div className="grid grid-cols-2 gap-2 mt-2">
                           <div className="bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl text-center">
                             <span className="text-[10px] text-emerald-800 font-extrabold block">Hadir</span>
@@ -1706,7 +1706,7 @@ export function KetuaKelasDashboard({ username }: KetuaKelasDashboardProps = {})
                       type="text"
                       value={newGroupDesc}
                       onChange={(e) => setNewGroupDesc(e.target.value)}
-                      placeholder="Contoh: Grup uji coba untuk absensi mandiri siswa"
+                      placeholder="Contoh: Grup uji coba untuk absensi mandiri murid"
                       className="w-full text-[11px] p-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
                     />
                   </div>

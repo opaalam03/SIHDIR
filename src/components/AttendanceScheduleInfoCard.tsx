@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export interface AttendanceScheduleInfoCardProps {
-  role?: "siswa" | "guru" | "staf" | "semua";
+  role?: "murid" | "guru" | "staf" | "semua";
   variant?: "full" | "compact" | "banner";
   highlightMode?: "all" | "masuk" | "pulang";
   className?: string;

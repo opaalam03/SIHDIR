@@ -76,7 +76,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
         status: (idx % 6 === 2) ? "Perlu Pembinaan" : "Tuntas",
         score: `${80 + (idx % 15)}`,
         parentPhone: s.parentWhatsApp || s.whatsApp || "08123456789",
-        lastNote: `Siswa terdaftar aktif kelas ${className}`
+        lastNote: `Murid terdaftar aktif kelas ${className}`
       }));
     }
 
@@ -91,7 +91,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
   const students = getStudentsForClass(selectedClass);
 
   const [classNotes, setClassNotes] = useState([
-    { id: "cn1", studentName: students[0]?.name || "Siswa Binaan", date: "Hari Ini", type: "Peringatan Absensi", text: "Dipanggil untuk klarifikasi kehadiran minggu ketiga.", author: username }
+    { id: "cn1", studentName: students[0]?.name || "Murid Binaan", date: "Hari Ini", type: "Peringatan Absensi", text: "Dipanggil untuk klarifikasi kehadiran minggu ketiga.", author: username }
   ]);
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -138,7 +138,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
             TUGAS & KONTROL WALI KELAS ({selectedClass})
           </h2>
           <p className="text-xs text-purple-200/90 leading-relaxed font-medium max-w-2xl">
-            Kelola data presensi, rekapitulasi nilai semua mata pelajaran dari input guru mapel, serta buat laporan individu siswa untuk diteruskan ke grup WA Orang Tua.
+            Kelola data presensi, rekapitulasi nilai semua mata pelajaran dari input guru mapel, serta buat laporan individu murid untuk diteruskan ke grup WA Orang Tua.
           </p>
         </div>
 
@@ -169,6 +169,14 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
           </button>
           <button
             type="button"
+            onClick={() => onNavigateToTab?.("kredit-pelanggaran")}
+            className="bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-rose-400/30"
+          >
+            <Shield className="h-4 w-4" />
+            <span>Poin Pelanggaran {selectedClass}</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setComprehensiveModalOpen(true)}
             className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-4 py-3 rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-amber-300/40"
           >
@@ -194,10 +202,10 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
               </span>
             </div>
             <h3 className="text-sm sm:text-base font-black text-white">
-              Rekapitulasi Presensi Terperinci Seluruh Sekolah (Siswa, Guru & Staf TU)
+              Rekapitulasi Presensi Terperinci Seluruh Sekolah (Murid, Guru & Staf TU)
             </h3>
             <p className="text-xs text-emerald-100/80 max-w-3xl">
-              Tepat pukul 15.00 WITA saat KBM ditutup, rekap kehadiran siswa per kelas, dewan guru yang bertugas & jurnalnya, serta staf Tata Usaha terekap tuntas dan disiarkan ke Saluran / Grup WhatsApp Sekolah.
+              Tepat pukul 15.00 WITA saat KBM ditutup, rekap kehadiran murid per kelas, dewan guru yang bertugas & jurnalnya, serta staf Tata Usaha terekap tuntas dan disiarkan ke Saluran / Grup WhatsApp Sekolah.
             </p>
           </div>
         </div>
@@ -217,7 +225,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left 2-Cols: Daftar Kehadiran & Rekap Laporan Siswa Binaan */}
+        {/* Left 2-Cols: Daftar Kehadiran & Rekap Laporan Murid Binaan */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
@@ -226,7 +234,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
                   Kelas Binaan Wali Kelas
                 </span>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                  <span>Daftar Siswa Kelas {selectedClass}</span>
+                  <span>Daftar Murid Kelas {selectedClass}</span>
                   <span className="bg-purple-100 text-purple-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-purple-200">
                     Wali Kelas: {assignedWaliName}
                   </span>
@@ -256,7 +264,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b text-slate-400 font-extrabold uppercase text-[9px] tracking-wider">
-                    <th className="py-2.5 px-2">Nama Siswa</th>
+                    <th className="py-2.5 px-2">Nama Murid</th>
                     <th className="px-2">NIS</th>
                     <th className="px-2">Kehadiran</th>
                     <th className="px-2">Status</th>
@@ -311,7 +319,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
                   {filteredStudents.length === 0 && (
                     <tr>
                       <td colSpan={6} className="text-center py-8 text-slate-400 italic font-medium">
-                        Siswa tidak ditemukan.
+                        Murid tidak ditemukan.
                       </td>
                     </tr>
                   )}
@@ -344,6 +352,15 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
               >
                 <MessageSquare className="h-4 w-4" />
                 Layanan Laporan WA Ortu
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onNavigateToTab?.("kredit-pelanggaran")}
+                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs py-2.5 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer border border-rose-400/30"
+              >
+                <Shield className="h-4 w-4" />
+                Catatan Poin Pelanggaran {selectedClass}
               </button>
 
               <button
@@ -440,7 +457,7 @@ export function WaliKelasWorkspace({ username = "Wali Kelas", currentRole = "wal
 
       </div>
 
-      {/* Modal Rekapitulasi Laporan Individu Siswa */}
+      {/* Modal Rekapitulasi Laporan Individu Murid */}
       <IndividualStudentReportModal
         isOpen={reportModalOpen}
         onClose={() => setReportModalOpen(false)}

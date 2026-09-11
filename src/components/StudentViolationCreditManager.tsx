@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { MOCK_STUDENTS } from "../mockData";
 import { getBkCounselorForClass } from "./KelasBimbinganManager";
+import { getTeacherPerwalianClass } from "../utils/scheduleHelper";
+import { getMuridBinaanForTeacher } from "../data/guruWaliMasterData";
 
 export interface ViolationRule {
   id: string;
@@ -405,14 +407,55 @@ export function StudentViolationCreditManager({
   studentViewMode = false,
   targetStudentName
 }: StudentViolationCreditManagerProps) {
-  // Only Guru BK can edit/add/delete violation credits & amnesty records
+  // Piket role is restricted from viewing or editing violation notes
+  if (currentRole?.toLowerCase() === "piket") {
+    return (
+      <div className="max-w-3xl mx-auto p-6 text-center space-y-4">
+        <div className="bg-amber-50 border border-amber-300 rounded-3xl p-8 space-y-4 shadow-sm">
+          <div className="w-16 h-16 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+            <ShieldAlert className="h-8 w-8" />
+          </div>
+          <h2 className="text-lg font-black text-slate-900">
+            Akses Catatan Poin Pelanggaran Dialihkan
+          </h2>
+          <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
+            Sesuai kebijakan sekolah, menu dan catatan poin pelanggaran murid telah dialihkan secara terfokus ke <strong>Wali Kelas</strong> (khusus untuk murid perwalian) dan <strong>Guru Wali</strong> (khusus untuk murid binaan), serta <strong>Guru BK</strong>. Guru Piket fokus pada pemantauan KBM harian, izin murid, dan jurnal piket.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Role permissions
   const isBkRole = currentRole?.toLowerCase() === "bk" || currentRole?.toLowerCase() === "guru bk";
-  const canEdit = isBkRole;
+  const isWaliRole = currentRole?.toLowerCase() === "wali" || currentRole?.toLowerCase() === "wali kelas";
+  const isGuruWaliRole = currentRole?.toLowerCase() === "guru_wali" || currentRole?.toLowerCase() === "guru wali";
+  const isAdminRole = currentRole?.toLowerCase() === "admin" || currentRole?.toLowerCase() === "kesiswaan";
+  const canEdit = isBkRole || isWaliRole || isGuruWaliRole || isAdminRole;
+
+  // Resolve teacher perwalian class and murid binaan
+  const teacherPerwalianClass = React.useMemo(() => {
+    if (!username) return null;
+    return getTeacherPerwalianClass(username);
+  }, [username]);
+
+  const teacherMuridBinaan = React.useMemo(() => {
+    if (!username) return [];
+    return getMuridBinaanForTeacher(username);
+  }, [username]);
+
+  const binaanNamesSet = React.useMemo(() => {
+    return new Set(teacherMuridBinaan.map(m => m.nama.trim().toUpperCase()));
+  }, [teacherMuridBinaan]);
 
   const [activeTab, setActiveTab] = useState<"directory" | "rules" | "history">("directory");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJurusan, setSelectedJurusan] = useState<string>("Semua Jurusan");
-  const [selectedClass, setSelectedClass] = useState<string>("Semua Kelas");
+  const [selectedClass, setSelectedClass] = useState<string>(() => {
+    if (isWaliRole && teacherPerwalianClass) return teacherPerwalianClass;
+    if (isGuruWaliRole) return "Semua Kelas Binaan";
+    return "Semua Kelas";
+  });
   const [selectedCounselor, setSelectedCounselor] = useState<string>("Semua BK");
   const [statusFilter, setStatusFilter] = useState<string>("Semua Status");
 
@@ -460,14 +503,19 @@ export function StudentViolationCreditManager({
 
   // Add Form States
   const [formStudentName, setFormStudentName] = useState("");
-  const [formClassName, setFormClassName] = useState("XI TKR A");
+  const [formClassName, setFormClassName] = useState(() => teacherPerwalianClass || "XI TKR A");
   const [formRuleId, setFormRuleId] = useState("");
   const [formCustomRuleName, setFormCustomRuleName] = useState("");
   const [formCategory, setFormCategory] = useState<"Ringan" | "Sedang" | "Berat" | "Apresiasi">("Ringan");
   const [formPoints, setFormPoints] = useState<number>(10);
   const [formDate, setFormDate] = useState(new Date().toISOString().split("T")[0]);
   const [formReporterName, setFormReporterName] = useState(username || "Cici Murni, S.Pd.");
-  const [formReporterRole, setFormReporterRole] = useState("Guru BK");
+  const [formReporterRole, setFormReporterRole] = useState(() => {
+    if (isWaliRole) return "Wali Kelas";
+    if (isGuruWaliRole) return "Guru Wali";
+    if (isBkRole) return "Guru BK";
+    return "Guru / Petugas";
+  });
   const [formNotes, setFormNotes] = useState("");
   const [formHandlingStatus, setFormHandlingStatus] = useState<
     "Dicatat" | "Pembinaan Lisan" | "Pemanggilan Orang Tua" | "SP1" | "SP2" | "SP3" | "Selesai/Tuntas"
@@ -509,7 +557,7 @@ export function StudentViolationCreditManager({
   const handleAddRecordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formStudentName.trim()) {
-      alert("Silakan pilih atau masukkan nama siswa.");
+      alert("Silakan pilih atau masukkan nama murid.");
       return;
     }
 
@@ -552,12 +600,24 @@ export function StudentViolationCreditManager({
     }
   };
 
-  // Compute student point summaries
+  // Compute student point summaries (scoped for Wali Kelas & Guru Wali)
   const studentSummaries = React.useMemo(() => {
     const map = new Map<string, { studentName: string; className: string; totalPoints: number; records: StudentViolationRecord[] }>();
 
-    // Seed from MOCK_STUDENTS (all master students)
-    MOCK_STUDENTS.forEach((s) => {
+    // Determine base student population based on teacher role scope
+    let baseStudents = MOCK_STUDENTS;
+    if (isWaliRole) {
+      baseStudents = MOCK_STUDENTS.filter((s) => {
+        const matchesClass = teacherPerwalianClass && s.className.toLowerCase() === teacherPerwalianClass.toLowerCase();
+        const matchesBinaan = binaanNamesSet.has(s.name.trim().toUpperCase());
+        return matchesClass || matchesBinaan;
+      });
+    } else if (isGuruWaliRole) {
+      baseStudents = MOCK_STUDENTS.filter((s) => binaanNamesSet.has(s.name.trim().toUpperCase()));
+    }
+
+    // Seed from baseStudents
+    baseStudents.forEach((s) => {
       map.set(s.name.toUpperCase(), {
         studentName: s.name,
         className: s.className,
@@ -569,6 +629,14 @@ export function StudentViolationCreditManager({
     // Populate from actual records
     records.forEach((r) => {
       const key = r.studentName.toUpperCase();
+      if (isWaliRole) {
+        const matchesClass = teacherPerwalianClass && r.className.toLowerCase() === teacherPerwalianClass.toLowerCase();
+        const matchesBinaan = binaanNamesSet.has(key);
+        if (!matchesClass && !matchesBinaan) return;
+      } else if (isGuruWaliRole) {
+        if (!binaanNamesSet.has(key)) return;
+      }
+
       if (!map.has(key)) {
         map.set(key, {
           studentName: r.studentName,
@@ -587,7 +655,7 @@ export function StudentViolationCreditManager({
       totalPoints: Math.max(0, s.totalPoints),
       threshold: getPointThresholdInfo(Math.max(0, s.totalPoints))
     }));
-  }, [records]);
+  }, [records, isWaliRole, isGuruWaliRole, teacherPerwalianClass, binaanNamesSet]);
 
   // Extract all available jurusan and classes
   const availableJurusanList = React.useMemo(() => {
@@ -606,8 +674,13 @@ export function StudentViolationCreditManager({
         set.add(s.className);
       }
     });
-    return ["Semua Kelas", ...Array.from(set).sort()];
-  }, [studentSummaries, selectedJurusan]);
+    const classes = Array.from(set).sort();
+    if (isWaliRole || isGuruWaliRole) {
+      if (classes.length <= 1) return classes;
+      return ["Semua Kelas Binaan/Perwalian", ...classes];
+    }
+    return ["Semua Kelas", ...classes];
+  }, [studentSummaries, selectedJurusan, isWaliRole, isGuruWaliRole]);
 
   // Filtered Summaries
   const filteredSummaries = studentSummaries.filter((s) => {
@@ -623,7 +696,7 @@ export function StudentViolationCreditManager({
       return false;
     }
 
-    if (selectedClass !== "Semua Kelas" && s.className !== selectedClass) return false;
+    if (selectedClass !== "Semua Kelas" && selectedClass !== "Semua Kelas Binaan/Perwalian" && s.className !== selectedClass) return false;
 
     if (selectedCounselor !== "Semua BK") {
       const counselor = getBkCounselorForClass(s.className);
@@ -694,12 +767,18 @@ export function StudentViolationCreditManager({
                 Sistem Akumulasi Kredit Poin (0 - 100 Poin)
               </span>
               <h2 className="text-xl font-black tracking-tight text-white mt-0.5">
-                {studentViewMode ? "KREDIT & CATATAN PELANGGARAN SAYA" : "KREDIT PELANGGARAN & SP SISWA"}
+                {studentViewMode
+                  ? "KREDIT & CATATAN PELANGGARAN SAYA"
+                  : isWaliRole
+                  ? `KREDIT PELANGGARAN MURID PERWALIAN ${teacherPerwalianClass ? `(${teacherPerwalianClass})` : ""}`
+                  : isGuruWaliRole
+                  ? "KREDIT PELANGGARAN MURID BINAAN"
+                  : "KREDIT PELANGGARAN & SP MURID"}
               </h2>
             </div>
           </div>
           <p className="text-xs text-slate-300 max-w-2xl font-medium leading-relaxed">
-            Sistem rekapitulasi poin kedisiplinan murid SMK Negeri 2 Konawe. Poin diakumulasikan dari <strong>0 Poin (Siswa Taat)</strong> hingga maksimal <strong>100 Poin (Surat Pengembalian Orang Tua)</strong>. Siswa juga dapat memulihkan poin melalui kegiatan prestasi/apresiasi.
+            Sistem rekapitulasi poin kedisiplinan murid SMK Negeri 2 Konawe. Poin diakumulasikan dari <strong>0 Poin (Murid Taat)</strong> hingga maksimal <strong>100 Poin (Surat Pengembalian Orang Tua)</strong>. Murid juga dapat memulihkan poin melalui kegiatan prestasi/apresiasi.
           </p>
         </div>
 
@@ -710,11 +789,68 @@ export function StudentViolationCreditManager({
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-4 py-3 rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 border border-amber-300 animate-pulse w-full md:w-auto"
             >
               <Plus className="h-4 w-4 text-slate-950" />
-              <span>Catat Pelanggaran / Apresiasi (BK)</span>
+              <span>
+                {isWaliRole
+                  ? "Catat Pelanggaran Murid Perwalian"
+                  : isGuruWaliRole
+                  ? "Catat Poin Murid Binaan"
+                  : "Catat Pelanggaran / Apresiasi"}
+              </span>
             </button>
           </div>
         )}
       </div>
+
+      {/* SCOPE BANNER FOR WALI KELAS */}
+      {isWaliRole && (
+        <div className="bg-gradient-to-r from-purple-950 via-purple-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl border border-purple-500/30 flex items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2.5 bg-purple-500/20 text-purple-300 rounded-xl border border-purple-400/30 shrink-0">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-purple-500/30 text-purple-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-purple-400/30">
+                  Fokus Perwalian & Binaan
+                </span>
+                {teacherPerwalianClass && (
+                  <span className="text-xs font-black text-amber-300">
+                    Kelas Perwalian: {teacherPerwalianClass}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-sm font-black text-white">
+                Catatan Poin Pelanggaran Khusus Murid Perwalian {teacherPerwalianClass ? `(${teacherPerwalianClass})` : ""} & Binaan Anda
+              </h3>
+              <p className="text-[11px] text-purple-200/80 max-w-2xl leading-relaxed">
+                Hanya menampilkan data anak perwalian dan binaan Anda ({studentSummaries.length} murid) agar terfokus, rapi, dan tidak menumpuk.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SCOPE BANNER FOR GURU WALI */}
+      {isGuruWaliRole && !isWaliRole && (
+        <div className="bg-gradient-to-r from-indigo-950 via-blue-900 to-indigo-950 text-white p-4 sm:p-5 rounded-2xl border border-indigo-500/30 flex items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2.5 bg-indigo-500/20 text-indigo-300 rounded-xl border border-indigo-400/30 shrink-0">
+              <Users className="h-6 w-6" />
+            </div>
+            <div className="space-y-0.5">
+              <span className="bg-indigo-500/30 text-indigo-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                Fokus Binaan Guru Wali
+              </span>
+              <h3 className="text-sm font-black text-white">
+                Catatan Poin Pelanggaran Khusus Murid Binaan Anda
+              </h3>
+              <p className="text-[11px] text-indigo-200/80 max-w-2xl leading-relaxed">
+                Hanya menampilkan data {studentSummaries.length} murid binaan resmi sesuai SK Pembimbingan Guru Wali Anda agar tidak menumpuk.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* READ-ONLY MONITORING BANNER FOR NON-BK ROLES */}
       {!studentViewMode && !canEdit && (
@@ -726,7 +862,7 @@ export function StudentViolationCreditManager({
                 Mode Pemantauan & Tinjauan Laporan ({currentRole.toUpperCase()})
               </span>
               <span className="text-[11px] text-indigo-200 leading-relaxed block">
-                Menu pencatatan/pengeditan poin pelanggaran & pengampunan hanya dapat dilakukan oleh <strong>Guru BK</strong>. Akses Anda ditujukan sebagai peninjau, pemantau per-kelas/jurusan, serta pencetakan laporan untuk Wali Kelas, Guru Wali, Waka Kesiswaan, & Admin.
+                Pencatatan dan pembinaan poin pelanggaran murid dikelola terfokus oleh <strong>Wali Kelas</strong>, <strong>Guru Wali</strong>, dan <strong>Guru BK</strong>. Akses Anda ditujukan sebagai peninjau dan pemantau laporan.
               </span>
             </div>
           </div>

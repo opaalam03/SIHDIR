@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   User, Shield, Save, Edit2, Phone, MapPin, Calendar, 
   Award, BookOpen, Users, ClipboardList, Briefcase, FileText, 
   MessageSquare, Plus, CheckCircle, RefreshCw, AlertCircle, FileCheck,
   ChevronRight, ArrowRight, BookMarked, UserCheck, Trash2, Send, Clock, Sparkles,
-  Megaphone, Bell, Cake, PartyPopper, ShieldAlert, Pin, CheckCircle2, Filter, AlertTriangle, Layers
+  Megaphone, Bell, Cake, PartyPopper, ShieldAlert, Pin, CheckCircle2, Filter, AlertTriangle, Layers,
+  HeartHandshake
 } from "lucide-react";
 import { compressImageFile } from "../lib/imageCompressor";
 import BirthDateSelector from "./BirthDateSelector";
 import { TeacherScheduleAndWAAlarm } from "./TeacherScheduleAndWAAlarm";
+import { GrupGuruWaliBinaanSection } from "./GrupGuruWaliBinaanSection";
+import { getMasterGuruWaliData } from "../data/guruWaliMasterData";
+import { getTeacherPhoto, syncTeacherProfileUpdate, getAllTeachers, subscribeTeacherRecords, cleanTeacherName, cleanNip } from "../services/teacherService";
 
 interface TeacherProfile {
   fullName: string;
@@ -98,31 +102,63 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
 
         const isTriana = (u.includes("daniel") || u.includes("triana")) && !u.includes("eva");
         if (isTriana) {
-          parsed.fullName = "TRIANA DANIEL, S.Pd.";
-          parsed.nip = "19920113 201701 2 025";
-          parsed.subject = "Bahasa Inggris";
+          if (!parsed.fullName) parsed.fullName = "TRIANA DANIEL, S.Pd.";
+          if (!parsed.nip) parsed.nip = "19920113 201701 2 025";
+          if (!parsed.subject) parsed.subject = "Bahasa Inggris";
           if (!parsed.classesTaught || parsed.classesTaught.includes("TAV")) {
             parsed.classesTaught = "X TSM, XI TSM B, XI TSM A, XI TKR B, XII TSM A, X TKR A, XI DKV, XI DPIB";
           }
         }
         const isEva = u.includes("eva") || u.includes("syahtriana") || u.includes("evasyatriana");
         if (isEva) {
-          parsed.fullName = "EVASYAHTRIANA, S.Si";
-          parsed.nip = "19930909 201801 2 009";
-          parsed.subject = "IPAS";
+          if (!parsed.fullName) parsed.fullName = "EVASYAHTRIANA, S.Si";
+          if (!parsed.nip) parsed.nip = "19930909 201801 2 009";
+          if (!parsed.subject) parsed.subject = "IPAS";
           if (!parsed.classesTaught || parsed.classesTaught.includes("TKR")) {
             parsed.classesTaught = "X TSM, XI TAV, X DKV, X DPIB";
           }
         }
 
+        if (!parsed.photoUrl) {
+          parsed.photoUrl = getTeacherPhoto(username) || getTeacherPhoto(parsed.fullName) || (parsed.nip ? getTeacherPhoto(parsed.nip) : "") || "";
+        }
         return parsed;
       } catch (e) {
         console.error("Error reading teacher profile", e);
       }
     }
 
-    // Default profiles
+    // 2. Check if the teacher exists in master teachers (which incorporates Firestore & admin/user edits)
     const cleanUser = username.trim().toLowerCase();
+    const cCleanUser = cleanTeacherName(username);
+    const masterTeachers = getAllTeachers();
+    const isRusniTarget = cleanUser.includes("rusni") || cCleanUser.includes("rusni") || cleanUser === "rus" || cleanUser === "t37";
+    const matchedMaster = masterTeachers.find(t => {
+      if (!t) return false;
+      if (isRusniTarget && (t.id === "T37" || cleanTeacherName(t.name).includes("rusni"))) return true;
+      const tName = cleanTeacherName(t.name);
+      return (cCleanUser && cCleanUser.length >= 3 && (tName === cCleanUser || tName.includes(cCleanUser) || cCleanUser.includes(tName))) ||
+             (cleanUser && (tName.includes(cleanUser) || cleanUser.includes(tName))) ||
+             (t.id && t.id.toLowerCase() === cleanUser) ||
+             (t.nip && cleanNip(t.nip) && cleanNip(t.nip) === cleanNip(cleanUser));
+    });
+
+    if (matchedMaster) {
+      const resolvedPhoto = matchedMaster.photoUrl || getTeacherPhoto(matchedMaster.id) || getTeacherPhoto(matchedMaster.name) || (matchedMaster.nip ? getTeacherPhoto(matchedMaster.nip) : "") || "";
+      return {
+        fullName: matchedMaster.name,
+        nip: matchedMaster.nip || "",
+        classesTaught: matchedMaster.classes && matchedMaster.classes.length > 0 ? matchedMaster.classes.join(", ") : "XI TKR A",
+        birthInfo: matchedMaster.birthPlace && matchedMaster.birthDate ? `${matchedMaster.birthPlace}, ${matchedMaster.birthDate}` : (matchedMaster.birthInfo || "Konawe, 23 Mei 1991"),
+        whatsapp: matchedMaster.whatsApp || "081299887766",
+        address: matchedMaster.address || "Jl. Poros Unaaha, Konawe",
+        subject: matchedMaster.subject || "Guru Mata Pelajaran",
+        additionalDuty: matchedMaster.additionalDuty || (matchedMaster.role ? [matchedMaster.role] : []),
+        photoUrl: resolvedPhoto
+      };
+    }
+
+    // Default profiles
     if (cleanUser === "arham" || (cleanUser === "admin" && !currentRole.includes("tu")) || cleanUser.includes("arham")) {
       return {
         fullName: "ARHAM AMIRUDDIN",
@@ -213,9 +249,24 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
         subject: "IPAS",
         additionalDuty: ["Wali Kelas XI DPIB", "Guru Mapel IPAS"]
       };
+    } else if (cleanUser.includes("rusni") || cCleanUser.includes("rusni") || cleanUser === "rus" || cleanUser === "t37") {
+      const t37 = masterTeachers.find(t => t.id === "T37" || cleanTeacherName(t.name).includes("rusni"));
+      const resolvedRusniPhoto = getTeacherPhoto("T37") || getTeacherPhoto("rusnik") || t37?.photoUrl || "";
+      return {
+        fullName: t37?.name || "RUSNI K, S.T",
+        nip: t37?.nip && t37.nip !== "-" ? t37.nip : "",
+        classesTaught: t37?.classes && t37.classes.length > 0 ? t37.classes.join(", ") : "X TAV, XI TAV, XII TAV, XII TKR B",
+        birthInfo: t37?.birthInfo || "Konawe, 1 Januari 1990",
+        whatsapp: t37?.whatsApp && t37.whatsApp !== "-" ? t37.whatsApp : "085241000037",
+        address: t37?.address || "Unaaha, Konawe",
+        subject: t37?.subject || "Dasar Program Keahlian & Mapel Keahlian",
+        additionalDuty: t37?.additionalDuty || ["Guru Wali Binaan Kelompok 36", "Guru Mapel Kejuruan TAV"],
+        photoUrl: resolvedRusniPhoto
+      };
     }
 
     // Generic fallback
+    const resolvedFallbackPhoto = getTeacherPhoto(username) || getTeacherPhoto(cleanUser) || "";
     return {
       fullName: username || "Guru SMK Negeri 2 Konawe",
       nip: "19910523 201802 1 023",
@@ -223,15 +274,51 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
       birthInfo: "Konawe, 23 Mei 1991",
       whatsapp: "081299887766",
       address: "Jl. Melati No. 10, Unaaha, Konawe",
-      subject: "Teknik Sepeda Motor (Produktif)",
-      additionalDuty: []
+      subject: "Guru Produktif Sepeda Motor",
+      additionalDuty: [],
+      photoUrl: resolvedFallbackPhoto
     };
   };
 
   const [profile, setProfile] = useState<TeacherProfile>(getInitialProfile);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editedProfile, setEditedProfile] = useState<TeacherProfile>(profile);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isGrupWaliModalOpen, setIsGrupWaliModalOpen] = useState(false);
+  const [showInlineGuruWaliPreview, setShowInlineGuruWaliPreview] = useState(false);
+
+  const masterGuruWaliData = useMemo(() => getMasterGuruWaliData(), []);
+
+  const currentGuruWaliGroup = useMemo(() => {
+    const teacherName = editedProfile?.fullName || profile.fullName || username;
+    if (!teacherName) return masterGuruWaliData[0] || null;
+    const cleanCurrent = teacherName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const found = masterGuruWaliData.find(g => {
+      const cleanG = g.namaGuru.toLowerCase().replace(/[^a-z0-9]/g, "");
+      return cleanG.includes(cleanCurrent) || cleanCurrent.includes(cleanG);
+    });
+    if (found) return found;
+
+    if (cleanCurrent.includes("arham") || cleanCurrent.includes("amiruddin")) {
+      const a = masterGuruWaliData.find(g => g.namaGuru.toLowerCase().includes("arham"));
+      if (a) return a;
+    }
+    if (cleanCurrent.includes("muslimin")) {
+      const m = masterGuruWaliData.find(g => g.namaGuru.toLowerCase().includes("muslimin"));
+      if (m) return m;
+    }
+    if (cleanCurrent.includes("haerul")) {
+      const h = masterGuruWaliData.find(g => g.namaGuru.toLowerCase().includes("haerul"));
+      if (h) return h;
+    }
+    if (cleanCurrent.includes("putu") || cleanCurrent.includes("juniasa")) {
+      const p = masterGuruWaliData.find(g => g.namaGuru.toLowerCase().includes("putu"));
+      if (p) return p;
+    }
+    return masterGuruWaliData[0] || null;
+  }, [editedProfile?.fullName, profile.fullName, username, masterGuruWaliData]);
 
   const isArhamAmiruddin = (() => {
     const u = (username || "").trim().toLowerCase();
@@ -335,14 +422,73 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
     );
   })();
 
-  // Sync profile info to specific storage and contextual keys
+  // Sync profile info to specific storage and contextual keys safely
   useEffect(() => {
-    localStorage.setItem(profileKey, JSON.stringify(profile));
+    if (!profile) return;
+    const currentStoredRaw = localStorage.getItem(profileKey);
+    let toStore = { ...profile };
+    if (currentStoredRaw) {
+      try {
+        const parsed = JSON.parse(currentStoredRaw);
+        if (toStore.photoUrl === undefined && parsed.photoUrl) {
+          toStore.photoUrl = parsed.photoUrl;
+        }
+      } catch (e) {}
+    }
+    localStorage.setItem(profileKey, JSON.stringify(toStore));
     // Set active teacher details for the currently active session
     if (username) {
-      localStorage.setItem(`sihadir_teacher_profile_${username.trim().toLowerCase()}`, JSON.stringify(profile));
+      localStorage.setItem(`sihadir_teacher_profile_${username.trim().toLowerCase()}`, JSON.stringify(toStore));
     }
   }, [profile, profileKey, username]);
+
+  // Keep teacher profile continuously synchronized with Firestore and other edits
+  useEffect(() => {
+    const unsub = subscribeTeacherRecords((teachers) => {
+      if (isEditing) return;
+      const cleanU = (username || "").trim().toLowerCase();
+      const cCleanU = cleanTeacherName(username);
+      const isArhamUser = cleanU === "arham" || (cleanU === "admin" && !currentRole.includes("tu")) || cleanU.includes("arham");
+      const isRusniUser = cleanU.includes("rusni") || cCleanU.includes("rusni") || cleanU === "rus" || cleanU === "t37";
+
+      const matched = teachers.find(t => {
+        if (!t) return false;
+        if (isArhamUser && (t.id === "T06" || cleanTeacherName(t.name).includes("arham"))) return true;
+        if (isRusniUser && (t.id === "T37" || cleanTeacherName(t.name).includes("rusni"))) return true;
+        const tName = cleanTeacherName(t.name);
+        return (cCleanU && cCleanU.length >= 3 && (tName === cCleanU || tName.includes(cCleanU) || cCleanU.includes(tName))) ||
+               (cleanU && cleanU !== "admin" && (tName === cleanU || cleanU.includes(tName))) ||
+               (t.id && t.id.toLowerCase() === cleanU) ||
+               (t.nip && cleanNip(t.nip).length >= 8 && cleanNip(t.nip) === cleanNip(cleanU));
+      });
+
+      if (matched) {
+        setProfile(prev => {
+          const isArham = matched.id === "T06" || cleanTeacherName(matched.name).includes("arham");
+          const arhamPhoto = getTeacherPhoto("T06") || "";
+          let resolvedPhoto = matched.photoUrl || getTeacherPhoto(matched.id) || "";
+          if (!isArham && arhamPhoto && resolvedPhoto === arhamPhoto) {
+            resolvedPhoto = "";
+          }
+
+          return {
+            ...prev,
+            fullName: matched.name || prev.fullName,
+            nip: matched.nip || prev.nip,
+            subject: matched.subject || prev.subject,
+            classesTaught: matched.classes && matched.classes.length > 0 ? matched.classes.join(", ") : prev.classesTaught,
+            whatsapp: matched.whatsApp || prev.whatsapp,
+            photoUrl: resolvedPhoto,
+            additionalDuty: matched.additionalDuty || prev.additionalDuty
+          };
+        });
+      }
+    });
+
+    return () => {
+      unsub();
+    };
+  }, [username, isEditing, currentRole]);
 
   const handleStartEdit = () => {
     let initial = { ...profile };
@@ -352,53 +498,48 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
       if (!initial.additionalDuty.includes("Guru BK")) {
         initial.additionalDuty.push("Guru BK");
       }
+    } else {
+      const subLower = (initial.subject || "").toLowerCase();
+      if (subLower === "guru mapel") initial.subject = "Guru Mata Pelajaran";
+      else if (subLower.includes("kendaraan ringan") || subLower.includes("mesin otomotif") || subLower.includes("tkr")) initial.subject = "Guru Produktif Kendaraan Ringan";
+      else if (subLower.includes("sepeda motor") || subLower.includes("tsm")) initial.subject = "Guru Produktif Sepeda Motor";
+      else if (subLower.includes("bangunan") || subLower.includes("dpib")) initial.subject = "Guru Produktif Bangunan";
+      else if (subLower.includes("audio video") || subLower.includes("tav")) initial.subject = "Guru Produktif Audio Video";
+      else if (subLower.includes("komunikasi visual") || subLower.includes("dkv")) initial.subject = "Guru Produktif Komunikasi Visual";
+      else if (subLower.includes("bahasa inggris teknik")) initial.subject = "Bahasa Inggris";
     }
     setEditedProfile(initial);
     setIsEditing(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    let finalProfile = { ...editedProfile };
-    if (isBkUser) {
-      finalProfile.subject = "Bimbingan Konseling (BK)";
-      finalProfile.additionalDuty = (finalProfile.additionalDuty || []).filter(d => d !== "Guru Mata Pelajaran" && d !== "Guru Mapel");
-      if (!finalProfile.additionalDuty.includes("Guru BK")) {
-        finalProfile.additionalDuty.push("Guru BK");
-      }
-    }
-    setProfile(finalProfile);
+    setIsSaving(true);
     try {
-      localStorage.setItem(profileKey, JSON.stringify(finalProfile));
-      
-      const savedMasterTeachers = localStorage.getItem("simpati_teachers_list") || localStorage.getItem("sihadir_master_teachers");
-      if (savedMasterTeachers) {
-        const teachers: any[] = JSON.parse(savedMasterTeachers);
-        const updated = teachers.map((t) => {
-          if ((t.name && t.name.toLowerCase().includes(username.toLowerCase())) || t.nip === editedProfile.nip) {
-            return {
-              ...t,
-              name: editedProfile.fullName,
-              nip: editedProfile.nip,
-              subject: editedProfile.subject,
-              photoUrl: editedProfile.photoUrl
-            };
-          }
-          return t;
-        });
-        localStorage.setItem("simpati_teachers_list", JSON.stringify(updated));
-        localStorage.setItem("sihadir_master_teachers", JSON.stringify(updated));
+      let finalProfile = { ...editedProfile };
+      if (isBkUser) {
+        finalProfile.subject = "Bimbingan Konseling (BK)";
+        finalProfile.additionalDuty = (finalProfile.additionalDuty || []).filter(d => d !== "Guru Mata Pelajaran" && d !== "Guru Mapel");
+        if (!finalProfile.additionalDuty.includes("Guru BK")) {
+          finalProfile.additionalDuty.push("Guru BK");
+        }
       }
+      // If the teacher explicitly cleared the photo (photoUrl === ""), preserve the deletion!
+      if (finalProfile.photoUrl === undefined && profile.photoUrl) {
+        finalProfile.photoUrl = profile.photoUrl;
+      }
+      setProfile(finalProfile);
+
+      await syncTeacherProfileUpdate(username, finalProfile);
+
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 4000);
     } catch (err) {
-      console.warn("Error saving teacher profile to localStorage:", err);
+      console.error("Failed to save teacher profile:", err);
+    } finally {
+      setIsSaving(false);
     }
-
-    window.dispatchEvent(new Event("storage"));
-    window.dispatchEvent(new CustomEvent("sihadir_data_updated"));
-
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   // Simulating live data metrics
@@ -432,7 +573,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
       }
     }
     return [
-      { id: 1, time: "07:15", teacher: "Ahmad Fauzi", class: "XI TKR A", status: "KBM Dimulai", note: "Siswa hadir lengkap" },
+      { id: 1, time: "07:15", teacher: "Ahmad Fauzi", class: "XI TKR A", status: "KBM Dimulai", note: "Murid hadir lengkap" },
       { id: 2, time: "08:30", student: "Rian Hidayat", class: "XI TKR B", status: "Terlambat", note: "Ban motor bocor, diizinkan masuk" }
     ];
   });
@@ -474,7 +615,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
   const [bkCases, setBkCases] = useState(() => {
     return [
       { name: "Eko Purwanto", class: "XI TKR A", issue: "Sering Terlambat (3x seminggu)", status: "Dipanggil Mandiri", action: "Pemberian motivasi & pembinaan wali kelas" },
-      { name: "Bagus Setiawan", class: "XI TKR A", issue: "Sakit berulang tanpa surat", status: "Kunjungan Rumah", action: "Berkoordinasi dengan orangtua siswa" }
+      { name: "Bagus Setiawan", class: "XI TKR A", issue: "Sakit berulang tanpa surat", status: "Kunjungan Rumah", action: "Berkoordinasi dengan orangtua murid" }
     ];
   });
 
@@ -515,7 +656,7 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
       id: "ann-2",
       title: "Himbauan Peningkatan Kedisiplinan & Penegakan Budaya Industri 5S/5R",
       category: "Kebijakan Sekolah",
-      content: "Seluruh pendidik diharapkan senantiasa mendampingi siswa dalam menjaga kebersihan lingkungan bengkel dan kelas (Budaya Industri 5S). Laporan kedisiplinan mingguan akan dievaluasi setiap hari Sabtu.",
+      content: "Seluruh pendidik diharapkan senantiasa mendampingi murid dalam menjaga kebersihan lingkungan bengkel dan kelas (Budaya Industri 5S). Laporan kedisiplinan mingguan akan dievaluasi setiap hari Sabtu.",
       publisherName: "Drs. H. ABD. MANAN, M.M. (Kepala Sekolah)",
       publisherRole: "Kepala Sekolah",
       publisherRoleKey: "kepsek",
@@ -535,9 +676,9 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
     },
     {
       id: "ann-4",
-      title: "Monitoring Ketertiban Siswa Terlambat & Penanganan Kasus Konseling",
+      title: "Monitoring Ketertiban Murid Terlambat & Penanganan Kasus Konseling",
       category: "Kedisiplinan & Kesiswaan",
-      content: "Tim Piket bersama Guru BK dan Wali Kelas mohon melakukan rekapitulasi bagi siswa dengan catatan keterlambatan lebih dari 3 kali untuk diberikan pembinaan terpadu.",
+      content: "Tim Piket bersama Guru BK dan Wali Kelas mohon melakukan rekapitulasi bagi murid dengan catatan keterlambatan lebih dari 3 kali untuk diberikan pembinaan terpadu.",
       publisherName: "Nyoman Suliawati, S.Pd., M.Pd. (Waka Kesiswaan)",
       publisherRole: "Waka Kesiswaan",
       publisherRoleKey: "kesiswaan",
@@ -673,11 +814,11 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
 
 
       {/* Header Profile Dashboard */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-60"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-50 rounded-full blur-xl -ml-8 -mb-8 opacity-40"></div>
+      <div className="bg-[#ffffff] rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#f1cfcf] rounded-full blur-2xl -mr-10 -mt-10 opacity-60"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-yellow-300/40 rounded-full blur-xl -ml-8 -mb-8 opacity-40"></div>
         
-        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-[#ffffff]">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-sm border-2 border-indigo-100 overflow-hidden shrink-0">
               {profile.photoUrl ? (
@@ -688,13 +829,13 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{profile.fullName}</h2>
+                <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">{profile.fullName}</h2>
                 {isKepsekUser ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-amber-100 text-amber-900 border-amber-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-amber-950 text-amber-100 border-amber-800">
                     Kepala Sekolah
                   </span>
                 ) : isTuUser ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-indigo-100 text-indigo-800 border-indigo-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-slate-900 text-white border-slate-800">
                     Admin Tata Usaha (TU)
                   </span>
                 ) : profile.additionalDuty && profile.additionalDuty.length > 0 ? (
@@ -704,26 +845,25 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                     </span>
                   ))
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-slate-100 text-slate-700 border-slate-200">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border bg-slate-900 text-white border-slate-800">
                     Pendidik Utama
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 font-medium">NIP: {profile.nip} {isKepsekUser ? "| Pimpinan Utama (Kepala Sekolah)" : isTuUser ? (isSaktiOrAdelia ? "| Admin Tata Usaha (TU)" : "| Staf Tata Usaha") : `| Guru ${profile.subject}`}</p>
-              <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 font-semibold">
-                <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-indigo-500" /> {profile.address}</span>
-                <span className="flex items-center gap-1"><Phone className="h-3 w-3 text-emerald-500" /> {profile.whatsapp}</span>
+              <p className="text-xs text-slate-800 font-bold">NIP: {profile.nip} {isKepsekUser ? "| Pimpinan Utama (Kepala Sekolah)" : isTuUser ? (isSaktiOrAdelia ? "| Admin Tata Usaha (TU)" : "| Staf Tata Usaha") : `| Guru ${profile.subject}`}</p>
+              <div className="flex items-center gap-3 text-[11px] text-slate-700 mt-1 font-bold">
+                <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-900" /> {profile.address}</span>
+                <span className="flex items-center gap-1"><Phone className="h-3 w-3 text-emerald-800" /> {profile.whatsapp}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-2">
-
+          <div className="flex gap-2 flex-wrap">
             {!isEditing ? (
               <button
                 type="button"
                 onClick={handleStartEdit}
-                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl border border-indigo-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="bg-[#0068ff] hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl border border-[#0068ff] transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <Edit2 className="h-3.5 w-3.5" />
                 {isKepsekUser ? "Ubah Biodata Kepala Sekolah" : isTuUser ? (isSaktiOrAdelia ? "Ubah Biodata Admin TU" : "Ubah Biodata Staf") : "Ubah Biodata Guru"}
@@ -904,12 +1044,12 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                       <option value="Bimbingan Konseling (BK)">Bimbingan Konseling (BK)</option>
                     ) : (
                       <>
-                        <option value="Guru Mapel">Guru Mapel</option>
                         <option value="Guru Mata Pelajaran">Guru Mata Pelajaran</option>
-                        <option value="Teknik Kendaraan Ringan (Otomotif)">Teknik Kendaraan Ringan (Otomotif)</option>
-                        <option value="Teknik Sepeda Motor (Produktif)">Teknik Sepeda Motor (Produktif)</option>
-                        <option value="Mesin Otomotif & K3">Mesin Otomotif & K3</option>
-                        <option value="Bahasa Inggris Teknik">Bahasa Inggris Teknik</option>
+                        <option value="Guru Produktif Kendaraan Ringan">Guru Produktif Kendaraan Ringan</option>
+                        <option value="Guru Produktif Sepeda Motor">Guru Produktif Sepeda Motor</option>
+                        <option value="Guru Produktif Bangunan">Guru Produktif Bangunan</option>
+                        <option value="Guru Produktif Audio Video">Guru Produktif Audio Video</option>
+                        <option value="Guru Produktif Komunikasi Visual">Guru Produktif Komunikasi Visual</option>
                         <option value="Mata Pelajaran Umum">Mata Pelajaran Umum</option>
                         <option value="Guru Piket">Guru Piket</option>
                         <option value="Guru Wali">Guru Wali</option>
@@ -939,10 +1079,10 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                   <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                     {[
                       ...(isArhamAmiruddin ? [{ value: "Administrator Utama", label: "Admin Utama", note: "Akses Penuh" }] : []),
-                      ...(isBkUser ? [] : [{ value: "Guru Mata Pelajaran", label: "Guru Mapel", note: "Terhubung" }]),
+                      ...(isBkUser ? [] : [{ value: "Guru Mata Pelajaran", label: "Guru Mata Pelajaran", note: "Terhubung" }]),
                       { value: "Guru Piket", label: "Guru Piket", note: "Terhubung" },
                       { value: "Wali Kelas", label: "Wali Kelas", note: "Terhubung" },
-                      { value: "Guru Wali", label: "Guru Wali", note: "Terhubung" },
+                      { value: "Guru Wali", label: "Guru Wali", note: `${currentGuruWaliGroup?.muridList?.length || 12} Binaan` },
                       ...(isBkUser ? [{ value: "Guru BK", label: "Guru BK", note: "Terhubung" }] : []),
                       ...(isAndiAsrul ? [
                         { value: "Waka Kurikulum", label: "Waka Kurikulum", note: "Kurikulum" }
@@ -963,12 +1103,18 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                               nextDuties = currentDuties.filter((d) => d !== item.value);
                             } else {
                               nextDuties = [...currentDuties, item.value];
+                              if (item.value === "Guru Wali") {
+                                setShowInlineGuruWaliPreview(true);
+                              }
                             }
                             setEditedProfile({ ...editedProfile, additionalDuty: nextDuties });
+                            if (item.value === "Guru Wali" && isSelected) {
+                              setShowInlineGuruWaliPreview(!showInlineGuruWaliPreview);
+                            }
                           }}
                           className={`p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1 ${
                             isSelected 
-                              ? "bg-indigo-600 text-white border-transparent shadow-xs font-extrabold"
+                              ? "bg-indigo-600 text-white border-transparent shadow-xs font-extrabold ring-2 ring-indigo-400/40"
                               : "bg-white border-slate-200 hover:border-indigo-300 text-slate-700 font-semibold"
                           }`}
                         >
@@ -987,8 +1133,54 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
                   <p className="text-[10px] text-slate-500 italic mt-1">
                     {isBuCici || isPakYoga 
                       ? "Terhubung dengan tugas khusus Bimbingan Konseling (BK), Guru Piket, Guru Wali, dan Wali Kelas." 
-                      : "Seluruh guru terhubung dengan tugas Guru Mapel, Guru Wali, Piket, dan Wali Kelas."}
+                      : "Seluruh guru terhubung dengan tugas Guru Mata Pelajaran, Guru Produktif, Guru Wali, Piket, dan Wali Kelas."}
                   </p>
+
+                  {/* INLINE EXPANDED GURU WALI BINAAN PREVIEW */}
+                  {((editedProfile.additionalDuty || []).includes("Guru Wali") || showInlineGuruWaliPreview) && (
+                    <div className="mt-3 bg-teal-50/90 border border-teal-200 rounded-2xl p-4 space-y-3">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-teal-200/80 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
+                          <div>
+                            <h5 className="text-xs font-black text-teal-950 uppercase tracking-wide">
+                              Murid Binaan Guru Wali ({currentGuruWaliGroup?.namaGuru || editedProfile.fullName}): {currentGuruWaliGroup?.muridList?.length || 0} Murid Terdaftar
+                            </h5>
+                            <p className="text-[10px] text-teal-800 font-medium">
+                              Sesuai SK Resmi Kepala SMKN 2 Konawe untuk pembimbingan mandiri
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsGrupWaliModalOpen(true)}
+                          className="bg-teal-700 hover:bg-teal-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                        >
+                          <Users className="h-3.5 w-3.5" />
+                          <span>Kelola Grup Ini & Lihat Seluruh Guru Wali (36 Guru) →</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                        {(currentGuruWaliGroup?.muridList || []).map((m, idx) => (
+                          <div key={m.id || idx} className="bg-white border border-teal-100 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-[11px] shadow-2xs">
+                            <span className="font-bold text-slate-800 truncate" title={m.nama}>
+                              {idx + 1}. {m.nama}
+                            </span>
+                            <span className="bg-teal-100 text-teal-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded font-mono shrink-0 ml-1">
+                              {m.kelas}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="text-[10px] text-teal-800 font-medium italic">
+                          * Klik tombol di atas untuk melihat kelompok guru lainnya atau mencetak rekap SK.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -996,10 +1188,11 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
             <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
               <button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-xl border border-transparent shadow-xs flex items-center gap-1.5 cursor-pointer"
+                disabled={isSaving}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold px-5 py-2.5 rounded-xl border border-transparent shadow-xs flex items-center gap-1.5 cursor-pointer transition-all"
               >
-                <Save className="h-4 w-4" />
-                Simpan & Sinkronkan
+                <Save className={`h-4 w-4 ${isSaving ? "animate-spin" : ""}`} />
+                {isSaving ? "Menyimpan ke Cloud..." : "Simpan & Sinkronkan"}
               </button>
             </div>
           </form>
@@ -1068,6 +1261,26 @@ export function TeacherDashboard({ username, currentRole, onNavigateToTab }: Tea
           username={username}
           additionalDuty={profile.additionalDuty}
           onNavigateToTab={onNavigateToTab} 
+        />
+      )}
+
+      {/* GRUP GURU WALI & MURID BINAAN TERINTEGRASI - Hanya untuk role Guru Wali, dihilangkan untuk guru mapel */}
+      {currentRole === "guru_wali" && !isTuUser && !isKepsekUser && (
+        <GrupGuruWaliBinaanSection 
+          currentTeacherName={profile.fullName || username} 
+          currentRole={currentRole} 
+          onNavigateToTab={onNavigateToTab} 
+        />
+      )}
+
+      {/* MODAL KELOLA SELURUH GRUP GURU WALI (JIKA DIBUKA SECARA POPUP) */}
+      {isGrupWaliModalOpen && (
+        <GrupGuruWaliBinaanSection 
+          currentTeacherName={editedProfile?.fullName || profile.fullName || username} 
+          currentRole={currentRole} 
+          onNavigateToTab={onNavigateToTab}
+          isOpenModal={true}
+          onCloseModal={() => setIsGrupWaliModalOpen(false)}
         />
       )}
 

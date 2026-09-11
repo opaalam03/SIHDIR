@@ -685,7 +685,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="bg-indigo-500 text-white font-extrabold text-[10px] uppercase px-2.5 py-1 rounded-full tracking-wider">
-                E-RAPOR SISWA
+                E-RAPOR MURID
               </span>
               <span className="bg-amber-400 text-slate-950 font-extrabold text-[10px] uppercase px-2.5 py-1 rounded-full tracking-wider">
                 KURIKULUM MERDEKA
@@ -869,7 +869,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
 
           {/* Student Selector (Locked for student role, unlocked for teachers/admins) */}
           <div>
-            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Nama Siswa Terdaftar</label>
+            <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Nama Murid Terdaftar</label>
             {isTeacherOrAdmin ? (
               <div className="relative flex items-center">
                 <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -908,7 +908,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
           <div className="space-y-4">
             <div className="flex justify-between items-start border-b pb-3">
               <div>
-                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Lembar Identitas Siswa</h4>
+                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Lembar Identitas Murid</h4>
                 <p className="text-sm font-black text-slate-800">{activeStudent.name}</p>
                 <p className="text-[10px] font-mono text-slate-400 mt-0.5">Kompetensi Keahlian: {activeStudent.major}</p>
               </div>
@@ -919,7 +919,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1 border-b border-dashed">
-                <span className="text-slate-500 font-medium">Nomor Induk Siswa (NIS):</span>
+                <span className="text-slate-500 font-medium">Nomor Induk Murid (NIS):</span>
                 <span className="font-bold text-slate-800">{activeStudent.nis}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-dashed">
@@ -987,7 +987,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
             <div className="text-[11px] text-slate-300 font-medium leading-relaxed bg-black/20 p-3 rounded-xl border border-white/5">
               <span className="font-extrabold text-white text-xs block mb-1">Rekomendasi Akademik Merdeka:</span>
               {isPassed 
-                ? "Sangat baik. Siswa berhasil melampaui Kriteria Ketercapaian Tujuan Pembelajaran (KKTP 75). Disarankan untuk melanjutkan pendalaman keterampilan."
+                ? "Sangat baik. Murid berhasil melampaui Kriteria Ketercapaian Tujuan Pembelajaran (KKTP 75). Disarankan untuk melanjutkan pendalaman keterampilan."
                 : "Belum memenuhi standar minimum KKTP (75.0). Wajib mengikuti kelas remedial harian sore di bengkel produktif dan perbaikan tugas tertulis."
               }
             </div>
@@ -1153,7 +1153,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
               <div>
                 <span className="text-xs font-black text-emerald-900 block">✓ Karakter Terpuji (Disiplin Prima)</span>
                 <span className="text-xs text-emerald-750 font-semibold block mt-0.5">
-                  Siswa ini bersih dari catatan kasus perilaku negatif. Tidak ada rujukan bimbingan konseling (BK) yang aktif.
+                  Murid ini bersih dari catatan kasus perilaku negatif. Tidak ada rujukan bimbingan konseling (BK) yang aktif.
                   Sikap gotong-royong, sopan santun, dan ketaatan terhadap standar tata tertib sekolah berjalan dengan sangat memuaskan.
                 </span>
               </div>
@@ -1200,7 +1200,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
                   </div>
                   <div>
                     <span>Rata-rata Kehadiran (Clock-In)</span>
-                    <span className="block text-[9px] text-slate-400 font-mono">Kehadiran presensi siswa di kelas & bengkel</span>
+                    <span className="block text-[9px] text-slate-400 font-mono">Kehadiran presensi murid di kelas & bengkel</span>
                   </div>
                 </td>
                 <td className="py-3 px-4 text-center font-bold font-mono text-slate-800">{simAttendance}%</td>
@@ -1569,7 +1569,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
                     className="bg-slate-950 hover:bg-slate-800 text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all"
                   >
                     <FileText className="h-4 w-4 text-emerald-400" />
-                    <span>Update Rapor Siswa Secara Resmi</span>
+                    <span>Update Rapor Murid Secara Resmi</span>
                   </button>
                 ) : (
                   <div className="bg-amber-50 text-amber-800 border border-amber-200 text-xs px-4 py-2 rounded-xl font-bold flex items-center gap-2">
@@ -1604,7 +1604,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
         {/* Judul Lembar Penilaian */}
         <div className="text-center space-y-1 my-4">
           <h4 className="text-md font-black underline tracking-wider text-slate-900 uppercase">
-            LEMBAR PENILAIAN HASIL BELAJAR SISWA (PORTFOLIO NILAI)
+            LEMBAR PENILAIAN HASIL BELAJAR MURID (PORTFOLIO NILAI)
           </h4>
           <p className="text-xs font-bold text-slate-700">
             Tahun Pelajaran: {schoolYear} | Semester: {semester} ({semester === "Ganjil" ? "1 / Ganjil" : "2 / Genap"})
@@ -1615,7 +1615,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
         <div className="grid grid-cols-2 gap-4 text-xs border border-slate-300 p-4 rounded-xl bg-slate-50/50">
           <div className="space-y-1.5">
             <div className="flex">
-              <span className="w-28 text-slate-600 font-semibold">Nama Siswa</span>
+              <span className="w-28 text-slate-600 font-semibold">Nama Murid</span>
               <span className="mr-2">:</span>
               <span className="font-extrabold text-slate-900 uppercase">{activeStudent.name}</span>
             </div>
@@ -1776,8 +1776,8 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
             <div className="text-xs border-t border-slate-300 pt-2.5 text-slate-800 leading-relaxed">
               <span className="font-extrabold text-slate-900 block mb-0.5">Catatan Khusus Guru Wali Kelas:</span>
               {isPassed 
-                ? "Siswa menunjukkan pemahaman yang sangat mendalam dan keahlian tinggi di bengkel kerja otomotif. Karakter gotong royong dan kesadaran K3 sangat baik. Pertahankan kompetensi prima ini untuk persiapan Praktik Kerja Lapangan (PKL) semester berikutnya."
-                : "Nilai capaian belum memenuhi batas ketuntasan minimal kriteria sekolah (KKTP 75). Siswa disarankan untuk mengikuti kelas remedial terjadwal dan melengkapi jobsheet yang belum tuntas di bawah bimbingan instruktur."
+                ? "Murid menunjukkan pemahaman yang sangat mendalam dan keahlian tinggi di bengkel kerja otomotif. Karakter gotong royong dan kesadaran K3 sangat baik. Pertahankan kompetensi prima ini untuk persiapan Praktik Kerja Lapangan (PKL) semester berikutnya."
+                : "Nilai capaian belum memenuhi batas ketuntasan minimal kriteria sekolah (KKTP 75). Murid disarankan untuk mengikuti kelas remedial terjadwal dan melengkapi jobsheet yang belum tuntas di bawah bimbingan instruktur."
               }
             </div>
           </div>
@@ -1823,7 +1823,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
                   ))
                 ) : (
                   <p className="text-[11px] text-emerald-800 font-medium italic">
-                    "Siswa tidak memiliki catatan rujukan atau tindakan pelanggaran kedisiplinan dari Guru BK. Karakter terpuji."
+                    "Murid tidak memiliki catatan rujukan atau tindakan pelanggaran kedisiplinan dari Guru BK. Karakter terpuji."
                   </p>
                 )}
               </div>
@@ -1836,7 +1836,7 @@ export function LaporanNilaiSiswa({ currentRole, username, isAutomotive = true }
           <div className="space-y-12">
             <div>
               <p className="text-slate-600">Menyetujui,</p>
-              <p className="font-bold text-slate-800">Orang Tua / Wali Siswa</p>
+              <p className="font-bold text-slate-800">Orang Tua / Wali Murid</p>
             </div>
             <div className="border-b border-slate-400 w-3/4 mx-auto pt-6"></div>
             <p className="text-slate-500 text-[10px] italic">(........................................................)</p>

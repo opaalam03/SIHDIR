@@ -3,15 +3,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { MapPin, Camera, Clock, CheckCircle2, XCircle, AlertCircle, AlertTriangle, FileText, Calendar, Sliders, RefreshCw, Compass, LogOut } from "lucide-react";
+import { MapPin, Camera, Clock, CheckCircle2, XCircle, AlertCircle, AlertTriangle, FileText, Calendar, Sliders, RefreshCw, Compass, LogOut, Radio, Settings, Coffee, Send, Eye, Check, Sparkles, Layers, ShieldCheck, CheckSquare } from "lucide-react";
 import { TeacherAttendance } from "../types";
 import { INITIAL_TEACHER_ATTENDANCE, MOCK_TEACHERS } from "../mockData";
 import { InteractiveAttendanceMap } from "./InteractiveAttendanceMap";
 import { AttendanceScheduleInfoCard } from "./AttendanceScheduleInfoCard";
+import { ChannelPresensiConfigModal } from "./ChannelPresensiConfigModal";
+import { 
+  getFonnteApiKey,
+  getSchoolChannelTarget, 
+  dispatchTeacherAttendanceToChannel,
+  buildTeacherSession1Report,
+  buildTeacherSession2Report,
+  dispatchTwoSessionReport
+} from "../services/whatsappFonnteService";
 import { dbService } from "../firebase";
 import { compressImageFile } from "../lib/imageCompressor";
+import { getTeacherMatchedSchedules, getIndonesianDayName } from "../utils/scheduleHelper";
 
 // SMK Negeri 2 Konawe Central coordinates
 const SCHOOL_LAT = -3.8380461319668107;
@@ -36,6 +46,20 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 export function AttendanceTeacher({ username, currentRole }: { username?: string; currentRole?: string } = {}) {
+  // Hanya tampilkan laporan rekapan presensi bulanan dan semester untuk Admin Utama dan Admin Tata Usaha (TU), dihilangkan untuk guru mapel
+  const isAdminOrTu = 
+    (currentRole || "").toLowerCase() === "admin" || 
+    (currentRole || "").toLowerCase() === "tu" ||
+    (username || "").toLowerCase() === "admin" ||
+    (username || "").toLowerCase() === "tu";
+
+  // Admin Utama selaku pengendali aturan (Bapak Arham Amiruddin, S.Pd.Gr / akun admin utama)
+  const isAdminUtama = (() => {
+    const u = (username || "").trim().toLowerCase();
+    const r = (currentRole || "").trim().toLowerCase();
+    return r === "admin" || u === "admin" || u === "arham" || u === "alam" || u.includes("arham") || u.includes("alam");
+  })();
+
   const [mapAuthFailed, setMapAuthFailed] = useState(false);
 
   useEffect(() => {
@@ -358,14 +382,34 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
   // Clock Out selection state
   const [activeAttendanceId, setActiveAttendanceId] = useState<string | null>(null);
 
-  // Selfie capture mock
+  // Selfie capture state & refs
   const [selfieImage, setSelfieImage] = useState<string>("");
   const [isCapturing, setIsCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [earlyReason, setEarlyReason] = useState<string>("Selesai KBM Jam Awal (Hanya s.d Jam Istirahat, Tidak Ada Jam Lanjutan Hari Ini)");
 
   // Status logs
   const [attendanceMessage, setAttendanceMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [reportTab, setReportTab] = useState<"harian" | "mingguan" | "bulanan" | "semester">("harian");
+
+  // Saluran WhatsApp Resmi SMK Negeri 2 Konawe Modal state
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState<boolean>(false);
+  const [schoolChannelId, setSchoolChannelId] = useState<string>(() => getSchoolChannelTarget());
+
+  // Listen to target changes from settings modal
+  useEffect(() => {
+    const handleTargetChange = (e: any) => {
+      if (e.detail) {
+        setSchoolChannelId(e.detail);
+      } else {
+        setSchoolChannelId(getSchoolChannelTarget());
+      }
+    };
+    window.addEventListener("sihadir_wa_target_changed", handleTargetChange);
+    return () => window.removeEventListener("sihadir_wa_target_changed", handleTargetChange);
+  }, []);
 
   // Real-time ticking system clock for alarms
   const [liveDateTime, setLiveDateTime] = useState<Date>(new Date());
@@ -397,6 +441,77 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
   useEffect(() => {
     localStorage.setItem("simpati_teacher_alarm_enabled", String(isAlarmEnabled));
   }, [isAlarmEnabled]);
+
+  // 2-Session WhatsApp Group Report State
+  const [showSession1Preview, setShowSession1Preview] = useState<boolean>(false);
+  const [showSession2Preview, setShowSession2Preview] = useState<boolean>(false);
+  const [sendingSession, setSendingSession] = useState<1 | 2 | null>(null);
+  const [sessionNotice, setSessionNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleSendSession = async (session: 1 | 2) => {
+    setSendingSession(session);
+    setSessionNotice(null);
+    try {
+      const res = await dispatchTwoSessionReport(session);
+      if (res.success) {
+        setSessionNotice({
+          type: "success",
+          text: `Rekap Sesi ${session} berhasil disiarkan ke WhatsApp! Target: ${res.target}`
+        });
+      } else {
+        setSessionNotice({
+          type: "error",
+          text: `Pengiriman Rekap Sesi ${session} gagal: ${res.message}`
+        });
+      }
+    } catch (e: any) {
+      setSessionNotice({
+        type: "error",
+        text: `Terjadi kendala saat mengirim: ${e.message || e}`
+      });
+    } finally {
+      setSendingSession(null);
+    }
+  };
+
+  // Auto-broadcast toggle and tracking
+  const [autoSessionBroadcast, setAutoSessionBroadcast] = useState<boolean>(() => {
+    return localStorage.getItem("sihadir_auto_session_broadcast") !== "false";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sihadir_auto_session_broadcast", String(autoSessionBroadcast));
+  }, [autoSessionBroadcast]);
+
+  // Automatic scheduler ticker
+  useEffect(() => {
+    if (!autoSessionBroadcast) return;
+
+    const hour = liveDateTime.getHours();
+    const minute = liveDateTime.getMinutes();
+    const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const todayKey = `${liveDateTime.getFullYear()}-${String(liveDateTime.getMonth() + 1).padStart(2, "0")}-${String(liveDateTime.getDate()).padStart(2, "0")}`;
+
+    // Sesi 1: Menjelang jam istirahat (09:55 WITA)
+    if (timeStr === "09:55" && localStorage.getItem("sihadir_sent_session1_date") !== todayKey) {
+      localStorage.setItem("sihadir_sent_session1_date", todayKey);
+      dispatchTwoSessionReport(1).then((res) => {
+        if (res.success) {
+          console.log("✅ Auto Sesi 1 WhatsApp Report dispatched at 09:55 WITA");
+        }
+      });
+    }
+
+    // Sesi 2: Tepat pukul 13:00 WITA
+    if (timeStr === "13:00" && localStorage.getItem("sihadir_sent_session2_date") !== todayKey) {
+      localStorage.setItem("sihadir_sent_session2_date", todayKey);
+      dispatchTwoSessionReport(2).then((res) => {
+        if (res.success) {
+          console.log("✅ Auto Sesi 2 WhatsApp Report dispatched at 13:00 WITA");
+        }
+      });
+    }
+  }, [liveDateTime, autoSessionBroadcast]);
 
   const playAlarmSound = () => {
     try {
@@ -468,55 +583,163 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
     setDistance(dist);
   }, [useRealGps, realLat, realLon, simulatedLat, simulatedLon, schoolLat, schoolLon]);
 
-  const triggerCamera = async () => {
-    setIsCapturing(true);
-    setSelfieImage("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 300, height: 200 } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+  // Stop camera tracks cleanly on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
       }
-    } catch (e) {
-      console.warn("Unable to access physical camera, using dynamic fallback face generator.", e);
-      // Fallback generator
-      setTimeout(() => {
-        const avatars = [
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-        ];
-        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-        setSelfieImage(randomAvatar);
-        setIsCapturing(false);
-      }, 1500);
+    };
+  }, []);
+
+  const triggerLiveCamera = async () => {
+    setIsCapturing(true);
+    setCameraError(null);
+    setSelfieImage("");
+
+    // Stop existing stream if any
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
+
+    try {
+      let stream: MediaStream | null = null;
+      try {
+        // Preferred front camera with standard dimensions
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        });
+      } catch {
+        // Fallback to any available video stream
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true");
+        await videoRef.current.play();
+      }
+    } catch (e: any) {
+      console.warn("Kamera browser terkendala, mengarahkan ke kamera native HP:", e);
+      setIsCapturing(false);
+      setCameraError("Kamera browser terkendala izin. Mengalihkan ke Kamera Depan HP...");
+      setTimeout(() => {
+        nativeCameraInputRef.current?.click();
+      }, 350);
+    }
+  };
+
+  const triggerNativeCamera = () => {
+    setCameraError(null);
+    nativeCameraInputRef.current?.click();
+  };
+
+  const cancelLiveCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCapturing(false);
   };
 
   const captureSelfieFromVideo = () => {
     if (videoRef.current) {
+      const video = videoRef.current;
       const canvas = document.createElement("canvas");
-      canvas.width = 300;
-      canvas.height = 200;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/png");
+        // Mirror horizontally so the captured photo matches the mirrored video display
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
         setSelfieImage(dataUrl);
-        // stop camera stream
-        const stream = videoRef.current.srcObject as MediaStream;
+
+        // Stop camera stream immediately
+        const stream = video.srcObject as MediaStream;
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
         }
       }
     }
     setIsCapturing(false);
   };
 
+  // Check if current user is teacher role (not student/murid/ketua_kelas)
+  const isTeacherRole = (currentRole || "").toLowerCase() !== "siswa" && (currentRole || "").toLowerCase() !== "murid" && (currentRole || "").toLowerCase() !== "ketua_kelas";
+
+  // Teacher schedule for today
+  const todayDayName = getIndonesianDayName(new Date());
+  const teacherTodaySchedules = useMemo(() => {
+    if (!selectedTeacher) return [];
+    const allMatched = getTeacherMatchedSchedules(selectedTeacher);
+    return allMatched.filter(s => s.day.trim().toLowerCase() === todayDayName.toLowerCase());
+  }, [selectedTeacher, todayDayName]);
+
+  // Today's schedule summary for early clock out detection
+  const todayScheduleSummary = useMemo(() => {
+    if (teacherTodaySchedules.length === 0) {
+      return {
+        hasScheduleToday: false,
+        isEarlyOnly: true,
+        lastTimeStr: "",
+        classListStr: "",
+        desc: "Tidak ada jadwal KBM tatap muka terdaftar hari ini (dapat langsung presensi pulang khusus jika tugas selesai)"
+      };
+    }
+
+    let maxEndTimeMinutes = 0;
+    let maxEndTimeStr = "";
+    const classNames: string[] = [];
+
+    teacherTodaySchedules.forEach(item => {
+      classNames.push(`${item.className} (${item.period})`);
+      const times = (item.timeRange || item.period).match(/(\d{2})[:.](\d{2})\s*-\s*(\d{2})[:.](\d{2})/);
+      if (times) {
+        const endH = parseInt(times[3], 10);
+        const endM = parseInt(times[4], 10);
+        const endTotalM = endH * 60 + endM;
+        if (endTotalM > maxEndTimeMinutes) {
+          maxEndTimeMinutes = endTotalM;
+          maxEndTimeStr = `${times[3]}:${times[4]}`;
+        }
+      }
+    });
+
+    // If latest class ends at or before 12:00 WITA, it's strictly a morning / pre-break session
+    const isEarlyOnly = maxEndTimeMinutes <= (12 * 60);
+
+    return {
+      hasScheduleToday: true,
+      isEarlyOnly,
+      lastTimeStr: maxEndTimeStr,
+      classListStr: classNames.join(", "),
+      desc: isEarlyOnly
+        ? `Jadwal KBM hari ini selesai pada jam awal (${maxEndTimeStr ? `pukul ${maxEndTimeStr} WITA` : "jam istirahat"} - ${classNames.join(", ")})`
+        : `Jadwal KBM hari ini berlangsung s.d pukul ${maxEndTimeStr} WITA (${classNames.join(", ")})`
+    };
+  }, [teacherTodaySchedules]);
+
+  const todayDateStr = new Date().toISOString().split("T")[0];
+  const todayLog = logs.find(log => log.teacherName === selectedTeacher && log.date === todayDateStr);
+  const hasClockedIn = Boolean(todayLog && todayLog.clockIn && todayLog.clockIn !== "--:--");
+  const hasClockedOut = Boolean(todayLog && todayLog.clockOut && todayLog.clockOut !== "--:--");
+
   const triggerAutoWA = async (messageText: string) => {
-    const key = localStorage.getItem("simpati_fonnte_api_key") || "";
-    const target = localStorage.getItem("simpati_fonnte_target") || "";
+    const key = localStorage.getItem("simpati_fonnte_api_key") || getFonnteApiKey();
+    const target = localStorage.getItem("simpati_fonnte_target") || getSchoolChannelTarget();
     if (!key || !target) {
       console.log("Fonnte API Key or Target is empty, skipping auto background WhatsApp broadcast for teacher attendance.");
       return;
@@ -588,13 +811,27 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
     dbService.saveRecord("teacher_attendance_logs", newLog.id, newLog);
 
     if (isWithinRadius) {
-      setAttendanceMessage({ type: "success", text: `Presensi Masuk BERHASIL dicatat & Laporan Terkirim ke Grup WA Guru (Dipantau Kepsek)! Status: Hadir (Jarak: ${distance} m).` });
+      setAttendanceMessage({ type: "success", text: `Presensi Masuk BERHASIL dicatat & Terbit ke Grup WhatsApp SMK Negeri 2 Konawe! Status: Hadir (Jarak: ${distance} m).` });
       // remember this log to allow clock out later
       setActiveAttendanceId(newLog.id);
 
-      // Formatted WhatsApp message for Kepsek & Teacher Group
+      // 1. Formatted WhatsApp message for Kepsek & Teacher Group
       const waMsg = `*📢 LAPORAN PRESENSI MASUK GURU (SIHADIR)*\n_Monitoring Real-Time Kepsek & Manajemen Sekolah_\n\n👤 *Nama Guru:* ${selectedTeacher}\n📅 *Tanggal:* ${todayDateStr}\n⏱️ *Jam Masuk:* ${timeStr} WITA\n📌 *Lokasi GPS:* ${distance} meter dari Sekolah (Valid/Dalam Radius)\n✅ *Status:* HADIR DI SEKOLAH / KELAS\n\n_Sistem SIHADIR mencatat presensi ini secara otomatis terverifikasi posisi GPS & foto selfie biometrik._`;
       triggerAutoWA(waMsg);
+
+      // 2. Dispatch automatically to Saluran Resmi SMK Negeri 2 Konawe
+      dispatchTeacherAttendanceToChannel("masuk", {
+        teacherName: selectedTeacher,
+        date: todayDateStr,
+        time: timeStr,
+        distance: distance,
+        status: "HADIR TEPAT WAKTU (Dalam Radius)",
+        notes: "Presensi Masuk terverifikasi geofence & biometrik selfie"
+      }).then(res => {
+        if (res.success) {
+          console.log("Presensi masuk guru sukses terbit ke saluran SMKN 2 Konawe:", res.targetsSent);
+        }
+      }).catch(err => console.error("Gagal broadcast presensi masuk ke saluran:", err));
 
       // Direct WhatsApp dispatch connection
       const targetPhone = localStorage.getItem("simpati_fonnte_target") || "";
@@ -624,7 +861,7 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
     if (currentMins < outStartMins) {
       setAttendanceMessage({ 
         type: "error", 
-        text: `⚠️ Akses Ditolak: Absen Pulang DITAHAN! Absen Pulang baru dapat dilakukan mulai pukul ${outStartTimeStr} WITA${isFriday ? " (Khusus Hari Jumat)" : ""}.` 
+        text: `⚠️ Akses Ditolak: Jam Absen Pulang reguler baru dibuka pukul ${outStartTimeStr} WITA${isFriday ? " (Khusus Hari Jumat)" : ""}. Jika Bapak/Ibu hanya mengajar jam awal (selesai s.d istirahat) dan sudah tidak ada jam tatap muka lanjutan, silakan gunakan tombol "Presensi Pulang Khusus (Selesai Mengajar Awal)" di bawah.` 
       });
       return;
     }
@@ -654,10 +891,25 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
       };
       setLogs(prev => prev.map(log => log.id === existingLog.id ? updatedLog : log));
       dbService.saveRecord("teacher_attendance_logs", updatedLog.id, updatedLog);
-      setAttendanceMessage({ type: "success", text: `Presensi Pulang BERHASIL dicatat & Laporan Terkirim ke Grup WA Guru! Pukul ${timeStr} WITA.` });
+      setAttendanceMessage({ type: "success", text: `Presensi Pulang BERHASIL dicatat & Terbit ke Grup WhatsApp SMK Negeri 2 Konawe! Pukul ${timeStr} WITA.` });
       
       const waMsg = `*📢 LAPORAN PRESENSI PULANG GURU (SIHADIR)*\n_Monitoring Real-Time Kepsek & Manajemen Sekolah_\n\n👤 *Nama Guru:* ${selectedTeacher}\n📅 *Tanggal:* ${todayDateStr}\n⏱️ *Jam Pulang:* ${timeStr} WITA\n📌 *Lokasi GPS:* ${distance} meter dari Sekolah (Radius Lingkungan Sekolah)\n🏁 *Status:* SELESAI TUGAS / PULANG\n\n_Terima kasih atas pengabdian dan dedikasinya hari ini. Selamat beristirahat!_`;
       triggerAutoWA(waMsg);
+
+      // Dispatch automatically to Saluran Resmi SMK Negeri 2 Konawe
+      dispatchTeacherAttendanceToChannel("pulang", {
+        teacherName: selectedTeacher,
+        date: todayDateStr,
+        time: timeStr,
+        clockInTime: existingLog.clockIn || undefined,
+        distance: distance,
+        status: "SELESAI TUGAS / PULANG LENGKAP",
+        notes: "Presensi Pulang terverifikasi selesai KBM dan administrasi harian"
+      }).then(res => {
+        if (res.success) {
+          console.log("Presensi pulang guru sukses terbit ke saluran SMKN 2 Konawe:", res.targetsSent);
+        }
+      }).catch(err => console.error("Gagal broadcast presensi pulang ke saluran:", err));
 
       // Direct WhatsApp dispatch connection
       const targetPhone = localStorage.getItem("simpati_fonnte_target") || "";
@@ -694,10 +946,24 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
       dbService.saveRecord("teacher_attendance_logs", newLog.id, newLog);
 
       if (isWithinRadius) {
-        setAttendanceMessage({ type: "success", text: `Presensi Pulang BERHASIL dicatat & Laporan Terkirim ke Grup WA Guru! Status: Hadir (Jarak: ${distance} m).` });
+        setAttendanceMessage({ type: "success", text: `Presensi Pulang BERHASIL dicatat & Terbit ke Grup WhatsApp SMK Negeri 2 Konawe! Status: Hadir (Jarak: ${distance} m).` });
         
         const waMsg = `*📢 LAPORAN PRESENSI PULANG GURU (SIHADIR)*\n_Monitoring Real-Time Kepsek & Manajemen Sekolah_\n\n👤 *Nama Guru:* ${selectedTeacher}\n📅 *Tanggal:* ${todayDateStr}\n⏱️ *Jam Pulang:* ${timeStr} WITA\n📌 *Lokasi GPS:* ${distance} meter dari Sekolah (Radius Lingkungan Sekolah)\n🏁 *Status:* SELESAI TUGAS / PULANG\n\n_Terima kasih atas pengabdian dan dedikasinya hari ini. Selamat beristirahat!_`;
         triggerAutoWA(waMsg);
+
+        // Dispatch automatically to Saluran Resmi SMK Negeri 2 Konawe
+        dispatchTeacherAttendanceToChannel("pulang", {
+          teacherName: selectedTeacher,
+          date: todayDateStr,
+          time: timeStr,
+          distance: distance,
+          status: "SELESAI TUGAS / PULANG LENGKAP",
+          notes: "Presensi Pulang terverifikasi selesai KBM dan administrasi harian"
+        }).then(res => {
+          if (res.success) {
+            console.log("Presensi pulang guru sukses terbit ke saluran SMKN 2 Konawe:", res.targetsSent);
+          }
+        }).catch(err => console.error("Gagal broadcast presensi pulang ke saluran:", err));
 
         // Direct WhatsApp dispatch connection
         const targetPhone = localStorage.getItem("simpati_fonnte_target") || "";
@@ -712,6 +978,104 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
         setAttendanceMessage({ type: "error", text: `Absensi Pulang DITOLAK! Anda berada di luar radius sekolah yang diijinkan (> ${schoolRadius} meter). Jarak: ${distance} m.` });
       }
     }
+    setSelfieImage("");
+  };
+
+  const handleClockOutEarly = () => {
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
+    // Must have already clocked in
+    if (!hasClockedIn || !todayLog) {
+      setAttendanceMessage({
+        type: "error",
+        text: "⚠️ Akses Ditolak: Anda belum melakukan Presensi Masuk hari ini. Wajib presensi masuk terlebih dahulu sebelum presensi pulang!"
+      });
+      return;
+    }
+
+    if (hasClockedOut) {
+      setAttendanceMessage({
+        type: "error",
+        text: "Bapak/Ibu guru sudah melakukan Absen Pulang hari ini!"
+      });
+      return;
+    }
+
+    // Minimum sensible time (09:00 WITA) so morning KBM is underway or finished
+    if (currentMins < (9 * 60)) {
+      setAttendanceMessage({
+        type: "error",
+        text: "⚠️ Presensi Pulang Khusus (Selesai Mengajar Awal) baru dapat dilakukan setelah jam KBM pagi berjalan (mulai pukul 09.00 WITA)."
+      });
+      return;
+    }
+
+    if (!selfieImage) {
+      setAttendanceMessage({
+        type: "error",
+        text: "Wajib mengambil Foto Selfie biometrik wajah Anda terlebih dahulu sebagai bukti kehadiran fisik sebelum mengirim presensi pulang!"
+      });
+      return;
+    }
+
+    const isWithinRadius = distance <= schoolRadius;
+    if (!isWithinRadius) {
+      setAttendanceMessage({
+        type: "error",
+        text: `Absensi Pulang DITOLAK! Anda berada di luar radius sekolah yang diijinkan (> ${schoolRadius} meter). Jarak terdeteksi: ${distance} m.`
+      });
+      return;
+    }
+
+    const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+    // Update existing record with early clock out
+    const updatedLog: TeacherAttendance = {
+      ...todayLog,
+      clockOut: timeStr,
+      selfie: selfieImage || todayLog.selfie,
+      status: "Hadir",
+      notes: `Presensi Pulang Khusus (Selesai KBM Jam Awal: ${earlyReason})`
+    };
+
+    setLogs(prev => prev.map(log => log.id === todayLog.id ? updatedLog : log));
+    dbService.saveRecord("teacher_attendance_logs", updatedLog.id, updatedLog);
+
+    setAttendanceMessage({
+      type: "success",
+      text: `Presensi Pulang Khusus (Selesai Mengajar Awal) BERHASIL dicatat & Terbit ke Grup WhatsApp SMK Negeri 2 Konawe! Pukul ${timeStr} WITA.`
+    });
+
+    const waMsg = `*📢 LAPORAN PRESENSI PULANG KHUSUS GURU (SELESAI MENGAJAR AWAL)*\n_Monitoring Real-Time Kepsek & Manajemen Sekolah SMKN 2 Konawe_\n\n👤 *Nama Guru:* ${selectedTeacher}\n📅 *Tanggal:* ${todayDateStr}\n⏱️ *Jam Masuk:* ${todayLog.clockIn} WITA\n⏱️ *Jam Pulang Khusus:* ${timeStr} WITA (Selesai KBM Awal)\n📌 *Lokasi GPS:* ${distance} meter dari Sekolah (Dalam Radius Valid)\n📚 *Status KBM:* Selesai Jam Mengajar Hari Ini\n📝 *Keterangan:* ${earlyReason}\n🏁 *Status:* SELESAI TUGAS / PULANG AWAL RESMI\n\n_Terima kasih atas pelaksanaan kegiatan belajar mengajar pagi ini. Selamat beristirahat!_`;
+    triggerAutoWA(waMsg);
+
+    // Dispatch automatically to Saluran Resmi SMK Negeri 2 Konawe
+    dispatchTeacherAttendanceToChannel("pulang", {
+      teacherName: selectedTeacher,
+      date: todayDateStr,
+      time: timeStr,
+      clockInTime: todayLog.clockIn || undefined,
+      distance: distance,
+      status: "SELESAI KBM AWAL (PULANG RESMI)",
+      notes: `Presensi Pulang Khusus: ${earlyReason}`
+    }).then(res => {
+      if (res.success) {
+        console.log("Presensi pulang khusus guru sukses terbit ke saluran SMKN 2 Konawe:", res.targetsSent);
+      }
+    }).catch(err => console.error("Gagal broadcast presensi pulang khusus ke saluran:", err));
+
+    // Direct WhatsApp dispatch connection
+    const targetPhone = localStorage.getItem("simpati_fonnte_target") || "";
+    const cleanPhone = targetPhone.replace(/[^0-9]/g, "");
+    const encodedMsg = encodeURIComponent(waMsg);
+    let waUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
+    if (cleanPhone) {
+      waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
+    }
+    window.open(waUrl, "_blank");
+
+    // Reset selfie
     setSelfieImage("");
   };
 
@@ -743,8 +1107,224 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
       className="md:col-span-3 space-y-6"
       id="absen-guru-view"
     >
-      {/* ALARM & PENGINGAT ABSENSI MANDIRI GURU */}
-      <div className="bg-white p-5 rounded-2xl border border-indigo-150 shadow-sm space-y-4">
+      {/* KONEKSI GRUP WHATSAPP RESMI SMK NEGERI 2 KONAWE - Khusus Admin Utama Pengendali Aturan */}
+      {isAdminUtama && (
+        <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-indigo-50 p-4 sm:p-5 rounded-2xl border border-emerald-200/90 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-sm shrink-0">
+              <Radio className="h-5 w-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm font-black text-slate-900">
+                  Grup WhatsApp Resmi SMK Negeri 2 Konawe
+                </h3>
+                <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  Otomasi Masuk & Pulang Aktif
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <span>Target Siaran:</span>
+                <code className="font-mono font-bold bg-white/90 border border-slate-200 px-1.5 py-0.5 rounded text-[11px] text-slate-800">
+                  {schoolChannelId === "120363205084846535@g.us"
+                    ? "👥 Grup SMKN 2 KONAWE (120363205084846535@g.us)"
+                    : schoolChannelId === "120363155477246592@g.us"
+                    ? "📋 ADM SMK 2 KNW (120363155477246592@g.us)"
+                    : (schoolChannelId || "120363205084846535@g.us")}
+                </code>
+                <span>• Terbit otomatis setiap presensi guru</span>
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsChannelModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 active:scale-95"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Pengaturan Pengiriman Laporan Grup</span>
+          </button>
+        </div>
+      )}
+
+      {/* SKEMA RESMI 2 SESI REKAPITULASI GRUP WA GURU - Khusus Admin Utama Pengendali Aturan */}
+      {isAdminUtama && (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-150 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-50 text-indigo-700 rounded-2xl">
+                <Layers className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-black text-slate-900">
+                    Skema Rekapitulasi Terjadwal Grup WA Guru (2 Sesi Harian)
+                  </h3>
+                  <span className="bg-indigo-100 text-indigo-800 border border-indigo-200 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                    Format Disiplin 2x Sehari
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Mencegah banjir pesan berkala di grup guru: Rekapitulasi dirangkum padat pada jeda istirahat dan jam 13.00 WITA.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-center bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 shrink-0">
+              <span className="text-xs font-bold text-slate-700">Otomatis Terjadwal:</span>
+              <label className="inline-flex items-center cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={autoSessionBroadcast}
+                  onChange={(e) => setAutoSessionBroadcast(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="relative w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+              <span className={`text-[11px] font-black ${autoSessionBroadcast ? "text-emerald-700" : "text-slate-400"}`}>
+                {autoSessionBroadcast ? "AKTIF" : "OFF"}
+              </span>
+            </div>
+          </div>
+
+          {/* Notifikasi feedback pengiriman sesi */}
+          {sessionNotice && (
+            <div className={`p-3 rounded-xl text-xs font-bold border flex items-center justify-between gap-2 ${
+              sessionNotice.type === "success" 
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200" 
+                : "bg-rose-50 text-rose-800 border-rose-200"
+            }`}>
+              <div className="flex items-center gap-2">
+                {sessionNotice.type === "success" ? <Check className="h-4 w-4 shrink-0 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />}
+                <span>{sessionNotice.text}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSessionNotice(null)}
+                className="text-slate-400 hover:text-slate-600 text-xs px-1.5 py-0.5 font-black"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* 2 Sesi Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* SESI 1 */}
+            <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-slate-50 p-4 rounded-2xl border border-amber-200/90 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 bg-amber-500 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs">
+                    <Coffee className="h-3 w-3" />
+                    Sesi 1 • Menjelang Istirahat
+                  </span>
+                  <span className="text-[11px] font-extrabold text-amber-900 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-200">
+                    Pukul 09.55 / 10.15 WITA
+                  </span>
+                </div>
+
+                <h4 className="text-sm font-black text-slate-800 mt-2.5">
+                  Rekap KBM Sesi Pagi (Jam Ke-1 s.d. Ke-4)
+                </h4>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Menghimpun seluruh data presensi pagi, daftar guru yang telah aktif mengajar di kelas beserta jurnalnya, serta pengingat peringatan guru terjadwal yang belum hadir sebelum bel istirahat.
+                </p>
+
+                {/* Preview Toggle Content */}
+                {showSession1Preview && (
+                  <div className="mt-3 bg-white p-3 rounded-xl border border-amber-200 shadow-inner">
+                    <span className="text-[10px] font-extrabold text-amber-800 uppercase block mb-1">
+                      Format Pesan WhatsApp Sesi 1:
+                    </span>
+                    <pre className="text-[10px] font-mono text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                      {buildTeacherSession1Report().messageText}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-amber-200/60">
+                <button
+                  type="button"
+                  onClick={() => setShowSession1Preview(!showSession1Preview)}
+                  className="flex-1 bg-white hover:bg-slate-50 text-amber-900 border border-amber-300 text-xs font-extrabold py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>{showSession1Preview ? "Tutup Preview" : "Preview Pesan"}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={sendingSession === 1}
+                  onClick={() => handleSendSession(1)}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-black py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>{sendingSession === 1 ? "Mengirim..." : "Kirim Sesi 1"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* SESI 2 */}
+            <div className="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-4 rounded-2xl border border-indigo-200/90 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs">
+                    <Sparkles className="h-3 w-3" />
+                    Sesi 2 • Menjelang Pulang
+                  </span>
+                  <span className="text-[11px] font-extrabold text-indigo-900 bg-indigo-100/90 px-2 py-0.5 rounded-full border border-indigo-200">
+                    Tepat Pukul 13.00 WITA
+                  </span>
+                </div>
+
+                <h4 className="text-sm font-black text-slate-800 mt-2.5">
+                  Rekap KBM Sesi Siang & Kehadiran Harian
+                </h4>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                  Menghimpun KBM Jam Ke-5 s.d. selesai, akumulasi statistik total pendidik hadir/terlambat/tugas luar hari ini, serta pengingat presensi pulang (clock-out) di aplikasi SIHADIR.
+                </p>
+
+                {/* Preview Toggle Content */}
+                {showSession2Preview && (
+                  <div className="mt-3 bg-white p-3 rounded-xl border border-indigo-200 shadow-inner">
+                    <span className="text-[10px] font-extrabold text-indigo-800 uppercase block mb-1">
+                      Format Pesan WhatsApp Sesi 2:
+                    </span>
+                    <pre className="text-[10px] font-mono text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                      {buildTeacherSession2Report().messageText}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-indigo-200/60">
+                <button
+                  type="button"
+                  onClick={() => setShowSession2Preview(!showSession2Preview)}
+                  className="flex-1 bg-white hover:bg-slate-50 text-indigo-900 border border-indigo-300 text-xs font-extrabold py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>{showSession2Preview ? "Tutup Preview" : "Preview Pesan"}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={sendingSession === 2}
+                  onClick={() => handleSendSession(2)}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-black py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>{sendingSession === 2 ? "Mengirim..." : "Kirim Sesi 2"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ALARM & PENGINGAT ABSENSI MANDIRI GURU - Khusus Admin Utama Pengendali Aturan */}
+      {isAdminUtama && (
+        <div className="bg-white p-5 rounded-2xl border border-indigo-150 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-rose-50 text-rose-600 rounded-xl animate-pulse">
@@ -894,6 +1474,7 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
           )}
         </AnimatePresence>
       </div>
+      )}
 
       {/* INFORMASI JADWAL & BATAS WAKTU PRESENSI GURU & STAF */}
       <AttendanceScheduleInfoCard role="guru" variant="full" />
@@ -1017,43 +1598,103 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
             <div className="relative w-full aspect-video bg-slate-900 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center text-white">
               {isCapturing ? (
                 <>
-                  <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" />
-                  <button
-                    onClick={captureSelfieFromVideo}
-                    className="absolute bottom-3 bg-red-600 text-white font-extrabold text-xs px-4 py-2 rounded-full shadow-lg"
-                  >
-                    Ambil Foto
-                  </button>
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    muted 
+                    className="absolute inset-0 w-full h-full object-cover" 
+                    style={{ transform: "scaleX(-1)" }} 
+                  />
+                  {/* Visual oval guideline */}
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-36 h-48 sm:w-44 sm:h-56 rounded-[50%] border-2 border-dashed border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-end justify-center pb-2">
+                      <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                        Posisikan Wajah
+                      </span>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-3 inset-x-0 flex items-center justify-center gap-2 z-10">
+                    <button
+                      type="button"
+                      onClick={captureSelfieFromVideo}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Camera className="w-4 h-4 text-emerald-200" />
+                      <span>Jepret Foto Wajah</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelLiveCamera}
+                      className="bg-slate-800/80 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-full transition-all cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
                 </>
               ) : selfieImage ? (
                 <div className="relative w-full h-full">
                   <img src={selfieImage} alt="Selfie preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  <div className="absolute top-2 right-2 bg-emerald-500 text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded shadow">
-                    Foto Tersimpan
+                  <div className="absolute top-2 right-2 bg-emerald-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Foto Wajah Siap</span>
                   </div>
-                  <button
-                    onClick={triggerCamera}
-                    className="absolute bottom-2 left-2 bg-slate-900/80 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg hover:bg-slate-800"
-                  >
-                    Ambil Ulang
-                  </button>
+                  <div className="absolute bottom-2 inset-x-2 flex justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={triggerNativeCamera}
+                      className="bg-slate-900/85 hover:bg-slate-800 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow"
+                    >
+                      <Camera className="w-3 h-3 text-emerald-400" />
+                      <span>Ambil Ulang (Kamera HP)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelfieImage("")}
+                      className="bg-rose-900/85 hover:bg-rose-800 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow"
+                    >
+                      <XCircle className="w-3 h-3 text-rose-300" />
+                      <span>Hapus Foto</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center p-4">
-                  <Camera className="h-8 w-8 text-slate-400 mx-auto mb-2 animate-pulse" />
-                  <p className="text-xs text-slate-300 font-bold mb-1">Kamera Belum Aktif</p>
-                  <p className="text-[10px] text-slate-500 max-w-[240px] mx-auto mb-3">Silakan pilih metode: Ambil selfie via kamera web atau gunakan foto langsung/berkas</p>
-                  
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2 text-emerald-400">
+                    <Camera className="h-6 w-6" />
+                  </div>
+                  <p className="text-xs text-slate-200 font-bold mb-0.5">Ambil Foto Selfie Wajah</p>
+                  <p className="text-[10px] text-slate-400 max-w-[260px] mx-auto mb-3">
+                    Wajib foto selfie wajah asli Bapak/Ibu guru secara langsung untuk validasi presensi biometrik
+                  </p>
+
+                  {cameraError && (
+                    <div className="mb-3 text-[11px] text-amber-300 bg-amber-950/70 border border-amber-800/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 max-w-xs mx-auto">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                      <span>{cameraError}</span>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <button
-                      onClick={triggerCamera}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      type="button"
+                      onClick={triggerNativeCamera}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2.5 rounded-xl shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <span>🤳 Selfie Live</span>
+                      <Camera className="h-3.5 w-3.5 text-emerald-200" />
+                      <span>📸 Buka Kamera Depan HP</span>
                     </button>
-                    <label className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5">
-                      <Camera className="h-3.5 w-3.5" />
-                      <span>📸 Foto Langsung / Unggah</span>
+
+                    <button
+                      type="button"
+                      onClick={triggerLiveCamera}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <span>🤳 Kamera Langsung Browser</span>
+                    </button>
+
+                    <label className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5">
+                      <span>📁 Galeri</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1062,7 +1703,7 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
                           const file = e.target.files?.[0];
                           if (file) {
                             try {
-                              const compressed = await compressImageFile(file, 400, 400, 0.7);
+                              const compressed = await compressImageFile(file, 640, 640, 0.8);
                               setSelfieImage(compressed);
                             } catch {
                               const reader = new FileReader();
@@ -1079,6 +1720,30 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
                 </div>
               )}
             </div>
+
+            {/* Hidden native camera input explicitly targeting front user camera */}
+            <input
+              ref={nativeCameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  try {
+                    const compressed = await compressImageFile(file, 640, 640, 0.85);
+                    setSelfieImage(compressed);
+                  } catch {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setSelfieImage(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }
+              }}
+            />
           </div>
 
           <div className="space-y-3 pt-3">
@@ -1118,7 +1783,7 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3.5 px-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Clock className="w-4.5 h-4.5 text-emerald-100" />
-                <span>KIRIM PRESENSI MASUK KE GRUP WA</span>
+                <span>KIRIM PRESENSI MASUK KE GRUP WA SMKN 2 KONAWE</span>
               </button>
 
               <button
@@ -1127,107 +1792,223 @@ export function AttendanceTeacher({ username, currentRole }: { username?: string
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs py-3.5 px-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-4.5 h-4.5 text-indigo-100" />
-                <span>KIRIM PRESENSI PULANG KE GRUP WA</span>
+                <span>KIRIM PRESENSI PULANG KE GRUP WA SMKN 2 KONAWE</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Report Categories tabs */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="h-4.5 w-4.5 text-indigo-500" />
-            <span>Laporan Rekapan Presensi Bulanan & Semester</span>
-          </h3>
-          
-          <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-            {(["harian", "mingguan", "bulanan", "semester"] as const).map((tab) => (
-              <button
-                id={`btn-report-${tab}`}
-                key={tab}
-                onClick={() => setReportTab(tab)}
-                className={`text-[10px] font-extrabold uppercase px-3 py-1.5 rounded-lg transition-all ${
-                  reportTab === tab 
-                    ? "bg-slate-900 text-white shadow-sm" 
-                    : "text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Render Table accordingly */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs text-slate-600 font-medium">
-            <thead>
-              <tr className="bg-slate-50 text-slate-400 uppercase text-[10px] font-extrabold border-b">
-                <th className="py-3 px-4">NAMA GURU & STAF</th>
-                <th className="py-3 px-4">Tanggal / Waktu</th>
-                <th className="py-3 px-4">Masuk / Pulang</th>
-                <th className="py-3 px-4">Posisi GPS (Radius)</th>
-                <th className="py-3 px-4 text-center">Selfie</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/50">
-                  <td className="py-3 px-4 font-bold text-slate-950">{log.teacherName}</td>
-                  <td className="py-3 px-4 font-mono">
-                    <span className="block font-semibold">{log.date}</span>
-                    <span className="text-[10px] text-slate-400">Timestamp</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded font-mono block w-fit">
-                      {log.clockIn}
-                    </span>
-                    {log.clockOut ? (
-                      <span className="bg-violet-50 text-violet-700 font-bold px-2 py-0.5 rounded font-mono block w-fit mt-1">
-                        {log.clockOut}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-amber-500 font-extrabold block mt-1">Menunggu Pulang</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[11px]">
-                    <div>{log.latitude}, {log.longitude}</div>
-                    <div className={`text-[10px] font-bold ${log.distanceMeter <= schoolRadius ? "text-emerald-500" : "text-rose-500"}`}>
-                      Jarak: {log.distanceMeter}m ({log.distanceMeter <= schoolRadius ? "Aman" : "Diluar SOP"})
+            {/* KHUSUS GURU: Fitur Presensi Pulang Khusus Selesai Mengajar Awal s.d Istirahat */}
+            {isTeacherRole && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                {hasClockedOut ? (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="font-bold">Presensi Hari Ini Telah Lengkap!</p>
+                      <p className="text-[11px] text-emerald-700">
+                        Masuk: <span className="font-extrabold">{todayLog?.clockIn || "-"} WITA</span> | Pulang: <span className="font-extrabold">{todayLog?.clockOut || "-"} WITA</span>
+                        {todayLog?.notes ? ` (${todayLog.notes})` : ""}
+                      </p>
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <img src={log.selfie} alt="guru selfie" className="h-8 w-8 rounded-full border border-slate-200 mx-auto object-cover" referrerPolicy="no-referrer" />
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className={`inline-block text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
-                      log.status === "Hadir" 
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-100" 
-                        : "bg-rose-50 text-rose-800 border border-rose-100"
-                    }`}>
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    {!log.clockOut && log.status === "Hadir" && (
-                      <button
-                        onClick={() => handleClockOut(log.id)}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg shadow-sm"
+                  </div>
+                ) : hasClockedIn ? (
+                  <div className="bg-amber-50/90 border-2 border-amber-300 rounded-xl p-3.5 space-y-3 shadow-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1.5 bg-amber-500 text-white rounded-lg shadow-xs">
+                          <LogOut className="w-4 h-4" />
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="text-xs font-black text-amber-950 uppercase tracking-tight">
+                              Presensi Pulang Khusus (Selesai Mengajar Awal)
+                            </h4>
+                            <span className="bg-amber-200 text-amber-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full">
+                              Khusus Guru
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-800 font-medium">
+                            Bagi guru yang jam tatap mukanya selesai pada jam awal / s.d istirahat dan tidak ada jam mengajar lanjutan
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Schedule detection alert */}
+                    <div className="bg-white/90 p-2.5 rounded-lg border border-amber-200 text-[11px] text-slate-700 space-y-1">
+                      <div className="flex items-center justify-between font-bold text-slate-900">
+                        <span>📅 Status Jadwal KBM Hari Ini:</span>
+                        <span className="text-amber-700 font-black">
+                          {todayScheduleSummary.lastTimeStr ? `Selesai ~${todayScheduleSummary.lastTimeStr} WITA` : "Sesi KBM Pagi"}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 text-[10.5px]">
+                        {todayScheduleSummary.desc}
+                      </p>
+                      <p className="text-emerald-700 font-semibold text-[10px] flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Presensi Masuk Anda tercatat pukul <span className="font-bold">{todayLog?.clockIn} WITA</span>
+                      </p>
+                    </div>
+
+                    {/* Reason selector */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase text-amber-900 block">
+                        Keterangan / Alasan Pulang Mengajar Awal:
+                      </label>
+                      <select
+                        value={earlyReason}
+                        onChange={(e) => setEarlyReason(e.target.value)}
+                        className="w-full text-xs font-semibold bg-white border border-amber-300 rounded-lg p-2 text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                       >
-                        Absen Pulang
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <option value="Selesai KBM Jam Awal (Hanya s.d Jam Istirahat, Tidak Ada Jam Lanjutan Hari Ini)">
+                          Selesai KBM Jam Awal (Hanya s.d Jam Istirahat, Tidak Ada Jam Lanjutan)
+                        </option>
+                        <option value="Jadwal Tatap Muka Hari Ini Telah Tuntas Sesuai Roster Resmi SMKN 2 Konawe">
+                          Jadwal Tatap Muka Hari Ini Telah Tuntas Sesuai Roster Resmi
+                        </option>
+                        <option value="Telah Menyelesaikan Seluruh Jam KBM Pagi & Administrasi Pembelajaran">
+                          Telah Menyelesaikan Seluruh Jam KBM Pagi & Administrasi Pembelajaran
+                        </option>
+                        <option value="Tugas Piket / KBM Sesi Pagi Telah Selesai Dilaksanakan">
+                          Tugas Piket / KBM Sesi Pagi Telah Selesai Dilaksanakan
+                        </option>
+                      </select>
+                    </div>
+
+                    {/* Submit early clock out button */}
+                    <button
+                      id="btn-clock-out-early"
+                      type="button"
+                      onClick={handleClockOutEarly}
+                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold text-xs py-3 px-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                    >
+                      <LogOut className="w-4 h-4 text-amber-200" />
+                      <span>KIRIM PRESENSI PULANG KHUSUS KE GRUP WA SMKN 2 KONAWE</span>
+                    </button>
+                    <p className="text-[9.5px] text-amber-800/90 text-center italic">
+                      * Memerlukan foto selfie wajah biometrik & posisi dalam radius sekolah. Otomatis terbit ke Grup WhatsApp Resmi SMKN 2 Konawe.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-xs">
+                    <p className="font-bold text-slate-800">💡 Fitur Pulang Khusus Selesai Mengajar Awal</p>
+                    <p className="text-[11px] text-slate-500">
+                      Bapak/Ibu guru wajib melakukan <span className="font-bold text-emerald-700">Presensi Masuk</span> terlebih dahulu sebelum fitur Presensi Pulang Khusus dapat digunakan.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Report Categories tabs - Hanya untuk Admin Tata Usaha & Admin Utama, dihilangkan untuk Guru Mapel */}
+      {isAdminOrTu && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 mb-4">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <FileText className="h-4.5 w-4.5 text-indigo-500" />
+              <span>Laporan Rekapan Presensi Bulanan & Semester</span>
+            </h3>
+            
+            <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+              {(["harian", "mingguan", "bulanan", "semester"] as const).map((tab) => (
+                <button
+                  id={`btn-report-${tab}`}
+                  key={tab}
+                  onClick={() => setReportTab(tab)}
+                  className={`text-[10px] font-extrabold uppercase px-3 py-1.5 rounded-lg transition-all ${
+                    reportTab === tab 
+                      ? "bg-slate-900 text-white shadow-sm" 
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Render Table accordingly */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-xs text-slate-600 font-medium">
+              <thead>
+                <tr className="bg-slate-50 text-slate-400 uppercase text-[10px] font-extrabold border-b">
+                  <th className="py-3 px-4">NAMA GURU & STAF</th>
+                  <th className="py-3 px-4">Tanggal / Waktu</th>
+                  <th className="py-3 px-4">Masuk / Pulang</th>
+                  <th className="py-3 px-4">Posisi GPS (Radius)</th>
+                  <th className="py-3 px-4 text-center">Selfie</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {logs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50/50">
+                    <td className="py-3 px-4 font-bold text-slate-950">{log.teacherName}</td>
+                    <td className="py-3 px-4 font-mono">
+                      <span className="block font-semibold">{log.date}</span>
+                      <span className="text-[10px] text-slate-400">Timestamp</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded font-mono block w-fit">
+                        {log.clockIn}
+                      </span>
+                      {log.clockOut ? (
+                        <span className="bg-violet-50 text-violet-700 font-bold px-2 py-0.5 rounded font-mono block w-fit mt-1">
+                          {log.clockOut}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-amber-500 font-extrabold block mt-1">Menunggu Pulang</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-[11px]">
+                      <div>{log.latitude}, {log.longitude}</div>
+                      <div className={`text-[10px] font-bold ${log.distanceMeter <= schoolRadius ? "text-emerald-500" : "text-rose-500"}`}>
+                        Jarak: {log.distanceMeter}m ({log.distanceMeter <= schoolRadius ? "Aman" : "Diluar SOP"})
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <img src={log.selfie} alt="guru selfie" className="h-8 w-8 rounded-full border border-slate-200 mx-auto object-cover" referrerPolicy="no-referrer" />
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-block text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
+                        log.status === "Hadir" 
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-100" 
+                          : "bg-rose-50 text-rose-800 border border-rose-100"
+                      }`}>
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {!log.clockOut && log.status === "Hadir" && (
+                        <button
+                          onClick={() => handleClockOut(log.id)}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-lg shadow-sm"
+                        >
+                          Absen Pulang
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PENGATURAN KONEKSI SALURAN WHATSAPP SMKN 2 KONAWE */}
+      <ChannelPresensiConfigModal
+        isOpen={isChannelModalOpen}
+        onClose={() => {
+          setIsChannelModalOpen(false);
+          setSchoolChannelId(getSchoolChannelTarget());
+        }}
+        currentTeacherName={selectedTeacher}
+      />
     </motion.div>
   );
 }

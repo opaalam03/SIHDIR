@@ -18,7 +18,8 @@ import {
   GraduationCap,
   Layers,
   BookOpen,
-  UserCheck
+  UserCheck,
+  Users
 } from "lucide-react";
 import { 
   getMasterGuruWaliData, 
@@ -125,7 +126,7 @@ function convertMuridListToStudents(guruWali: ReturnType<typeof getMasterGuruWal
 }
 
 export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_wali", onNavigateToTab }: GuruWaliWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<"daftar-siswa" | "catat-sesi">("daftar-siswa");
+  const [activeTab, setActiveTab] = useState<"daftar-murid" | "catat-sesi">("daftar-murid");
   const [searchQuery, setSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -196,7 +197,7 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
   const handleAddStudent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStudentName.trim() || !newStudentNisn.trim()) {
-      showToast("Harap isi Nama Siswa dan NISN!");
+      showToast("Harap isi Nama Murid dan NISN!");
       return;
     }
 
@@ -336,14 +337,6 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
         </div>
 
         <div className="flex items-center gap-3 shrink-0 z-10 flex-wrap">
-          <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-center">
-            <span className="text-[10px] uppercase font-bold text-teal-300 block">Murid Binaan</span>
-            <span className="text-sm font-black text-white">{students.length} Siswa Terdaftar</span>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-center">
-            <span className="text-[10px] uppercase font-bold text-teal-300 block">Record Bimbingan</span>
-            <span className="text-sm font-black text-white">{consultations.length} Sesi Terpaut</span>
-          </div>
           <button
             type="button"
             onClick={() => {
@@ -354,7 +347,7 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-4 py-3 rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
           >
             <UserCheck className="h-4 w-4" />
-            <span>Lihat Presensi Siswa Binaan ({students[0]?.kelas || "XII DPIB"})</span>
+            <span>Lihat Presensi Murid Binaan ({students[0]?.kelas || "XII DPIB"})</span>
           </button>
           <button
             type="button"
@@ -370,15 +363,15 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
       {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
-          onClick={() => setActiveTab("daftar-siswa")}
+          onClick={() => setActiveTab("daftar-murid")}
           className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === "daftar-siswa"
+            activeTab === "daftar-murid"
               ? "bg-teal-700 text-white shadow-md"
               : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
           }`}
         >
-          <UserPlus className="h-4 w-4" />
-          <span>Daftar & Input Siswa Bimbingan ({students.length})</span>
+          <Users className="h-4 w-4" />
+          <span>Daftar Murid Bimbingan ({students.length})</span>
         </button>
 
         <button
@@ -394,192 +387,94 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
         </button>
       </div>
 
-      {/* MAIN VIEW TAB 1: DAFTAR & INPUT SISWA BIMBINGAN */}
-      {activeTab === "daftar-siswa" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* LEFT 2-COLS: DAFTAR SISWA BIMBINGAN GURU WALI */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-teal-700 tracking-wider flex items-center gap-1.5">
-                    <GraduationCap className="h-3.5 w-3.5" />
-                    Binaan Guru Wali
-                  </span>
-                  <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
-                    Daftar Murid Masuk Bimbingan Guru Wali
-                  </h3>
-                </div>
-
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Cari NISN, nama, kelas, jurusan..."
-                    className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 text-xs rounded-xl focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              {/* TABLE DATA SISWA BIMBINGAN */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                      <th className="py-3 px-3">No</th>
-                      <th className="py-3 px-3">NISN</th>
-                      <th className="py-3 px-3">Nama Siswa</th>
-                      <th className="py-3 px-3">Kelas & Jurusan</th>
-                      <th className="py-3 px-3 text-right">Aksi Management</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-xs">
-                    {filteredStudents.map((std, idx) => (
-                      <tr key={std.id} className="hover:bg-teal-50/20 transition-colors">
-                        <td className="py-3 px-3 font-bold text-slate-400">{idx + 1}</td>
-                        <td className="py-3 px-3 font-mono font-bold text-teal-700">{std.nisn}</td>
-                        <td className="py-3 px-3">
-                          <div className="font-black text-slate-900">{std.name}</div>
-                          <span className="text-[9px] text-slate-400 font-medium">Binaan Aktif</span>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="inline-block px-2 py-0.5 bg-slate-100 font-extrabold text-[10px] text-slate-800 rounded mb-0.5">
-                            {std.kelas}
-                          </div>
-                          <div className="text-[10px] text-slate-500 font-bold">{std.jurusan}</div>
-                        </td>
-                        <td className="py-3 px-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleQuickAddSessionForStudent(std)}
-                              className="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl text-[10px] font-black transition-all cursor-pointer flex items-center gap-1"
-                            >
-                              <Plus className="h-3 w-3" />
-                              <span>Sesi Bimbingan</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteStudent(std.id, std.name)}
-                              className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition-all cursor-pointer"
-                              title="Hapus Murid"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-
-                    {filteredStudents.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-8 text-center text-slate-400 font-medium italic">
-                          Belum ada siswa bimbingan yang tercatat. Silakan tambah melalui form di sebelah kanan.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT 1-COL: FORM TAMBAH SISWA BIMBINGAN */}
-          <div className="space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b pb-3">
-                <UserPlus className="h-5 w-5 text-teal-600" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-                  Tambah Siswa Bimbingan Guru Wali
+      {/* MAIN VIEW TAB 1: DAFTAR MURID BIMBINGAN */}
+      {activeTab === "daftar-murid" && (
+        <div className="w-full space-y-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-teal-700 tracking-wider flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  Binaan Guru Wali
+                </span>
+                <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
+                  Daftar Murid Masuk Bimbingan Guru Wali
                 </h3>
               </div>
 
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                Daftarkan nama siswa, NISN, kelas, dan jurusan untuk dimasukkan ke dalam buku kendali bimbingan Guru Wali.
-              </p>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari NISN, nama, kelas, jurusan..."
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 text-xs rounded-xl focus:bg-white"
+                />
+              </div>
+            </div>
 
-              <form onSubmit={handleAddStudent} className="space-y-3.5 text-xs font-medium">
-                <div>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                    Nama Lengkap Siswa *
-                  </label>
-                  <input
-                    type="text"
-                    value={newStudentName}
-                    onChange={(e) => setNewStudentName(e.target.value)}
-                    placeholder="Contoh: Muhammad Al-Fatih"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
-                  />
-                </div>
+            {/* TABLE DATA MURID BIMBINGAN */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <th className="py-3 px-3">No</th>
+                    <th className="py-3 px-3">NISN</th>
+                    <th className="py-3 px-3">Nama Murid</th>
+                    <th className="py-3 px-3">Kelas & Jurusan</th>
+                    <th className="py-3 px-3 text-right">Aksi Management</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredStudents.map((std, idx) => (
+                    <tr key={std.id} className="hover:bg-teal-50/20 transition-colors">
+                      <td className="py-3 px-3 font-bold text-slate-400">{idx + 1}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-teal-700">{std.nisn}</td>
+                      <td className="py-3 px-3">
+                        <div className="font-black text-slate-900">{std.name}</div>
+                        <span className="text-[9px] text-slate-400 font-medium">Binaan Aktif</span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="inline-block px-2 py-0.5 bg-slate-100 font-extrabold text-[10px] text-slate-800 rounded mb-0.5">
+                          {std.kelas}
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-bold">{std.jurusan}</div>
+                      </td>
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAddSessionForStudent(std)}
+                            className="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl text-[10px] font-black transition-all cursor-pointer flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" />
+                            <span>Sesi Bimbingan</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStudent(std.id, std.name)}
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition-all cursor-pointer"
+                            title="Hapus Murid"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
 
-                <div>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                    NISN (Nomor Induk Siswa Nasional) *
-                  </label>
-                  <input
-                    type="text"
-                    value={newStudentNisn}
-                    onChange={(e) => setNewStudentNisn(e.target.value)}
-                    placeholder="Contoh: 0068912345"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                    Kelas *
-                  </label>
-                  <select
-                    value={newStudentKelas}
-                    onChange={(e) => setNewStudentKelas(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="X TSM A">X TSM A</option>
-                    <option value="X TSM B">X TSM B</option>
-                    <option value="X TKR A">X TKR A</option>
-                    <option value="X TKR B">X TKR B</option>
-                    <option value="XI TSM A">XI TSM A</option>
-                    <option value="XI TSM B">XI TSM B</option>
-                    <option value="XI TKR A">XI TKR A</option>
-                    <option value="XI TKR B">XI TKR B</option>
-                    <option value="XII TAV">XII TAV</option>
-                    <option value="XII TKJ">XII TKJ</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                    Jurusan / Program Keahlian *
-                  </label>
-                  <select
-                    value={newStudentJurusan}
-                    onChange={(e) => setNewStudentJurusan(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="Teknik Sepeda Motor (TSM)">Teknik Sepeda Motor (TSM)</option>
-                    <option value="Teknik Kendaraan Ringan (TKR)">Teknik Kendaraan Ringan (TKR)</option>
-                    <option value="Teknik Audio Video (TAV)">Teknik Audio Video (TAV)</option>
-                    <option value="Teknik Komputer & Jaringan (TKJ)">Teknik Komputer & Jaringan (TKJ)</option>
-                    <option value="Multimedia / Desain Grafis">Multimedia / Desain Grafis</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-teal-700 hover:bg-teal-800 text-white font-black uppercase tracking-wider text-[11px] py-3 rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span>Simpan Siswa Bimbingan</span>
-                </button>
-              </form>
+                  {filteredStudents.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400 font-medium italic">
+                        Belum ada murid bimbingan yang tercatat.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
-
         </div>
       )}
 
@@ -597,7 +492,7 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
                     Jurnal Bimbingan
                   </span>
                   <h3 className="text-base font-extrabold text-slate-900 mt-0.5">
-                    Histori & Record Sesi Bimbingan Siswa
+                    Histori & Record Sesi Bimbingan Murid
                   </h3>
                 </div>
 
@@ -677,7 +572,7 @@ export function GuruWaliWorkspace({ username = "Guru Wali", currentRole = "guru_
               <form onSubmit={handleAddConsultation} className="space-y-3 text-xs font-medium">
                 <div>
                   <label className="block text-[9px] font-black text-slate-600 uppercase tracking-wider mb-1">
-                    Pilih Dari Daftar Siswa Bimbingan
+                    Pilih Dari Daftar Murid Bimbingan
                   </label>
                   <select
                     value={selectedStudentId}

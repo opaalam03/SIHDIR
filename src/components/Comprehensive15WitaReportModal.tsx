@@ -110,7 +110,7 @@ export function Comprehensive15WitaReportModal({
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-white/10 relative z-10 text-xs">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2.5 border border-white/10">
-              <div className="text-[10px] uppercase font-bold text-emerald-200">Kehadiran Siswa</div>
+              <div className="text-[10px] uppercase font-bold text-emerald-200">Kehadiran Murid</div>
               <div className="text-base font-black text-white">{report.summary.studentAttendancePct}%</div>
               <div className="text-[9px] text-emerald-200 truncate">
                 {report.summary.studentsHadir}/{report.summary.totalStudents} Hadir (S:{report.summary.studentsSakit} I:{report.summary.studentsIzin} A:{report.summary.studentsAlfa})
@@ -134,9 +134,9 @@ export function Comprehensive15WitaReportModal({
             </div>
 
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2.5 border border-white/10">
-              <div className="text-[10px] uppercase font-bold text-rose-200">Siswa Tidak Hadir</div>
+              <div className="text-[10px] uppercase font-bold text-rose-200">Murid Tidak Hadir</div>
               <div className="text-base font-black text-white">
-                {report.summary.studentsSakit + report.summary.studentsIzin + report.summary.studentsAlfa} Siswa
+                {report.summary.studentsSakit + report.summary.studentsIzin + report.summary.studentsAlfa} Murid
               </div>
               <div className="text-[9px] text-rose-200 truncate">
                 Sakit: {report.summary.studentsSakit} | Izin: {report.summary.studentsIzin} | Alfa: {report.summary.studentsAlfa}
@@ -170,7 +170,7 @@ export function Comprehensive15WitaReportModal({
             }`}
           >
             <UserX className="h-3.5 w-3.5" />
-            <span>Daftar Siswa Tidak Hadir ({report.details.allAbsentStudents.length})</span>
+            <span>Daftar Murid Tidak Hadir ({report.details.allAbsentStudents.length})</span>
           </button>
 
           <button
@@ -294,17 +294,17 @@ export function Comprehensive15WitaReportModal({
             </div>
           )}
 
-          {/* TAB 2: DAFTAR SISWA TIDAK HADIR */}
+          {/* TAB 2: DAFTAR MURID TIDAK HADIR */}
           {activeTab === "siswa_absen" && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                   <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
                     <UserX className="h-4 w-4 text-rose-600" />
-                    <span>Daftar Siswa Tidak Hadir Hari Ini ({report.details.allAbsentStudents.length} Siswa)</span>
+                    <span>Daftar Murid Tidak Hadir Hari Ini ({report.details.allAbsentStudents.length} Murid)</span>
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Transparansi penuh data siswa yang sakit, izin, atau alfa agar dapat segera dikoordinasikan oleh Wali Kelas & Guru BK.
+                    Transparansi penuh data murid yang sakit, izin, atau alfa agar dapat segera dikoordinasikan oleh Wali Kelas & Guru BK.
                   </p>
                 </div>
 
@@ -314,7 +314,7 @@ export function Comprehensive15WitaReportModal({
                     type="text"
                     value={searchStudent}
                     onChange={(e) => setSearchStudent(e.target.value)}
-                    placeholder="Cari siswa / kelas..."
+                    placeholder="Cari murid / kelas..."
                     className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white"
                   />
                 </div>
@@ -325,7 +325,7 @@ export function Comprehensive15WitaReportModal({
                   <thead>
                     <tr className="bg-slate-100 text-slate-500 font-extrabold uppercase text-[10px] border-b border-slate-200">
                       <th className="py-2.5 px-3">No</th>
-                      <th className="py-2.5 px-3">Nama Siswa</th>
+                      <th className="py-2.5 px-3">Nama Murid</th>
                       <th className="py-2.5 px-3">Kelas</th>
                       <th className="py-2.5 px-3">Status</th>
                       <th className="py-2.5 px-3">Keterangan / Alasan</th>
@@ -354,7 +354,7 @@ export function Comprehensive15WitaReportModal({
                     {filteredAbsentStudents.length === 0 && (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-slate-400 italic">
-                          Tidak ada siswa yang berstatus tidak hadir sesuai pencarian.
+                          Tidak ada murid yang berstatus tidak hadir sesuai pencarian.
                         </td>
                       </tr>
                     )}

@@ -242,10 +242,12 @@ export function StudentAttendance({
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
     return [
-      "Pemeliharaan Mesin Kendaraan Ringan",
-      "Teknik Kendaraan Ringan (Otomotif)",
-      "Mesin Otomotif & K3",
-      "Bahasa Inggris Teknik"
+      "Guru Produktif Kendaraan Ringan",
+      "Guru Produktif Sepeda Motor",
+      "Guru Produktif Bangunan",
+      "Guru Produktif Audio Video",
+      "Guru Produktif Komunikasi Visual",
+      "Pemeliharaan Mesin Kendaraan Ringan"
     ];
   });
 
@@ -853,24 +855,12 @@ export function StudentAttendance({
         }
       }, 100);
     } catch (e) {
-      console.warn("Unable to access physical camera for student, using dynamic fallback face generator.", e);
-      // Fallback generator
-      setTimeout(() => {
-        const avatars = [
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200",
-          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200"
-        ];
-        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-        if (isOut) {
-          setCustomPhotoOut(randomAvatar);
-          setStudentIsCapturingOut(false);
-        } else {
-          setCustomPhoto(randomAvatar);
-          setStudentIsCapturing(false);
-        }
-      }, 1500);
+      console.warn("Unable to access physical camera for student:", e);
+      if (isOut) {
+        setStudentIsCapturingOut(false);
+      } else {
+        setStudentIsCapturing(false);
+      }
     }
   };
 
@@ -1376,7 +1366,7 @@ export function StudentAttendance({
   };
 
   const handleSendFonnteWhatsApp = async (studentName: string, status: string) => {
-    const fonnteApiKey = localStorage.getItem("simpati_fonnte_api_key") || "ypkaCVkd5uLo3fkEWtnb";
+    const fonnteApiKey = localStorage.getItem("simpati_fonnte_api_key") || "LMJoXs8WD3g78VGgFuTM";
     const fonnteTargetOverride = waNotifyPhone.replace(/[^0-9]/g, "");
     const msg = getWhatsAppMessageRawForParent(studentName, status);
 
@@ -1890,7 +1880,7 @@ export function StudentAttendance({
                         gpsAccuracy={gpsAccuracy}
                         isGpsLoading={isGpsLoading}
                         onRefreshGps={startRealGpsTracking}
-                        userRoleType="siswa"
+                        userRoleType="murid"
                       />
                     </div>
 

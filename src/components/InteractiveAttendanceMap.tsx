@@ -32,7 +32,7 @@ interface InteractiveAttendanceMapProps {
   gpsAccuracy?: number | null;
   isGpsLoading?: boolean;
   onRefreshGps?: () => void;
-  userRoleType?: "siswa" | "guru" | "staf";
+  userRoleType?: "murid" | "guru" | "staf";
 }
 
 // Haversine formula to compute meters
@@ -66,7 +66,7 @@ export function InteractiveAttendanceMap({
   gpsAccuracy,
   isGpsLoading = false,
   onRefreshGps,
-  userRoleType = "siswa"
+  userRoleType = "murid"
 }: InteractiveAttendanceMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -75,8 +75,6 @@ export function InteractiveAttendanceMap({
   const radiusCircleRef = useRef<L.Circle | null>(null);
   const polylineRef = useRef<L.Polyline | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-
-  const [mapType, setMapType] = useState<"street" | "satellite">("street");
 
   // Determine active coordinates
   const activeLat = useRealGps && realLat !== null ? realLat : schoolLat + gpsOffsetLat;
@@ -105,16 +103,20 @@ export function InteractiveAttendanceMap({
 
     mapInstanceRef.current = map;
 
-    // Tile Layer setup
-    const tileUrl =
-      mapType === "satellite"
-        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-        : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-
+    // Tile Layer setup: Satelit (ArcGIS World Imagery + Reference Labels)
+    const tileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}";
     const tileLayer = L.tileLayer(tileUrl, {
       maxZoom: 19
     }).addTo(map);
     tileLayerRef.current = tileLayer;
+
+    // Layer nama jalan, batas wilayah, dan label tempat di atas citra satelit
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{x}/{y}",
+      {
+        maxZoom: 19
+      }
+    ).addTo(map);
 
     // School Radius Circle
     const circle = L.circle([schoolLat, schoolLon], {
@@ -150,8 +152,8 @@ export function InteractiveAttendanceMap({
     schoolMarkerRef.current = schoolMarker;
 
     // Custom icon for User/Student
-    const userRoleColor = userRoleType === "siswa" ? "#2563eb" : "#4f46e5";
-    const userRoleEmoji = userRoleType === "siswa" ? "🎒" : "👨‍🏫";
+    const userRoleColor = userRoleType === "murid" ? "#2563eb" : "#4f46e5";
+    const userRoleEmoji = userRoleType === "murid" ? "🎒" : "👨‍🏫";
     const userIcon = L.divIcon({
       className: "custom-user-marker",
       html: `
@@ -223,7 +225,7 @@ export function InteractiveAttendanceMap({
       map.remove();
       mapInstanceRef.current = null;
     };
-  }, [schoolLat, schoolLon, mapType]);
+  }, [schoolLat, schoolLon]);
 
   // Update markers when coordinates change
   useEffect(() => {
@@ -269,7 +271,7 @@ export function InteractiveAttendanceMap({
           <div>
             <div className="flex items-center gap-1.5">
               <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                Peta Lokasi GPS {userRoleType === "siswa" ? "Siswa" : "Guru & Staf"}
+                Peta Lokasi GPS {userRoleType === "murid" ? "Murid" : "Guru & Staf"}
               </h4>
               <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
                 useRealGps 
@@ -286,27 +288,11 @@ export function InteractiveAttendanceMap({
           </div>
         </div>
 
-        {/* Map Layer Switcher & External Link */}
+        {/* Map Layer Satelit & External Link */}
         <div className="flex items-center gap-1.5">
-          <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700">
-            <button
-              type="button"
-              onClick={() => setMapType("street")}
-              className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all ${
-                mapType === "street" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Jalan
-            </button>
-            <button
-              type="button"
-              onClick={() => setMapType("satellite")}
-              className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all ${
-                mapType === "satellite" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Satelit
-            </button>
+          <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700 text-teal-300 text-[10px] font-black uppercase tracking-wider shadow-xs">
+            <Layers className="w-3 h-3 text-teal-400" />
+            <span>Satelit</span>
           </div>
 
           {onRefreshGps && (

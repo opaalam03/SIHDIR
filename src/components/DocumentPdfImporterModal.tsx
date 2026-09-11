@@ -22,7 +22,7 @@ import { Teacher, Student } from "../types";
 interface DocumentPdfImporterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultFileType: "guru" | "siswa" | "mapel";
+  defaultFileType: "guru" | "murid" | "mapel";
   onImportTeachers: (newTeachers: Teacher[]) => void;
   onImportStudents: (newStudents: Student[]) => void;
   onImportSubjects: (newSubjects: string[]) => void;
@@ -38,7 +38,7 @@ export function DocumentPdfImporterModal({
   onImportSubjects,
   existingClasses
 }: DocumentPdfImporterModalProps) {
-  const [fileType, setFileType] = useState<"guru" | "siswa" | "mapel">(defaultFileType);
+  const [fileType, setFileType] = useState<"guru" | "murid" | "mapel">(defaultFileType);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileBase64, setFileBase64] = useState<string | null>(null);
   const [pastedText, setPastedText] = useState("");
@@ -120,7 +120,7 @@ export function DocumentPdfImporterModal({
           setStatusMessage({ type: "success", text: `Berhasil mengekstrak ${result.data.length} data guru terstandar dari PDF.` });
         } else if (fileType === "siswa") {
           setExtractedSiswa(result.data);
-          setStatusMessage({ type: "success", text: `Berhasil mengekstrak ${result.data.length} data siswa terstandar dari PDF.` });
+          setStatusMessage({ type: "success", text: `Berhasil mengekstrak ${result.data.length} data murid terstandar dari PDF.` });
         } else {
           setExtractedMapel(result.data);
           setStatusMessage({ type: "success", text: `Berhasil mengekstrak ${result.data.length} data mata pelajaran dari PDF.` });
@@ -208,7 +208,7 @@ export function DocumentPdfImporterModal({
         { name: "Eko Prasetyo", nis: "21049", nisn: "0061234571", className: "XI TKR A", major: "Teknik Kendaraan Ringan", parentName: "Suryo Prasetyo", parentWhatsApp: "081299887770" }
       ];
       setExtractedSiswa(dummySiswa);
-      setStatusMessage({ type: "success", text: "Berhasil memproses PDF dan mengekstrak 5 data siswa terstandar." });
+      setStatusMessage({ type: "success", text: "Berhasil memproses PDF dan mengekstrak 5 data murid terstandar." });
     } else {
       const dummyMapel = [
         { code: "MP-01", name: "Pemeliharaan Mesin Kendaraan Ringan", category: "Produktif Kejuruan", hours: "6 Jam/Minggu" },
@@ -240,12 +240,12 @@ export function DocumentPdfImporterModal({
     } else if (fileType === "siswa" && extractedSiswa.length > 0) {
       const formatted: Student[] = extractedSiswa.map((s, idx) => ({
         id: `S_PDF_${Date.now()}_${idx}`,
-        name: s.name || "Siswa Baru",
+        name: s.name || "Murid Baru",
         nis: s.nis || `${22000 + idx}`,
         nisn: s.nisn || `007${100000 + idx}`,
         className: s.className || "XI TKR A",
         major: s.major || "Teknik Kendaraan Ringan",
-        parentName: s.parentName || "Wali Siswa",
+        parentName: s.parentName || "Wali Murid",
         parentWhatsApp: s.parentWhatsApp || "081234567890"
       }));
       onImportStudents(formatted);
@@ -307,13 +307,13 @@ export function DocumentPdfImporterModal({
 
             <button
               type="button"
-              onClick={() => { setFileType("siswa"); setExtractedSiswa([]); }}
+              onClick={() => { setFileType("murid"); setExtractedSiswa([]); }}
               className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                 fileType === "siswa" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:bg-slate-200/60"
               }`}
             >
               <Users className="h-4 w-4" />
-              Daftar Nama Siswa
+              Daftar Nama Murid
             </button>
 
             <button
@@ -444,7 +444,7 @@ export function DocumentPdfImporterModal({
                   <h4 className="font-extrabold text-xs text-indigo-900 uppercase tracking-wider">
                     Hasil Olahan Data Standar ({
                       fileType === "guru" ? `${extractedGuru.length} Guru` :
-                      fileType === "siswa" ? `${extractedSiswa.length} Siswa` :
+                      fileType === "siswa" ? `${extractedSiswa.length} Murid` :
                       `${extractedMapel.length} Mata Pelajaran`
                     })
                   </h4>
@@ -471,7 +471,7 @@ export function DocumentPdfImporterModal({
                       )}
                       {fileType === "siswa" && (
                         <>
-                          <th className="p-2.5">Nama Siswa</th>
+                          <th className="p-2.5">Nama Murid</th>
                           <th className="p-2.5">NIS / NISN</th>
                           <th className="p-2.5">Kelas</th>
                           <th className="p-2.5">Orang Tua / Wali</th>

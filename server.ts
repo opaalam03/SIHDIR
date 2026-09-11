@@ -295,7 +295,7 @@ Ketentuan: Hanya kirimkan JSON array murni.`;
       }
 
       // Determine target and token (allowing override from client or using env)
-      const token = customToken || process.env.FONNTE_API_KEY;
+      const token = customToken || process.env.FONNTE_API_KEY || "LMJoXs8WD3g78VGgFuTM";
       const finalTarget = target || process.env.FONNTE_TARGET;
 
       if (!token) {
@@ -320,16 +320,33 @@ Ketentuan: Hanya kirimkan JSON array murni.`;
 
       console.log(`Mengirim pesan WhatsApp ke target Fonnte: ${finalTarget}`);
 
-      const fonnteResponse = await fetch("https://api.fonnte.com/send", {
-        method: "POST",
-        headers: {
-          "Authorization": token
-        },
-        body: params
-      });
+      let data: any = null;
+      try {
+        const fonnteResponse = await fetch("https://api.fonnte.com/send", {
+          method: "POST",
+          headers: {
+            "Authorization": token
+          },
+          body: params
+        });
+        data = await fonnteResponse.json();
+        console.log("Fonnte API response:", data);
+      } catch (fErr: any) {
+        console.warn("Fonnte API fetch error:", fErr.message);
+      }
 
-      const data = await fonnteResponse.json();
-      console.log("Fonnte API response:", data);
+      if (!data) {
+        return res.status(500).json({
+          status: false,
+          reason: "Gagal menghubungi Fonnte WhatsApp Gateway."
+        });
+      }
+
+      // Jika Fonnte menolak target @newsletter, berikan penjelasan transparan
+      if (data.status === false && finalTarget.includes("@newsletter")) {
+        data.reason = "Fonnte API belum mendukung pengiriman ke Saluran WhatsApp (@newsletter). Fonnte hanya mendukung ID Grup WhatsApp (@g.us) seperti 120363205084846535@g.us atau nomor HP.";
+      }
+
       return res.json(data);
     } catch (error: any) {
       console.error("Fonnte API error proxying:", error);
@@ -344,7 +361,7 @@ Ketentuan: Hanya kirimkan JSON array murni.`;
   app.post("/api/whatsapp/fetch-groups", async (req, res) => {
     try {
       const { customToken } = req.body;
-      const token = customToken || process.env.FONNTE_API_KEY;
+      const token = customToken || process.env.FONNTE_API_KEY || "LMJoXs8WD3g78VGgFuTM";
 
       if (!token) {
         return res.status(400).json({
@@ -408,7 +425,7 @@ Ketentuan: Hanya kirimkan JSON array murni.`;
   app.post("/api/whatsapp/device-status", async (req, res) => {
     try {
       const { customToken } = req.body;
-      const token = customToken || process.env.FONNTE_API_KEY;
+      const token = customToken || process.env.FONNTE_API_KEY || "LMJoXs8WD3g78VGgFuTM";
 
       if (!token) {
         return res.status(400).json({

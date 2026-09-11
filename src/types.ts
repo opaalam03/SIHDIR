@@ -16,6 +16,7 @@ export interface Teacher {
   birthPlace?: string;
   birthDate?: string;
   birthInfo?: string;
+  address?: string;
   additionalDuty?: string[];
   photoUrl?: string;
   qrCode?: string;

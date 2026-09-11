@@ -118,11 +118,11 @@ export function IndividualStudentReportModal({
 
   // 2. Generate Narrative WhatsApp Text
   const generateNarrativeText = () => {
-    let txt = `📢 *REKAPITULASI LAPORAN BELAJAR SISWA*\n`;
+    let txt = `📢 *REKAPITULASI LAPORAN BELAJAR MURID*\n`;
     txt += `*SMK NEGERI 2 KONAWE*\n`;
     txt += `----------------------------------------\n`;
-    txt += `👤 *IDENTITAS SISWA:*\n`;
-    txt += `• Nama Siswa: *${student.name}*\n`;
+    txt += `👤 *IDENTITAS MURID:*\n`;
+    txt += `• Nama Murid: *${student.name}*\n`;
     txt += `• NIS: *${student.nis}*\n`;
     txt += `• Kelas Binaan: *${className}*\n`;
     txt += `• Wali Kelas: *${waliKelasName}*\n\n`;
@@ -143,7 +143,7 @@ export function IndividualStudentReportModal({
 
     txt += `\n🎯 *RATA-RATA KESELURUHAN: ${avgGrade}*\n\n`;
     txt += `💬 *CATATAN & IMBAUAN WALI KELAS:*\n`;
-    txt += `"${student.lastNote || "Siswa menunjukkan perkembangan belajar yang positif. Mohon motivasi dan pendampingan di rumah terus dijaga."}"\n\n`;
+    txt += `"${student.lastNote || "Murid menunjukkan perkembangan belajar yang positif. Mohon motivasi dan pendampingan di rumah terus dijaga."}"\n\n`;
     txt += `----------------------------------------\n`;
     txt += `_Laporan ini direkap otomatis oleh Wali Kelas berdasarkan input faktual masing-masing Guru Mata Pelajaran. Terima kasih atas perhatian Bapak/Ibu Wali Murid._`;
 
@@ -175,7 +175,7 @@ export function IndividualStudentReportModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase font-black tracking-wider bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
-                  Laporan Rekapitulasi Siswa
+                  Laporan Rekapitulasi Murid
                 </span>
                 <span className="text-xs text-slate-400 font-mono">NIS: {student.nis}</span>
               </div>
@@ -301,7 +301,7 @@ export function IndividualStudentReportModal({
                     SMK NEGERI 2 KONAWE
                   </h2>
                   <p className="text-[11px] text-slate-600 font-bold uppercase tracking-wider">
-                    LAPORAN CAPAIAN HASIL BELAJAR & KEDISIPLINAN SISWA
+                    LAPORAN CAPAIAN HASIL BELAJAR & KEDISIPLINAN MURID
                   </p>
                   <p className="text-[10px] text-slate-500 italic">
                     Tahun Ajaran 2026/2027 - Semester Ganjil
@@ -311,11 +311,11 @@ export function IndividualStudentReportModal({
                 {/* Student Info Box */}
                 <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs font-semibold">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Nama Lengkap Siswa</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Nama Lengkap Murid</span>
                     <span className="text-sm font-extrabold text-slate-900">{student.name}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Nomor Induk Siswa (NIS)</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Nomor Induk Murid (NIS)</span>
                     <span className="text-sm font-mono text-slate-900">{student.nis}</span>
                   </div>
                   <div>
@@ -405,7 +405,7 @@ export function IndividualStudentReportModal({
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
                     <span className="text-[10px] font-black uppercase text-slate-500 block">Catatan & Evaluasi Wali Kelas:</span>
                     <p className="text-[11px] text-slate-800 leading-relaxed italic">
-                      "{student.lastNote || "Siswa rajin dan santun. Diharapkan terus mempertahankan motivasi belajar di sekolah maupun di rumah."}"
+                      "{student.lastNote || "Murid rajin dan santun. Diharapkan terus mempertahankan motivasi belajar di sekolah maupun di rumah."}"
                     </p>
                   </div>
 

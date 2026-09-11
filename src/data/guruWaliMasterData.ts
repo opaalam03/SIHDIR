@@ -680,3 +680,41 @@ export function saveMasterGuruWaliData(data: GuruWaliMasterItem[]) {
     console.error("Error saving master guru wali data:", err);
   }
 }
+
+// Helper to find guru wali match by name or username
+export function findGuruWaliMatch(uName: string, dataList: GuruWaliMasterItem[] = getMasterGuruWaliData()): GuruWaliMasterItem | null {
+  if (!uName) return null;
+  const clean = uName.toLowerCase().trim();
+
+  return dataList.find(g => {
+    const gName = g.namaGuru.toLowerCase();
+    if (gName.includes(clean) || clean.includes(gName)) return true;
+    if (clean.includes("arbianti") && gName.includes("arbianti")) return true;
+    if (clean.includes("putu") && gName.includes("putu")) return true;
+    if (clean.includes("juniyasa") && gName.includes("juni")) return true;
+    if (clean.includes("haerul") && gName.includes("haerul")) return true;
+    if (clean.includes("muslimin") && gName.includes("muslimin")) return true;
+    if (clean.includes("ainal") && gName.includes("ainal")) return true;
+    if ((clean.includes("hiswan") || clean.includes("iswan")) && gName.includes("hiswan")) return true;
+    if (clean.includes("isnawati") && gName.includes("isna")) return true;
+    if (clean.includes("muharjun") && gName.includes("muharjun")) return true;
+    if (clean.includes("khotijah") && gName.includes("khotijah")) return true;
+    if (clean.includes("salma") && gName.includes("salma")) return true;
+    if (clean.includes("saiful") && gName.includes("saiful")) return true;
+    if (clean.includes("arham") && gName.includes("arham")) return true;
+    if (clean.includes("wahyu") && gName.includes("wahyu")) return true;
+    if (clean.includes("eva") && gName.includes("eva")) return true;
+    if (clean.includes("daniel") && gName.includes("daniel")) return true;
+    if (clean.includes("syamsul") && gName.includes("syamsul")) return true;
+    if (clean.includes("nyoman") && gName.includes("nyoman")) return true;
+    if (clean.includes("elis") && gName.includes("elis")) return true;
+    if (clean.includes("nunung") && gName.includes("nunung")) return true;
+    return false;
+  }) || null;
+}
+
+// Get array of mentored students for a given teacher
+export function getMuridBinaanForTeacher(uName: string): BimbinganMuridItem[] {
+  const match = findGuruWaliMatch(uName);
+  return match?.muridList || [];
+}

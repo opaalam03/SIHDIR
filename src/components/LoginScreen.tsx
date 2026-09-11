@@ -5,6 +5,7 @@ import { OFFICIAL_CLASSES, CLASS_CAPTAIN_MAP, getStudentCaptainClass } from "../
 import { MOCK_STUDENTS } from "../mockData";
 import { SIHADIR_THEMES, ThemeId } from "../utils/themeConfig";
 import { DraggableThemeWidget } from "./DraggableThemeWidget";
+import { getAllTeachers } from "../services/teacherService";
 
 interface LoginScreenProps {
   onLoginSuccess: (username: string, role: string) => void;
@@ -20,7 +21,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     if (saved && SIHADIR_THEMES[saved]) return saved;
     return "blue-white";
   });
-  const [loginMode, setLoginMode] = useState<"siswa" | "ketua_kelas" | "staf">("siswa");
+  const [loginMode, setLoginMode] = useState<"murid" | "ketua_kelas" | "staf">("murid");
 
   // Save selected background theme to localStorage and dispatch event
   const handleThemeChange = (newTheme: ThemeId) => {
@@ -123,113 +124,13 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     { name: "Guru BK (Cici Murni & Pak Yoga)", username: "suci", role: "bk", desc: "Khusus Guru BK (Bu Cici Murni & Pak Yoga Nanda Hermawan)" },
     { name: "Admin Tata Usaha (TU)", username: "tu", role: "tu", desc: "Rekap & Arsip Laporan Kehadiran Murid" },
     { name: "Kepala Sekolah", username: "kepsek", role: "kepsek", desc: "Akses menu Review & Laporan Supervisi" },
-    { name: "Waka Kesiswaan", username: "kesiswaan", role: "kesiswaan", desc: "Akses menu Waka Kesiswaan & Kedisiplinan Siswa" },
+    { name: "Waka Kesiswaan", username: "kesiswaan", role: "kesiswaan", desc: "Akses menu Waka Kesiswaan & Kedisiplinan Murid" },
     { name: "Waka Kurikulum", username: "kurikulum", role: "kurikulum", desc: "Akses menu Waka Kurikulum" },
   ];
 
-  // Dynamic Teachers & Staff list from localStorage (inputted Master Data) or defaults
+  // Dynamic Teachers & Staff list using centralized teacherService (preserves photos & custom records)
   const getDynamicTeachers = (): any[] => {
-    const officialTeacherNames = [
-      { id: "T01", name: "ADRIAN SAHPUTRA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T02", name: "AINAL LAREMBA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T03", name: "ANDI ASRUL UMAR", role: "Waka Kurikulum", subject: "Kurikulum & Keahlian" },
-      { id: "T04", name: "ANGGRAENI DESANIK", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T05", name: "ARBIANTI, SE", role: "Guru Wali", subject: "Mata Pelajaran Umum (Guru Wali XII DPIB - 11 Murid Bimbingan)" },
-      { id: "T06", name: "ARHAM AMIRUDDIN", role: "Administrator Utama", subject: "Administrator Utama / System SIHADIR" },
-      { id: "T07", name: "ASKIN", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T08", name: "CICI MURNI", role: "Guru BK", subject: "Bimbingan Konseling (BK)" },
-      { id: "T09", name: "ELIS SYARIFUDDIN.B", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T10", name: "EPNA SEPTIANA KRISTINA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T11", name: "EVASYAHTRIANA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T12", name: "GUSTI HIMAWAN KADIYANTO", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T13", name: "HAERUL", role: "Wali Kelas", subject: "Mata Pelajaran Keahlian" },
-      { id: "T14", name: "HISWAN PAGALA", role: "Guru Piket", subject: "Dasar Program Keahlian" },
-      { id: "T15", name: "I GUSTI NGURAH PUTU WAHYU DARMA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T16", name: "I PUTU JUNIYASA", role: "Guru Wali", subject: "Matematika" },
-      { id: "T17", name: "IMAN PURNAMA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T18", name: "ISNAWATI", role: "Guru", subject: "Mata Pelajaran Pilihan" },
-      { id: "T19", name: "IZZAT WAHYU ZALDI", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T20", name: "MOCH YAMIN", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T21", name: "MUHAMMAD MAIMANA L", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T22", name: "MUHARJUN", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T23", name: "MUNATAR TABARA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T24", name: "MUSLIMIN L.", role: "Guru", subject: "Bahasa Indonesia" },
-      { id: "T25", name: "NUNUNG SOSILOWATI PODADA", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T26", name: "NYOMAN SULIAWATI", role: "Waka Kesiswaan", subject: "Bimbingan & Kesiswaan" },
-      { id: "T27", name: "PUTU ANGGI MILDAYANTI", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T37", name: "RUSNI K", role: "Guru", subject: "Dasar Program Keahlian & Mapel Keahlian" },
-      { id: "T28", name: "SAIFUL ARIFIN", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T29", name: "SAIMAN", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T_KS", name: "H. ABD. MANAN", role: "Kepala Sekolah", subject: "Manajemen & Pengawasan Sekolah" },
-      { id: "T30", name: "SALMAH", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T31", name: "SITTI KHOTIJAH", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T32", name: "SYAMSUL SABIR", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T33", name: "TITIK HARUMI", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T34", name: "TRIANA DANIEL", role: "Guru", subject: "Mata Pelajaran Umum" },
-      { id: "T35", name: "YOGA NANDA HERMAWAN", role: "Guru BK", subject: "Bimbingan Konseling" },
-      { id: "TU01", name: "SAKTINANI DJUNAID", role: "Admin Tata Usaha (TU)", subject: "Administrasi Utama TU" },
-      { id: "TU02", name: "ADELIA PUSPARINI", role: "Admin Tata Usaha (TU)", subject: "Administrasi TU" },
-      { id: "TU03", name: "ANDI ARFAN UMAR", role: "Staf Tata Usaha", subject: "Keuangan & Persuratan" },
-      { id: "TU04", name: "ELPI", role: "Staf Tata Usaha", subject: "Kearsipan & Surat" },
-      { id: "TU05", name: "KOMANG HERNY PITRIANI", role: "Staf Tata Usaha", subject: "Kepegawaian TU" },
-      { id: "TU06", name: "WIDI AYUDIA NATASYA. B", role: "Staf Tata Usaha", subject: "Administrasi TU" }
-    ];
-
-    const validNamesMap = new Map<string, any>();
-    officialTeacherNames.forEach(t => validNamesMap.set(t.name.toUpperCase(), t));
-
-    const normalizeName = (raw: string): string => {
-      let n = (raw || "").toUpperCase();
-      n = n.replace(/,?\s*(S\.PD|M\.PD|ST|DRS|H\.|MAT|\([^)]*\))/gi, "").trim();
-      n = n.replace(/\s+/g, " ");
-      if (n.includes("ARHAM") || n.includes("AMIRUDDIN")) return "ARHAM AMIRUDDIN";
-      if (n.includes("ABD. MANAN") || n.includes("ABD MANAN") || (n.includes("MANAN") && !n.includes("SAIMAN"))) return "H. ABD. MANAN";
-      if (n.includes("SAIMAN")) return "SAIMAN";
-      if (n.includes("ASRUL UMAR")) return "ANDI ASRUL UMAR";
-      if (n.includes("SULIAWATI")) return "NYOMAN SULIAWATI";
-      if (n.includes("MUSLIMIN")) return "MUSLIMIN L.";
-      if (n.includes("YOGA NANDA")) return "YOGA NANDA HERMAWAN";
-      if (n.includes("RUSNI")) return "RUSNI K";
-      return n;
-    };
-
-    const saved = localStorage.getItem("simpati_teachers_list");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const resultList: any[] = [];
-          const seenNames = new Set<string>();
-
-          // Process parsed items and keep only valid ones
-          parsed.forEach((t: any) => {
-            const normalized = normalizeName(t.name);
-            if (validNamesMap.has(normalized) && !seenNames.has(normalized)) {
-              seenNames.add(normalized);
-              const official = validNamesMap.get(normalized);
-              resultList.push({ ...t, name: official.name, role: official.role, subject: official.subject });
-            }
-          });
-
-          // Fill in any missing official names
-          officialTeacherNames.forEach(off => {
-            const norm = off.name.toUpperCase();
-            if (!seenNames.has(norm)) {
-              seenNames.add(norm);
-              resultList.push(off);
-            }
-          });
-
-          localStorage.setItem("simpati_teachers_list", JSON.stringify(resultList));
-          return resultList;
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    
-    localStorage.setItem("simpati_teachers_list", JSON.stringify(officialTeacherNames));
-    return officialTeacherNames;
+    return getAllTeachers();
   };
 
   const allTeachers = getDynamicTeachers();
@@ -351,7 +252,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
     if (loginMode === "siswa") {
       if (!selectedStudentName) {
-        setError("Silakan pilih Nama Siswa.");
+        setError("Silakan pilih Nama Murid.");
         return;
       }
       const activeStudent = allStudents.find(
@@ -359,11 +260,11 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       );
       const expectedNisn = (activeStudent?.nisn || activeStudent?.nis || "").trim();
       if (!expectedNisn) {
-        setError("Data NISN tidak ditemukan untuk siswa ini. Silakan hubungi Admin Utama.");
+        setError("Data NISN tidak ditemukan untuk murid ini. Silakan hubungi Admin Utama.");
         return;
       }
       if (password.trim() !== expectedNisn) {
-        setError(`Kata sandi salah! Kata sandi akun siswa menggunakan nomor NISN resmi Anda (NISN: ${expectedNisn}).`);
+        setError(`Kata sandi salah! Kata sandi akun murid menggunakan nomor NISN resmi Anda (NISN: ${expectedNisn}).`);
         return;
       }
 
@@ -374,7 +275,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         localStorage.setItem("sihadir_ketua_kelas_name", selectedStudentName);
       }
 
-      onLoginSuccess(selectedStudentName, "siswa");
+      onLoginSuccess(selectedStudentName, "murid");
       return;
     }
 
@@ -575,12 +476,12 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               </p>
             </div>
 
-            {/* Custom tab selector for Siswa vs Ketua Kelas vs Guru & Staf */}
+            {/* Custom tab selector for Murid vs Ketua Kelas vs Guru & Staf */}
             <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-200/50 dark:bg-black/30 border border-slate-300/40 dark:border-white/5 mb-4">
               <button
                 type="button"
                 onClick={() => {
-                  setLoginMode("siswa");
+                  setLoginMode("murid");
                   setError(null);
                   setPassword("");
                 }}
@@ -595,7 +496,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 }`}
               >
                 <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">Siswa</span>
+                <span className="truncate">Murid</span>
               </button>
               <button
                 type="button"
@@ -827,7 +728,7 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                         className={`w-full text-xs rounded-xl pl-10 pr-10 py-3 focus:outline-none focus:ring-1 transition-all font-semibold cursor-pointer appearance-none ${style.inputBg}`}
                       >
                         {filteredStudentsByMajor.length === 0 ? (
-                          <option value="">Belum ada siswa terdaftar pada jurusan ini</option>
+                          <option value="">Belum ada murid terdaftar pada jurusan ini</option>
                         ) : (
                           filteredStudentsByMajor.map(student => (
                             <option key={student.id || student.name} value={student.name}>

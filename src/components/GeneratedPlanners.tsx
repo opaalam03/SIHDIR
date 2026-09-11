@@ -16,7 +16,7 @@ interface PlannerProps {
 // Component 1: Modul Ajar Generator
 // -----------------------------------------------------------------------------
 export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: PlannerProps) {
-  const [tpInput, setTpInput] = useState(preselectedTp || "TP-1: Siswa dapat mendiagnosis kerusakan sistem Electronic Fuel Injection (EFI) menggunakan scanner.");
+  const [tpInput, setTpInput] = useState(preselectedTp || "TP-1: Murid dapat mendiagnosis kerusakan sistem Electronic Fuel Injection (EFI) menggunakan scanner.");
   const [kelas, setKelas] = useState("XI TKR A");
   const [alokasi, setAlokasi] = useState("4 JP (4 x 45 Menit)");
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
     const systemInstruction = 
       "Anda adalah SIMPATI AI (Sistem Manajemen Pembelajaran Berbasis AI) dengan spesialisasi Kurikulum Merdeka, Deep Learning, dan Pembelajaran Berdiferensiasi.\n" +
       "Hasilkan Modul Ajar lengkap yang memuat 21 komponen berikut secara detail:\n" +
-      "1. Identitas, 2. Kompetensi Awal, 3. Profil Pelajar Pancasila, 4. Sarana Prasarana, 5. Target Peserta Didik, 6. Model Pembelajaran, 7. Pendekatan Pembelajaran, 8. Tujuan Pembelajaran, 9. Pemahaman Bermakna, 10. Pertanyaan Pemantik, 11. Kegiatan Pendahuluan, 12. Kegiatan Inti, 13. Kegiatan Penutup, 14. Asesmen Diagnostik, 15. Asesmen Formatif, 16. Asesmen Sumatif, 17. Pengayaan, 18. Remedial, 19. Refleksi Guru, 20. Refleksi Murid, 21. LKPD.\n" +
+      "1. Identitas, 2. Kompetensi Awal, 3. Profil Pelajar Pancasila, 4. Sarana Prasarana, 5. Target Murid, 6. Model Pembelajaran, 7. Pendekatan Pembelajaran, 8. Tujuan Pembelajaran, 9. Pemahaman Bermakna, 10. Pertanyaan Pemantik, 11. Kegiatan Pendahuluan, 12. Kegiatan Inti, 13. Kegiatan Penutup, 14. Asesmen Diagnostik, 15. Asesmen Formatif, 16. Asesmen Sumatif, 17. Pengayaan, 18. Remedial, 19. Refleksi Guru, 20. Refleksi Murid, 21. LKPD.\n" +
       (isAutomotive ? "KHUSUS PRODUKTIF OTOMOTIF: Gunakan istilah teknis otomotif yang akurat, K3 Bengkel, hubungan dengan industri karoseri/bengkel resmi, kasus pemeliharaan nyata, dan troubleshooting sensor/mekanis." : "") +
       "\nFormat output harus berupa JSON yang valid dengan properti:\n" +
       `{"identitas": {"namaPenyusun": "Alam, S.Pd.", "sekolah": "SMK Negeri 2 Konawe", "kelas": "${kelas}", "alokasiWaktu": "${alokasi}"}, "kompetensiAwal": "...", "profilPancasila": ["..."], "saranaPrasarana": "...", "targetPesertaDidik": "...", "modelPembelajaran": "...", "pendekatanPembelajaran": "...", "tujuanPembelajaran": ["..."], "pemahamanBermakna": "...", "pertanyaanPemantik": ["..."], "kegiatanPembelajaran": {"pendahuluan": "...", "inti": "...", "penutup": "..."}, "asesmen": {"diagnostik": "...", "formatif": "...", "sumatif": "..."}, "pengayaanRemedial": {"pengayaan": "...", "remedial": "..."}, "refleksi": {"guru": "...", "murid": "..."}, "lkpd": "..."}`;
@@ -74,18 +74,18 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
           alokasiWaktu: alokasi
         },
         kompetensiAwal: isAutomotive 
-          ? "Peserta didik memahami teori dasar motor bakar bensin 4 tak dan penggunaan alat tangan dasar (hand tools) di bengkel kerja bangku."
-          : "Peserta didik memiliki keterampilan dasar terkait topik materi pra-syarat.",
+          ? "Murid memahami teori dasar motor bakar bensin 4 tak dan penggunaan alat tangan dasar (hand tools) di bengkel kerja bangku."
+          : "Murid memiliki keterampilan dasar terkait topik materi pra-syarat.",
         profilPancasila: ["Mandiri", "Bernalar Kritis", "Kreatif", "Gotong Royong dalam penyelesaian sengketa teknis"],
         saranaPrasarana: isAutomotive 
           ? "Fasilitas car lift, unit Toyota Avanza EFI, diagnostic scanner Launch, multimeter, alat keselamatan kerja (K3LH) kacamata & wearpack."
           : "LCD proyektor, laptop, koneksi internet, papan tulis, buku literatur.",
-        targetPesertaDidik: "Siswa reguler/umum (32 siswa) dengan minat diferensiasi audiovisual & kinestetik.",
+        targetPesertaDidik: "Murid reguler/umum (32 murid) dengan minat diferensiasi audiovisual & kinestetik.",
         modelPembelajaran: "Project-Based Learning (PjBL) atau Problem-Based Learning.",
         pendekatanPembelajaran: "Pembelajaran Berdiferensiasi Proses dan Produk.",
         tujuanPembelajaran: [
-          `Siswa mampu mendiagnosis minimal 2 macam troubleshoot EFI sesuai spesifikasi manual Book.`,
-          `Siswa mampu mendemonstrasikan SOP pembersihan sensor MAP dengan mengutamakan keselamatan kerja (K3).`
+          `Murid mampu mendiagnosis minimal 2 macam troubleshoot EFI sesuai spesifikasi manual Book.`,
+          `Murid mampu mendemonstrasikan SOP pembersihan sensor MAP dengan mengutamakan keselamatan kerja (K3).`
         ],
         pemahamanBermakna: isAutomotive 
           ? "Mendeteksi secara cepat kerusakan sistem sensor menghemat waktu perawatan, bahan bakar, dan menghindari kerusakan parah komponen mesin sekunder."
@@ -95,9 +95,9 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
           `Mengapa check engine light menyala saat soket filter udara dilepas?`
         ],
         kegiatanPembelajaran: {
-          pendahuluan: "1. Guru mengucapkan salam hangat dan mengecek kesiapan pakaian K3 siswa.\n2. Berdoa bersama dan menyanyikan lagu Indonesia Raya.\n3. Guru memberikan apersepsi pertanyaan pemantik mengenai getarat mesin pincang pada mobil EFI.\n4. Menyampaikan tujuan kriteria kelulusan.",
-          inti: "1. Orientasi Masalah: Guru memposisikan Avanza EFI dalam kondisi mesin bergetar kasat mata (terdapat sensor MAP dilepas sengaja).\n2. Pembagian Kelompok Berdiferensiasi: Kelompok teori menganalisa wiring diagram, kelompok kinestetik langsung memasang Scanner OBD-2.\n3. Penyelidikan Mandiri: Siswa mengukur voltase sensor dengan multimeter digital sesuai tabel SOP Industri.\n4. Mengembangkan Hasil Karya: Siswa mencatat kode DTC p0105 pada LKPD harian.",
-          penutup: "1. Siswa merapikan kembali (pemberesan tools 5S/5R) workstation.\n2. Guru memandu refleksi lisan: apa kendala troubleshooting tadi?\n3. Memberikan pengumuman materi pertemuan berikutnya.\n4. Salam penutup."
+          pendahuluan: "1. Guru mengucapkan salam hangat dan mengecek kesiapan pakaian K3 murid.\n2. Berdoa bersama dan menyanyikan lagu Indonesia Raya.\n3. Guru memberikan apersepsi pertanyaan pemantik mengenai getarat mesin pincang pada mobil EFI.\n4. Menyampaikan tujuan kriteria kelulusan.",
+          inti: "1. Orientasi Masalah: Guru memposisikan Avanza EFI dalam kondisi mesin bergetar kasat mata (terdapat sensor MAP dilepas sengaja).\n2. Pembagian Kelompok Berdiferensiasi: Kelompok teori menganalisa wiring diagram, kelompok kinestetik langsung memasang Scanner OBD-2.\n3. Penyelidikan Mandiri: Murid mengukur voltase sensor dengan multimeter digital sesuai tabel SOP Industri.\n4. Mengembangkan Hasil Karya: Murid mencatat kode DTC p0105 pada LKPD harian.",
+          penutup: "1. Murid merapikan kembali (pemberesan tools 5S/5R) workstation.\n2. Guru memandu refleksi lisan: apa kendala troubleshooting tadi?\n3. Memberikan pengumuman materi pertemuan berikutnya.\n4. Salam penutup."
         },
         asesmen: {
           diagnostik: "Asesmen diagnostik non-kognitif berupa kuesioner gaya belajar (Visual vs Kinestetik) sebelum praktikum.",
@@ -112,7 +112,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
           guru: "Apakah alokasi waktu penanganan scanner sudah proporsional antar kelompok praktikum?",
           murid: "Bagian sensor mana yang menurut Anda paling menantang dideteksi kerusakannya?"
         },
-        lkpd: "LEMBAR KERJA PESERTA DIDIK (LKPD)\n\nNama Kelompok: .....................\nTanggal Praktik: .....................\n\nInstruksi:\n1. Persiapkan Wearpack & Safety Shoes.\n2. Lakukan colok scanner OBD-II pada terminal DLC mobil.\n3. Baca diagnostic trouble code (DTC) dan tulis keluhannya di kolom bawah ini!\n4. Lakukan pembersihan sensor MAP dengan contact cleaner.\n5. Hapus DTC (clear) dan uji coba nyalakan mesin.\n\nHasil Pengukuran voltase sensor MAP PIN 1: ..... Volt. Kesimpulan: [Baik / Butuh Diganti]"
+        lkpd: "LEMBAR KERJA MURID (LKPD)\n\nNama Kelompok: .....................\nTanggal Praktik: .....................\n\nInstruksi:\n1. Persiapkan Wearpack & Safety Shoes.\n2. Lakukan colok scanner OBD-II pada terminal DLC mobil.\n3. Baca diagnostic trouble code (DTC) dan tulis keluhannya di kolom bawah ini!\n4. Lakukan pembersihan sensor MAP dengan contact cleaner.\n5. Hapus DTC (clear) dan uji coba nyalakan mesin.\n\nHasil Pengukuran voltase sensor MAP PIN 1: ..... Volt. Kesimpulan: [Baik / Butuh Diganti]"
       });
     } finally {
       setLoading(false);
@@ -242,7 +242,7 @@ export function ModulAjarGenerator({ isAutomotive, preselectedTp = "" }: Planner
                 <div>
                   <h4 className="font-bold text-slate-900 border-l-4 border-emerald-500 pl-2 mb-1.5 uppercase text-[11px] tracking-wider">Target & Model Pembelajaran</h4>
                   <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>Target Peserta Didik:</strong> {generatedModule.targetPesertaDidik}</li>
+                    <li><strong>Target Murid:</strong> {generatedModule.targetPesertaDidik}</li>
                     <li><strong>Pendekatan & Model:</strong> {generatedModule.pendekatanPembelajaran} - {generatedModule.modelPembelajaran}</li>
                   </ul>
                 </div>

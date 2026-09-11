@@ -105,7 +105,7 @@ export function CetakKartuQrModal({
   }, [students, selectedClass, selectedMajor, searchQuery]);
 
   // Generate QR codes for visible students
-  // QR code encodes: Nama Sekolah, Nama Siswa, NISN, dan Jurusan
+  // QR code encodes: Nama Sekolah, Nama Murid, NISN, dan Jurusan
   useEffect(() => {
     if (!isOpen || filteredStudents.length === 0) return;
 
@@ -120,7 +120,7 @@ export function CetakKartuQrModal({
         const stMajor = getCleanMajor(st);
         const stNisn = (st.nisn || st.id || "").trim();
 
-        // Data QR Code memuat: Nama Sekolah, Nama Siswa, NISN, dan Jurusan
+        // Data QR Code memuat: Nama Sekolah, Nama Murid, NISN, dan Jurusan
         const qrPayload = [
           "SMK NEGERI 2 KONAWE",
           `Nama: ${st.name}`,
@@ -233,14 +233,14 @@ export function CetakKartuQrModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
-                  Cetak Kartu Tanda Pelajar Siswa
+                  Cetak Kartu Tanda Pelajar Murid
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-400/40">
                   SMK NEGERI 2 KONAWE
                 </span>
               </div>
               <p className="text-xs text-blue-200">
-                Kartu pelajar resmi dengan Logo Sekolah, NISN &amp; Jurusan (tanpa nama kelas, berlaku 3 tahun). QR Code memuat identitas lengkap siswa &amp; sekolah.
+                Kartu pelajar resmi dengan Logo Sekolah, NISN &amp; Jurusan (tanpa nama kelas, berlaku 3 tahun). QR Code memuat identitas lengkap murid &amp; sekolah.
               </p>
             </div>
           </div>
@@ -275,7 +275,7 @@ export function CetakKartuQrModal({
                 onChange={(e) => setSelectedClass(e.target.value)}
                 className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
               >
-                <option value="ALL">Semua Rombel ({students.length} Siswa)</option>
+                <option value="ALL">Semua Rombel ({students.length} Murid)</option>
                 {classList.map((cls) => {
                   const count = students.filter((s) => s.className === cls).length;
                   return (
@@ -363,12 +363,12 @@ export function CetakKartuQrModal({
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>
-              Format Aktif: <strong>Logo Resmi Sekolah</strong> • <strong>Cukup NISN</strong> (NIS dihapus) • <strong>Hanya Jurusan</strong> (tanpa nama kelas) • QR Code memuat <strong>Nama Siswa, NISN, Jurusan &amp; Nama Sekolah</strong>.
+              Format Aktif: <strong>Logo Resmi Sekolah</strong> • <strong>Cukup NISN</strong> (NIS dihapus) • <strong>Hanya Jurusan</strong> (tanpa nama kelas) • QR Code memuat <strong>Nama Murid, NISN, Jurusan &amp; Nama Sekolah</strong>.
             </span>
           </div>
 
           <div className="flex items-center gap-2 font-semibold text-slate-600 dark:text-slate-300">
-            <span>{filteredStudents.length} siswa siap dicetak</span>
+            <span>{filteredStudents.length} murid siap dicetak</span>
             {isGenerating && (
               <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                 <RefreshCw className="h-3 w-3 animate-spin" />
@@ -384,7 +384,7 @@ export function CetakKartuQrModal({
             {filteredStudents.length === 0 ? (
               <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                 <CreditCard className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Tidak ada siswa yang sesuai filter</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Tidak ada murid yang sesuai filter</p>
                 <p className="text-xs text-slate-400 mt-1">Coba sesuaikan pilihan rombel, jurusan, atau kata kunci pencarian.</p>
               </div>
             ) : cardLayout === "id_card_front" ? (
@@ -436,7 +436,7 @@ export function CetakKartuQrModal({
 
                       {/* Isi Utama Kartu: Pasfoto, Data Diri, Jurusan, & QR Code */}
                       <div className="p-3 flex items-center justify-between gap-3 flex-1 bg-white">
-                        {/* Pasfoto Siswa */}
+                        {/* Pasfoto Murid */}
                         <div className="flex flex-col items-center justify-center shrink-0">
                           <div className="w-20 h-24 rounded-lg bg-slate-100 border-2 border-slate-300 overflow-hidden flex items-center justify-center shadow-2xs relative">
                             {student.photoUrl ? (
@@ -457,17 +457,17 @@ export function CetakKartuQrModal({
                           <span className="text-[7px] font-bold text-slate-400 uppercase mt-1">NISN Terverifikasi</span>
                         </div>
 
-                        {/* Rincian Identitas Siswa: Hanya Nama, NISN & Jurusan (NIS dihapus, Kelas dihapus) */}
+                        {/* Rincian Identitas Murid: Hanya Nama, NISN & Jurusan (NIS dihapus, Kelas dihapus) */}
                         <div className="flex-1 min-w-0 space-y-1.5">
-                          {/* Nama Lengkap Siswa */}
+                          {/* Nama Lengkap Murid */}
                           <div>
-                            <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Nama Siswa</p>
+                            <p className="text-[7.5px] font-bold uppercase text-slate-400 tracking-wider">Nama Murid</p>
                             <h5 className="text-[12px] font-black text-slate-950 uppercase leading-snug line-clamp-2">
                               {student.name}
                             </h5>
                           </div>
 
-                          {/* NISN Siswa (NIS Dihapus Cukup NISN) */}
+                          {/* NISN Murid (NIS Dihapus Cukup NISN) */}
                           <div>
                             <p className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">NISN</p>
                             <p className="font-mono font-black text-blue-950 text-xs tracking-wider">
@@ -484,7 +484,7 @@ export function CetakKartuQrModal({
                           </div>
                         </div>
 
-                        {/* QR Code Presensi Siswa (Memuat: Nama Sekolah, Nama Siswa, NISN & Jurusan) */}
+                        {/* QR Code Presensi Murid (Memuat: Nama Sekolah, Nama Murid, NISN & Jurusan) */}
                         <div className="flex flex-col items-center justify-center p-1.5 bg-slate-50 border border-slate-200 rounded-xl shrink-0">
                           {qrImage ? (
                             <img
@@ -508,7 +508,7 @@ export function CetakKartuQrModal({
                       <div className="px-3.5 py-1.5 bg-gradient-to-r from-slate-50 via-blue-50/50 to-slate-50 border-t border-slate-200 flex items-center justify-between text-[8px] text-slate-600">
                         <div className="space-y-0.5">
                           <p className="font-semibold text-slate-700">
-                            Berlaku selama menjadi siswa aktif SMK Negeri 2 Konawe
+                            Berlaku selama menjadi murid aktif SMK Negeri 2 Konawe
                           </p>
                           <p className="text-[7px] text-slate-400">
                             Konawe, Sulawesi Tenggara | Telp: (0408) 242199
@@ -571,7 +571,7 @@ export function CetakKartuQrModal({
                         </div>
 
                         <div className="px-3 py-1 bg-slate-50 border-t border-slate-200 flex justify-between text-[7px] text-slate-500">
-                          <span>Kartu Identitas Resmi Siswa</span>
+                          <span>Kartu Identitas Resmi Murid</span>
                           <span>Kab. Konawe, Prov. Sulawesi Tenggara</span>
                         </div>
                       </div>
@@ -592,7 +592,7 @@ export function CetakKartuQrModal({
 
                         <div className="p-3 flex items-center justify-between gap-3 flex-1">
                           <div className="flex-1 space-y-1 text-[7.5px] text-slate-700 leading-tight">
-                            <p><strong>1.</strong> Kartu ini berlaku selama 3 (tiga) tahun atau selama terdaftar sebagai siswa aktif SMK Negeri 2 Konawe.</p>
+                            <p><strong>1.</strong> Kartu ini berlaku selama 3 (tiga) tahun atau selama terdaftar sebagai murid aktif SMK Negeri 2 Konawe.</p>
                             <p><strong>2.</strong> Wajib dibawa setiap hari sebagai kartu identitas resmi dan absensi digital.</p>
                             <p><strong>3.</strong> Tidak dapat dipindahtangankan kepada orang lain.</p>
                             <p><strong>4.</strong> Apabila kartu hilang atau rusak, segera melapor ke bagian Tata Usaha Sekolah.</p>
@@ -613,7 +613,7 @@ export function CetakKartuQrModal({
                               </div>
                             )}
                             <span className="text-[7px] font-mono font-bold text-slate-800 mt-0.5">NISN: {student.nisn || student.id}</span>
-                            <span className="text-[6px] uppercase font-bold text-slate-400">QR Presensi Siswa</span>
+                            <span className="text-[6px] uppercase font-bold text-slate-400">QR Presensi Murid</span>
                           </div>
                         </div>
 

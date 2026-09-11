@@ -20,7 +20,7 @@ export function QuickRoleSwitcher({ currentRole, currentUsername, onRoleSwitch }
     { name: "Admin TU — SAKTINANI DJUNAID", username: "SAKTINANI DJUNAID", role: "tu", desc: "Rekap & Arsip Laporan Kehadiran Murid" },
     { name: "Admin Utama — ARHAM AMIRUDDIN", username: "ARHAM AMIRUDDIN", role: "admin", desc: "Akses Penuh Administrator Utama SIHADIR" },
     { name: "Guru (Terhubung All-In-One) — Isnawati", username: "Isnawati, S.Pd.", role: "guru", desc: "Terhubung: Guru Mapel, Guru Wali, Guru Piket & Wali Kelas" },
-    { name: "Guru Wali — Ibu Arbianti, SE", username: "ARBIANTI, SE", role: "guru_wali", desc: "Siswa Perwalian Guru Wali: XII DPIB (11 Murid Bimbingan)" },
+    { name: "Guru Wali — Ibu Arbianti, SE", username: "ARBIANTI, SE", role: "guru_wali", desc: "Murid Perwalian Guru Wali: XII DPIB (11 Murid Bimbingan)" },
     { name: "Guru Wali — I Putu Juniyasa, S.Pd.", username: "I Putu Juniyasa, S.Pd.Mat", role: "guru_wali", desc: "Presensi Harian & Pembimbingan (16 Murid Bimbingan)" },
     { name: "Guru Piket Jum'at — Ainal Laremba, S.Ag", username: "Ainal Laremba, S.Ag", role: "piket", desc: "Petugas Piket Hari Jum'at (Pak Ainal & 5 Rekan)" },
     { name: "Guru Piket Rabu — Hiswan Pagala, S.Pd.", username: "Hiswan Pagala, S.Pd.", role: "piket", desc: "Monitor KBM, Absen Kelas & Jurnal Harian (Terhubung)" },
@@ -29,9 +29,9 @@ export function QuickRoleSwitcher({ currentRole, currentUsername, onRoleSwitch }
     { name: "Guru BK 2 — Pak Yoga Nanda Hermawan", username: "Yoga Nanda Hermawan, S.Pd.", role: "bk", desc: "Khusus BK: CICI MURNI & YOGA NANDA HERMAWAN" },
     { name: "Kepala Sekolah — Drs. H. ABD. MANAN, M.M.", username: "Drs. H. ABD. MANAN, M.M.", role: "kepsek", desc: "Statistik kehadiran guru & audit kurikulum" },
     { name: "Ketua Kelas — MUHAMAD SHIDIQ FATHONI", username: "MUHAMAD SHIDIQ FATHONI (Ketua Kelas XI TKR A)", role: "ketua_kelas", desc: "Presensi harian mandiri & broadcast WA" },
-    { name: "Siswa — Aditya Pratama", username: "Aditya Pratama", role: "siswa", desc: "Akses Mandiri Presensi Masuk/Pulang & E-Rapor Siswa" },
+    { name: "Murid — Aditya Pratama", username: "Aditya Pratama", role: "siswa", desc: "Akses Mandiri Presensi Masuk/Pulang & E-Rapor Murid" },
     { name: "Waka Kurikulum — Andi Asrul Umar, S.Pd.", username: "Andi Asrul Umar, S.Pd.", role: "kurikulum", desc: "Arsip CP/ATP & Monitoring Kelas" },
-    { name: "Waka Kesiswaan — Nyoman Suliawati, S.Pd., M.Pd.", username: "Nyoman Suliawati, S.Pd., M.Pd.", role: "kesiswaan", desc: "Ketertiban & Pembinaan Kedisiplinan Siswa" }
+    { name: "Waka Kesiswaan — Nyoman Suliawati, S.Pd., M.Pd.", username: "Nyoman Suliawati, S.Pd., M.Pd.", role: "kesiswaan", desc: "Ketertiban & Pembinaan Kedisiplinan Murid" }
   ];
 
   return (

@@ -14,6 +14,9 @@ export const STORAGE_KEYS = {
   TEACHER_GROUP_TARGET: "simpati_fonnte_target",
   TU_GROUP_TARGET: "simpati_fonnte_tu_target",
   SCHOOL_WA_GROUP_TARGET: "simpati_fonnte_school_target",
+  SCHOOL_WA_CHANNEL_TARGET: "simpati_fonnte_school_channel_target",
+  AUTO_CHANNEL_CHECKIN_ENABLED: "simpati_wa_auto_channel_checkin",
+  AUTO_CHANNEL_CHECKOUT_ENABLED: "simpati_wa_auto_channel_checkout",
   ADMIN_TU_PHONE: "simpati_admin_tu_phone",
   GURU_BK_PHONE: "simpati_guru_bk_phone",
   LAST_PERIOD_REPORT: "simpati_last_period_reported",
@@ -24,10 +27,11 @@ export const STORAGE_KEYS = {
 
 // Fallback Defaults
 export const DEFAULT_CONFIG = {
-  FONNTE_API_KEY: "ypkaCVkd5uLo3fkEWtnb",
-  TEACHER_GROUP_TARGET: "120363223018241031@g.us",
-  TU_GROUP_TARGET: "120363223018241031@g.us",
-  SCHOOL_WA_GROUP_TARGET: "120363223018241031@g.us",
+  FONNTE_API_KEY: "LMJoXs8WD3g78VGgFuTM",
+  TEACHER_GROUP_TARGET: "120363205084846535@g.us", // Grup Utama SMKN 2 KONAWE
+  TU_GROUP_TARGET: "120363155477246592@g.us",      // ADM SMK 2 KNW
+  SCHOOL_WA_GROUP_TARGET: "120363205084846535@g.us", // SMKN 2 KONAWE
+  SCHOOL_WA_CHANNEL_TARGET: "120363205084846535@g.us", // SMKN 2 KONAWE (Grup Utama Aktif)
   ADMIN_TU_PHONE: "085241445566", // Saktinani Djunaid (Admin TU)
   GURU_BK_PHONE: "085322223333"   // Yoga / Suci / Cici (Guru BK)
 };
@@ -141,11 +145,24 @@ export function getLessonPeriods(day?: string): LessonPeriod[] {
 }
 
 export function getFonnteApiKey(): string {
-  return localStorage.getItem(STORAGE_KEYS.FONNTE_API_KEY) || DEFAULT_CONFIG.FONNTE_API_KEY;
+  const stored = localStorage.getItem(STORAGE_KEYS.FONNTE_API_KEY);
+  if (!stored || stored === "ypkaCVkd5uLo3fkEWtnb" || stored === "azYnZj8rnnTB5cDFVwz5" || stored === "HxwVVhAM4qJjsB1KzkeD") {
+    localStorage.setItem(STORAGE_KEYS.FONNTE_API_KEY, DEFAULT_CONFIG.FONNTE_API_KEY);
+    return DEFAULT_CONFIG.FONNTE_API_KEY;
+  }
+  return stored;
 }
 
 export function getTeacherGroupTarget(): string {
-  return localStorage.getItem(STORAGE_KEYS.TEACHER_GROUP_TARGET) || DEFAULT_CONFIG.TEACHER_GROUP_TARGET;
+  const stored = localStorage.getItem(STORAGE_KEYS.TEACHER_GROUP_TARGET);
+  if (!stored || 
+      stored === "120363223018241031@g.us" || 
+      stored === "12036329384729384-tu@g.us" ||
+      stored === "120363297411977450@newsletter") {
+    localStorage.setItem(STORAGE_KEYS.TEACHER_GROUP_TARGET, DEFAULT_CONFIG.TEACHER_GROUP_TARGET);
+    return DEFAULT_CONFIG.TEACHER_GROUP_TARGET;
+  }
+  return stored;
 }
 
 export function getTuGroupTarget(): string {
@@ -162,19 +179,71 @@ export function getGuruBkPhone(): string {
 }
 export const getGuruBkNumber = getGuruBkPhone;
 
+export function getSchoolChannelTarget(): string {
+  const stored = localStorage.getItem(STORAGE_KEYS.SCHOOL_WA_CHANNEL_TARGET) || 
+                 localStorage.getItem(STORAGE_KEYS.SCHOOL_WA_GROUP_TARGET);
+  if (!stored || 
+      stored === "120363223018241031@g.us" || 
+      stored === "12036329384729384-tu@g.us" ||
+      stored === "120363297411977450@newsletter") {
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_CHANNEL_TARGET, DEFAULT_CONFIG.SCHOOL_WA_CHANNEL_TARGET);
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_GROUP_TARGET, DEFAULT_CONFIG.SCHOOL_WA_CHANNEL_TARGET);
+    return DEFAULT_CONFIG.SCHOOL_WA_CHANNEL_TARGET;
+  }
+  return stored;
+}
+
+export function setSchoolChannelTarget(target: string) {
+  const clean = target.trim();
+  localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_CHANNEL_TARGET, clean);
+  localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_GROUP_TARGET, clean);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sihadir_wa_target_changed", { detail: clean }));
+  }
+}
+
+export function isAutoChannelCheckInEnabled(): boolean {
+  const val = localStorage.getItem(STORAGE_KEYS.AUTO_CHANNEL_CHECKIN_ENABLED);
+  return val === null ? true : val === "true";
+}
+
+export function setAutoChannelCheckInEnabled(enabled: boolean) {
+  localStorage.setItem(STORAGE_KEYS.AUTO_CHANNEL_CHECKIN_ENABLED, String(enabled));
+}
+
+export function isAutoChannelCheckOutEnabled(): boolean {
+  const val = localStorage.getItem(STORAGE_KEYS.AUTO_CHANNEL_CHECKOUT_ENABLED);
+  return val === null ? true : val === "true";
+}
+
+export function setAutoChannelCheckOutEnabled(enabled: boolean) {
+  localStorage.setItem(STORAGE_KEYS.AUTO_CHANNEL_CHECKOUT_ENABLED, String(enabled));
+}
+
 export function saveFonnteConfig(config: {
   apiKey?: string;
   teacherGroup?: string;
   tuGroup?: string;
+  schoolChannel?: string;
+  schoolChannelTarget?: string;
   adminTuPhone?: string;
   guruBkPhone?: string;
 }) {
   if (config.apiKey !== undefined) localStorage.setItem(STORAGE_KEYS.FONNTE_API_KEY, config.apiKey.trim());
   if (config.teacherGroup !== undefined) localStorage.setItem(STORAGE_KEYS.TEACHER_GROUP_TARGET, config.teacherGroup.trim());
   if (config.tuGroup !== undefined) localStorage.setItem(STORAGE_KEYS.TU_GROUP_TARGET, config.tuGroup.trim());
+  if (config.schoolChannel !== undefined) {
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_CHANNEL_TARGET, config.schoolChannel.trim());
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_GROUP_TARGET, config.schoolChannel.trim());
+  }
+  if (config.schoolChannelTarget !== undefined) {
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_CHANNEL_TARGET, config.schoolChannelTarget.trim());
+    localStorage.setItem(STORAGE_KEYS.SCHOOL_WA_GROUP_TARGET, config.schoolChannelTarget.trim());
+  }
   if (config.adminTuPhone !== undefined) localStorage.setItem(STORAGE_KEYS.ADMIN_TU_PHONE, config.adminTuPhone.trim());
   if (config.guruBkPhone !== undefined) localStorage.setItem(STORAGE_KEYS.GURU_BK_PHONE, config.guruBkPhone.trim());
 }
+export const setFonnteConfig = saveFonnteConfig;
 
 // Low-level send method to call backend Fonnte proxy
 export async function sendFonnteMessage(
@@ -225,6 +294,161 @@ export async function sendFonnteMulti(
     })
   );
   return results;
+}
+
+// -------------------------------------------------------------
+// TEACHER ATTENDANCE TO SCHOOL CHANNEL / GROUP (Presensi Masuk & Pulang Saluran SMK Negeri 2 Konawe)
+// -------------------------------------------------------------
+
+export interface TeacherCheckInChannelPayload {
+  teacherName: string;
+  nip?: string;
+  date?: string;
+  time?: string;
+  distance?: number;
+  status?: string;
+  notes?: string;
+}
+
+export interface TeacherCheckOutChannelPayload {
+  teacherName: string;
+  nip?: string;
+  date?: string;
+  time?: string;
+  clockInTime?: string;
+  duration?: string;
+  distance?: number;
+  status?: string;
+  notes?: string;
+}
+
+export function buildTeacherCheckInChannelMessage(data: TeacherCheckInChannelPayload): string {
+  const dateStr = data.date || new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+  const timeStr = data.time || new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WITA";
+  const distStr = data.distance !== undefined ? `${data.distance} meter dari Titik Kampus (Valid / Dalam Radius)` : "Terverifikasi Titik Radius SMKN 2 Konawe";
+  const statusStr = data.status || "HADIR TEPAT WAKTU";
+
+  return `*🔔 LAPORAN PRESENSI MASUK GURU*\n` +
+    `*SMK NEGERI 2 KONAWE*\n` +
+    `_Sistem Presensi Digital SIHADIR_\n\n` +
+    `📋 *Biodata Presensi Datang:*\n` +
+    `• *Nama Guru/Staf* : ${data.teacherName}\n` +
+    (data.nip ? `• *NIP*            : ${data.nip}\n` : "") +
+    `• *Waktu Datang*   : ${dateStr}, pukul ${timeStr}\n` +
+    `• *Status Hadir*   : ✅ ${statusStr}\n` +
+    `• *Lokasi GPS*     : 📍 ${distStr}\n` +
+    `• *Verifikasi*     : 📸 Biometrik Selfie & Geofence GPS Valid\n` +
+    (data.notes ? `• *Catatan/Agenda* : ${data.notes}\n` : `• *Keterangan*     : Siap melaksanakan tugas KBM & Pelayanan Pendidikan\n`) +
+    `\n` +
+    `_Laporan ini terbit otomatis dan tercatat pada Grup WhatsApp Resmi SMK Negeri 2 Konawe._\n` +
+    `🌐 _SIHADIR SMKN 2 Konawe - Akurat, Transparan, Disiplin_`;
+}
+
+export function buildTeacherCheckOutChannelMessage(data: TeacherCheckOutChannelPayload): string {
+  const dateStr = data.date || new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+  const timeStr = data.time || new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WITA";
+  const distStr = data.distance !== undefined ? `${data.distance} meter dari Lingkungan Sekolah` : "Radius Kampus SMKN 2 Konawe";
+  const statusStr = data.status || "SELESAI TUGAS / PULANG LENGKAP";
+
+  return `*🏁 LAPORAN PRESENSI PULANG GURU*\n` +
+    `*SMK NEGERI 2 KONAWE*\n` +
+    `_Sistem Presensi Digital SIHADIR_\n\n` +
+    `📋 *Biodata Presensi Pulang:*\n` +
+    `• *Nama Guru/Staf* : ${data.teacherName}\n` +
+    (data.nip ? `• *NIP*            : ${data.nip}\n` : "") +
+    `• *Waktu Pulang*   : ${dateStr}, pukul ${timeStr}\n` +
+    (data.clockInTime ? `• *Waktu Datang*   : Pukul ${data.clockInTime} WITA\n` : "") +
+    (data.duration ? `• *Durasi Tugas*   : ⏳ ${data.duration}\n` : "") +
+    `• *Status Presensi*: 🏁 ${statusStr}\n` +
+    `• *Lokasi GPS*     : 📍 ${distStr}\n` +
+    `• *Verifikasi*     : 📸 Biometrik Selfie Pulang Valid\n` +
+    (data.notes ? `• *Catatan Tambahan*: ${data.notes}\n` : `• *Keterangan*     : Tugas KBM, administrasi, dan bimbingan hari ini selesai\n`) +
+    `\n` +
+    `_Terima kasih atas dedikasi dan pengabdian hari ini. Selamat beristirahat._\n` +
+    `🌐 _SIHADIR SMKN 2 Konawe - Akurat, Transparan, Disiplin_`;
+}
+
+export async function dispatchTeacherAttendanceToChannel(
+  type: "masuk" | "pulang",
+  data: TeacherCheckInChannelPayload & TeacherCheckOutChannelPayload
+): Promise<{ success: boolean; message: string; targetsSent: string[]; messageText: string; error?: string }> {
+  const isCheckIn = type === "masuk";
+  
+  const channelTarget = getSchoolChannelTarget().trim();
+  const teacherGroup = getTeacherGroupTarget().trim();
+
+  // Targets to send
+  const targets: string[] = [];
+  if (channelTarget) targets.push(channelTarget);
+  if (teacherGroup && teacherGroup !== channelTarget) targets.push(teacherGroup);
+
+  // Jika target adalah Saluran WA (@newsletter) yang belum didukung oleh Fonnte gateway,
+  // otomatis sertakan Grup WhatsApp Resmi SMKN 2 KONAWE agar laporan tetap masuk nyata ke WhatsApp sekolah
+  if (targets.some(t => t.includes("@newsletter")) && !targets.includes("120363205084846535@g.us")) {
+    targets.push("120363205084846535@g.us");
+  }
+
+  const messageText = isCheckIn 
+    ? buildTeacherCheckInChannelMessage(data)
+    : buildTeacherCheckOutChannelMessage(data);
+
+  if (targets.length === 0) {
+    return { 
+      success: false, 
+      message: "ID Saluran / Grup WhatsApp SMK Negeri 2 Konawe belum dikonfigurasi.", 
+      targetsSent: [], 
+      messageText 
+    };
+  }
+
+  // Check if enabled
+  if (isCheckIn && !isAutoChannelCheckInEnabled()) {
+    return { 
+      success: false, 
+      message: "Kirim otomatis presensi masuk ke saluran dinonaktifkan oleh pengaturan.", 
+      targetsSent: [], 
+      messageText 
+    };
+  }
+  if (!isCheckIn && !isAutoChannelCheckOutEnabled()) {
+    return { 
+      success: false, 
+      message: "Kirim otomatis presensi pulang ke saluran dinonaktifkan oleh pengaturan.", 
+      targetsSent: [], 
+      messageText 
+    };
+  }
+
+  const results = await sendFonnteMulti(targets, messageText);
+  const successList = results.filter(r => r.success).map(r => r.target);
+  const failList = results.filter(r => !r.success);
+
+  if (successList.length > 0) {
+    return {
+      success: true,
+      message: `Laporan presensi ${type} berhasil dikirim ke ${successList.length} saluran/grup WhatsApp (${successList.join(", ")})`,
+      targetsSent: successList,
+      messageText
+    };
+  } else {
+    return {
+      success: false,
+      message: failList[0]?.error || "Gagal mengirim ke saluran WhatsApp.",
+      targetsSent: [],
+      messageText,
+      error: failList.map(f => `${f.target}: ${f.error}`).join("; ")
+    };
+  }
 }
 
 // -------------------------------------------------------------
@@ -457,6 +681,222 @@ export async function dispatchTeacherPeriodReport(
 }
 
 // -------------------------------------------------------------
+// 1.B. SKEMA RESMI 2 SESI REKAPITULASI GRUP WA (PAGI & SIANG)
+// Sesi 1: Menjelang Istirahat (Jam 1 s.d. 4)
+// Sesi 2: Pukul 13.00 WITA (Jam 5 s.d. Selesai & Pengingat Pulang)
+// -------------------------------------------------------------
+
+export function buildTeacherSession1Report(): {
+  session: 1;
+  title: string;
+  timeRange: string;
+  dateFormatted: string;
+  hadirList: any[];
+  belumHadirList: any[];
+  messageText: string;
+} {
+  const todayDay = getIndonesianDay();
+  const todayDateStr = new Date().toISOString().split("T")[0];
+  const todayFormatted = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+  const schedCfg = getDayScheduleConfig(todayDay);
+  const allSchedules = getStoredSchedules();
+  const morningSchedules = allSchedules.filter(s => {
+    if (s.day.trim().toLowerCase() !== todayDay.toLowerCase()) return false;
+    const match = (s.period || "").match(/jam\s*(?:ke\s*|-)?\s*(\d+)/i);
+    if (match) {
+      const pNum = parseInt(match[1], 10);
+      return pNum <= 4; // Jam 1 s.d. 4
+    }
+    return false;
+  });
+
+  let teacherAttLogs: any[] = [];
+  try {
+    const raw = localStorage.getItem("simpati_teacher_attendance_logs");
+    if (raw) teacherAttLogs = JSON.parse(raw);
+  } catch (e) {}
+
+  let journalLogs: any[] = [];
+  try {
+    const raw = localStorage.getItem("simpati_jurnal_mengajar_logs");
+    if (raw) journalLogs = JSON.parse(raw);
+  } catch (e) {}
+
+  const scheduled = morningSchedules.map(sch => {
+    const attLog = teacherAttLogs.find(log => {
+      return isSameTeacherName(log.teacherName, sch.teacherName) &&
+        (log.date === todayDateStr || log.date === new Date().toLocaleDateString("id-ID"));
+    });
+    const jLog = journalLogs.find(j => {
+      return isSameTeacherName(j.teacherName || "", sch.teacherName) &&
+        (j.className || "").trim().toLowerCase() === sch.className.trim().toLowerCase();
+    });
+    const isHadir = Boolean(attLog?.clockIn || jLog);
+    return {
+      teacherName: sch.teacherName,
+      className: sch.className,
+      subject: sch.subject,
+      periodStr: sch.period,
+      isHadir,
+      clockInTime: attLog?.clockIn,
+      hasJournal: Boolean(jLog)
+    };
+  });
+
+  const hadirList = scheduled.filter(t => t.isHadir);
+  const belumHadirList = scheduled.filter(t => !t.isHadir);
+
+  let msg = `☕ *LAPORAN REKAP KBM SESI 1 (PAGI / MENJELANG ISTIRAHAT)*\n`;
+  msg += `🏫 *SMK NEGERI 2 KONAWE*\n`;
+  msg += `---------------------------------------------\n`;
+  msg += `📅 *Hari / Tanggal:* ${todayFormatted}\n`;
+  msg += `⏱️ *Cakupan Sesi 1:* Jam Pelajaran Ke-1 s.d. Jam Ke-4\n`;
+  msg += `☕ *Waktu Istirahat Sekolah:* Pukul ${schedCfg.jamIstirahat} WITA\n`;
+  msg += `📊 *Ringkasan KBM Pagi:* ${hadirList.length} Guru Hadir di Kelas | ${belumHadirList.length} Belum Terdata\n`;
+  msg += `---------------------------------------------\n\n`;
+
+  if (hadirList.length > 0) {
+    msg += `✅ *GURU TERDATA AKTIF MENGAJAR DI KELAS (SESI PAGI):*\n`;
+    // Filter unique by teacher name
+    const seen = new Set<string>();
+    hadirList.forEach((item) => {
+      if (!seen.has(item.teacherName)) {
+        seen.add(item.teacherName);
+        const detail = item.hasJournal ? "Jurnal Terisi" : `Presensi: ${item.clockInTime || "Hadir"}`;
+        msg += `• *${item.teacherName}* - Kelas ${item.className} (${item.subject}) [${detail}]\n`;
+      }
+    });
+    msg += `\n`;
+  }
+
+  if (belumHadirList.length > 0) {
+    msg += `⚠️ *PERINGATAN GURU BELUM MASUK KELAS / BELUM MENGISI JURNAL:*\n`;
+    const seenBelum = new Set<string>();
+    belumHadirList.forEach((item, idx) => {
+      if (!seenBelum.has(item.teacherName)) {
+        seenBelum.add(item.teacherName);
+        msg += `${idx + 1}. *${item.teacherName}* (Jadwal: ${item.className} - ${item.subject})\n`;
+      }
+    });
+    msg += `\n📢 *Catatan Piket:* Mohon Bapak/Ibu segera mengonfirmasi ke Piket/Kurikulum jika berhalangan atau sedang penugasan luar.\n\n`;
+  } else if (scheduled.length > 0) {
+    msg += `✨ *ALHAMDULILLAH, SELURUH JADWAL KBM SESI PAGI TELAH TERISI DENGAN TERTIB.* 🎯\n\n`;
+  }
+
+  msg += `---------------------------------------------\n`;
+  msg += `_Selamat menikmati waktu istirahat sejenak. Disiarkan otomatis via SIHADIR SMKN 2 Konawe._`;
+
+  return {
+    session: 1,
+    title: "Laporan Rekap KBM Sesi 1 (Menjelang Istirahat)",
+    timeRange: "Jam Ke-1 s.d. Jam Ke-4",
+    dateFormatted: todayFormatted,
+    hadirList,
+    belumHadirList,
+    messageText: msg
+  };
+}
+
+export function buildTeacherSession2Report(): {
+  session: 2;
+  title: string;
+  timeRange: string;
+  dateFormatted: string;
+  totalHadir: number;
+  totalTerlambat: number;
+  totalIzin: number;
+  messageText: string;
+} {
+  const todayDay = getIndonesianDay();
+  const todayDateStr = new Date().toISOString().split("T")[0];
+  const todayFormatted = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+
+  const schedCfg = getDayScheduleConfig(todayDay);
+
+  // Retrieve attendance logs
+  let teacherAttLogs: any[] = [];
+  try {
+    const raw = localStorage.getItem("simpati_teacher_attendance_logs");
+    if (raw) teacherAttLogs = JSON.parse(raw);
+  } catch (e) {}
+
+  const todayLogs = teacherAttLogs.filter(l => l.date === todayDateStr || l.date === new Date().toLocaleDateString("id-ID"));
+  const totalHadir = todayLogs.length;
+  const totalTerlambat = todayLogs.filter(l => (l.status || "").toLowerCase().includes("terlambat")).length;
+  const totalPulang = todayLogs.filter(l => Boolean(l.clockOut)).length;
+
+  let msg = `🏁 *LAPORAN REKAPITULASI HARIAN KBM & PRESENSI (PUKUL 13.00 WITA)*\n`;
+  msg += `🏫 *SMK NEGERI 2 KONAWE*\n`;
+  msg += `---------------------------------------------\n`;
+  msg += `📅 *Hari / Tanggal:* ${todayFormatted}\n`;
+  msg += `⏰ *Waktu Rekap:* Pukul 13.00 WITA (Menjelang Jam Pulang ${schedCfg.jamPulang} WITA)\n`;
+  msg += `⏱️ *Cakupan Sesi 2:* Jam Pelajaran Ke-5 s.d. Jam Terakhir\n`;
+  msg += `📊 *Statistik Kehadiran Guru Hari Ini:*\n`;
+  msg += `• Total Guru Hadir Bertugas: *${totalHadir} Orang*\n`;
+  msg += `• Presensi Tepat Waktu    : *${Math.max(0, totalHadir - totalTerlambat)} Orang*\n`;
+  msg += `• Presensi Terlambat      : *${totalTerlambat} Orang*\n`;
+  msg += `• Sudah Presensi Pulang   : *${totalPulang} Guru*\n`;
+  msg += `---------------------------------------------\n\n`;
+
+  msg += `📢 *HIMBAUAN KEPULANGAN GURU:*\n`;
+  msg += `Bapak/Ibu Guru dan Staf yang telah menyelesaikan seluruh jam tatap muka KBM, penataan administrasi kelas, dan bimbingan siswa hari ini, dipersilakan melakukan *Presensi Pulang* pada jam ${schedCfg.jamPulang} WITA melalui aplikasi SIHADIR dengan swafoto biometrik GPS.\n\n`;
+
+  msg += `🙏 _Terima kasih atas kerja keras, loyalitas, dan dedikasi Bapak/Ibu Pendidik dalam mendidik generasi SMK Negeri 2 Konawe hari ini. Selamat berkumpul kembali bersama keluarga!_\n\n`;
+  msg += `---------------------------------------------\n`;
+  msg += `🌐 _SIHADIR Gateway SMKN 2 Konawe - Akurat, Transparan, Disiplin_`;
+
+  return {
+    session: 2,
+    title: "Laporan Rekap KBM Sesi 2 (Pukul 13.00 WITA / Menjelang Pulang)",
+    timeRange: "Jam Ke-5 s.d. Jam Terakhir",
+    dateFormatted: todayFormatted,
+    totalHadir,
+    totalTerlambat,
+    totalIzin: 0,
+    messageText: msg
+  };
+}
+
+export async function dispatchTwoSessionReport(
+  session: 1 | 2
+): Promise<{ success: boolean; message: string; session: number; target: string }> {
+  const targetGroup = getSchoolChannelTarget() || getTeacherGroupTarget();
+  const report = session === 1 ? buildTeacherSession1Report() : buildTeacherSession2Report();
+
+  console.log(`[Fonnte Sesi ${session}] Mengirim rekapitulasi ke target: ${targetGroup}`);
+  const result = await sendFonnteMessage(targetGroup, report.messageText);
+
+  if (result.success) {
+    const todayStr = new Date().toISOString().split("T")[0];
+    localStorage.setItem(`simpati_last_session_report_${todayStr}_session_${session}`, "true");
+    return {
+      success: true,
+      session,
+      target: targetGroup,
+      message: `Laporan Rekapitulasi Sesi ${session} berhasil dikirim ke Grup WhatsApp (${targetGroup})!`
+    };
+  } else {
+    return {
+      success: false,
+      session,
+      target: targetGroup,
+      message: `Gagal mengirim Rekap Sesi ${session} ke WhatsApp: ${result.error}`
+    };
+  }
+}
+
+// -------------------------------------------------------------
 // 2. TATA USAHA (TU) DAILY ATTENDANCE REPORT AT 09:00 AM
 // -------------------------------------------------------------
 
@@ -628,10 +1068,10 @@ export async function notifyStudentAttendanceInstant(
   const isPositive = data.status === "Hadir" || data.status === "Terlambat";
   const icon = data.status === "Hadir" ? "✅" : data.status === "Terlambat" ? "⚠️" : data.status === "Sakit" ? "🏥" : data.status === "Izin" ? "📝" : "❌";
 
-  let msg = `📲 *NOTIFIKASI PRESENSI SISWA REAL-TIME*\n`;
+  let msg = `📲 *NOTIFIKASI PRESENSI MURID REAL-TIME*\n`;
   msg += `🏫 *SMK NEGERI 2 KONAWE*\n`;
   msg += `---------------------------------------------\n`;
-  msg += `👤 *Nama Siswa:* *${data.studentName}*\n`;
+  msg += `👤 *Nama Murid:* *${data.studentName}*\n`;
   if (data.nis) msg += `🆔 *NIS/ID:* ${data.nis}\n`;
   msg += `🏫 *Kelas:* *${data.className}*\n`;
   msg += `📅 *Hari/Tanggal:* ${dateFormatted}\n`;
@@ -643,7 +1083,7 @@ export async function notifyStudentAttendanceInstant(
   msg += `---------------------------------------------\n`;
   msg += `_Laporan otomatis langsung diteruskan ke Admin Tata Usaha & Guru BK_`;
 
-  console.log(`[Fonnte Real-Time] Mengirim notifikasi absensi siswa ${data.studentName} ke TU (${adminTuPhone}) & BK (${guruBkPhone})`);
+  console.log(`[Fonnte Real-Time] Mengirim notifikasi absensi murid ${data.studentName} ke TU (${adminTuPhone}) & BK (${guruBkPhone})`);
 
   // Parallel dispatch to both Admin TU and Guru BK
   const [resAdminTu, resBk] = await Promise.all([
@@ -673,7 +1113,7 @@ export async function notifyClassAttendanceSummary(data: {
   const adminTuPhone = getAdminTuPhone();
   const guruBkPhone = getGuruBkPhone();
 
-  let msg = `📊 *REKAP KELAS: LAPORAN PRESENSI SISWA*\n`;
+  let msg = `📊 *REKAP KELAS: LAPORAN PRESENSI MURID*\n`;
   msg += `🏫 *SMK NEGERI 2 KONAWE*\n`;
   msg += `---------------------------------------------\n`;
   msg += `🏫 *Kelas:* *${data.className}*\n`;
@@ -681,14 +1121,14 @@ export async function notifyClassAttendanceSummary(data: {
   if (data.subject) msg += `📚 *Mata Pelajaran:* ${data.subject}\n`;
   if (data.recordedBy) msg += `✍️ *Penginput:* ${data.recordedBy}\n`;
   msg += `---------------------------------------------\n`;
-  msg += `👥 *Total Siswa:* ${data.total}\n`;
-  msg += `✅ Hadir: ${data.hadir} siswa (${Math.round((data.hadir / (data.total || 1)) * 100)}%)\n`;
-  msg += `🏥 Sakit: ${data.sakit} siswa\n`;
-  msg += `📝 Izin: ${data.izin} siswa\n`;
-  msg += `❌ Alfa (Tanpa Keterangan): ${data.alfa} siswa\n\n`;
+  msg += `👥 *Total Murid:* ${data.total}\n`;
+  msg += `✅ Hadir: ${data.hadir} murid (${Math.round((data.hadir / (data.total || 1)) * 100)}%)\n`;
+  msg += `🏥 Sakit: ${data.sakit} murid\n`;
+  msg += `📝 Izin: ${data.izin} murid\n`;
+  msg += `❌ Alfa (Tanpa Keterangan): ${data.alfa} murid\n\n`;
 
   if (data.absentList.length > 0) {
-    msg += `🚨 *DAFTAR SISWA TIDAK HADIR / PERLU PERHATIAN BK:*\n`;
+    msg += `🚨 *DAFTAR MURID TIDAK HADIR / PERLU PERHATIAN BK:*\n`;
     data.absentList.forEach((st, idx) => {
       msg += `${idx + 1}. ${st.name} [Status: ${st.status}]\n`;
     });
@@ -705,7 +1145,7 @@ export async function notifyClassAttendanceSummary(data: {
 }
 
 // -------------------------------------------------------------
-// 4. COMPREHENSIVE 15:00 WITA RECAPITULATION (SISWA, GURU, STAF)
+// 4. COMPREHENSIVE 15:00 WITA RECAPITULATION (MURID, GURU, STAF)
 // "Transparansi Penuh Presensi — Menghindari Dusta di Antara Kita"
 // -------------------------------------------------------------
 
@@ -1010,7 +1450,7 @@ export function buildComprehensive15WitaReport(targetDate?: string): Comprehensi
   msg += `---------------------------------------------\n\n`;
 
   msg += `📊 *I. RINGKASAN TINGKAT KEHADIRAN SEKOLAH:*\n`;
-  msg += `👨‍🎓 *Peserta Didik (Siswa):* *${studentsHadir}* / ${totalStudents} Hadir (*${studentAttendancePct}%*)\n`;
+  msg += `👨‍🎓 *Murid (Murid):* *${studentsHadir}* / ${totalStudents} Hadir (*${studentAttendancePct}%*)\n`;
   msg += `   • 🏥 Sakit: *${studentsSakit}* | 📝 Izin: *${studentsIzin}* | ❌ Alfa: *${studentsAlfa}*\n`;
   msg += `👨‍🏫 *Dewan Guru (Pendidik):* *${teachersHadir}* / ${totalTeachers} Hadir (*${teacherAttendancePct}%*)\n`;
   msg += `   • 📖 Jurnal KBM: *${teachersJurnalCount}* Terisi | ⚠️ Izin/Dinas: *${teachersBelumHadir}*\n`;
@@ -1044,40 +1484,40 @@ export function buildComprehensive15WitaReport(targetDate?: string): Comprehensi
   });
   msg += `\n---------------------------------------------\n\n`;
 
-  msg += `🚨 *V. DAFTAR TERPERINCI SISWA TIDAK HADIR HARI INI:*\n`;
+  msg += `🚨 *V. DAFTAR TERPERINCI MURID TIDAK HADIR HARI INI:*\n`;
   msg += `_(Wajib ditindaklanjuti Wali Kelas, Guru Piket, dan Guru BK)_\n\n`;
 
   const allSakit = allAbsentStudents.filter(s => s.status === "Sakit");
   const allIzin = allAbsentStudents.filter(s => s.status === "Izin");
   const allAlfa = allAbsentStudents.filter(s => s.status === "Alfa");
 
-  msg += `🏥 *Siswa Sakit (${allSakit.length} Siswa):*\n`;
+  msg += `🏥 *Murid Sakit (${allSakit.length} Murid):*\n`;
   if (allSakit.length > 0) {
     allSakit.forEach((s, idx) => {
       msg += `${idx + 1}. *${s.name}* (${s.className}) - Ket: ${s.notes || "Sakit"}\n`;
     });
   } else {
-    msg += `• Nihil (Tidak ada laporan siswa sakit hari ini)\n`;
+    msg += `• Nihil (Tidak ada laporan murid sakit hari ini)\n`;
   }
   msg += `\n`;
 
-  msg += `📝 *Siswa Izin (${allIzin.length} Siswa):*\n`;
+  msg += `📝 *Murid Izin (${allIzin.length} Murid):*\n`;
   if (allIzin.length > 0) {
     allIzin.forEach((s, idx) => {
       msg += `${idx + 1}. *${s.name}* (${s.className}) - Ket: ${s.notes || "Izin"}\n`;
     });
   } else {
-    msg += `• Nihil (Tidak ada laporan siswa izin hari ini)\n`;
+    msg += `• Nihil (Tidak ada laporan murid izin hari ini)\n`;
   }
   msg += `\n`;
 
-  msg += `❌ *Siswa Alfa / Tanpa Keterangan (${allAlfa.length} Siswa):*\n`;
+  msg += `❌ *Murid Alfa / Tanpa Keterangan (${allAlfa.length} Murid):*\n`;
   if (allAlfa.length > 0) {
     allAlfa.forEach((s, idx) => {
       msg += `${idx + 1}. *${s.name}* (${s.className}) - Tanpa Keterangan\n`;
     });
   } else {
-    msg += `• Nihil (Seluruh siswa disiplin 100%)\n`;
+    msg += `• Nihil (Seluruh murid disiplin 100%)\n`;
   }
 
   msg += `\n---------------------------------------------\n`;
@@ -1129,7 +1569,7 @@ export async function dispatchComprehensive15WitaReport(
     localStorage.setItem(`${STORAGE_KEYS.LAST_COMPREHENSIVE_15_REPORT}_${todayStr}`, "true");
     return {
       success: true,
-      message: `Rekapitulasi presensi terperinci (Siswa, Guru & Staf TU) pukul 15.00 WITA berhasil disiarkan ke Grup WhatsApp Sekolah!`,
+      message: `Rekapitulasi presensi terperinci (Murid, Guru & Staf TU) pukul 15.00 WITA berhasil disiarkan ke Grup WhatsApp Sekolah!`,
       data: report
     };
   } else {
@@ -1175,13 +1615,13 @@ export function checkAndRunAutomations(): void {
     }
   }
 
-  // 2. Check Comprehensive 15:00 WITA daily report (Siswa, Guru, Staf TU)
+  // 2. Check Comprehensive 15:00 WITA daily report (Murid, Guru, Staf TU)
   // Window: 15:00 - 15:20 WITA
   if (witaHour === 15 && witaMinute >= 0 && witaMinute <= 20) {
     const key = `${STORAGE_KEYS.LAST_COMPREHENSIVE_15_REPORT}_${todayStr}`;
     const alreadySent = localStorage.getItem(key);
     if (!alreadySent) {
-      console.log("[Scheduler] ⏰ Pukul 15:00 WITA terdeteksi! Mengirim rekap presensi terperinci (Siswa, Guru, Staf) secara otomatis!");
+      console.log("[Scheduler] ⏰ Pukul 15:00 WITA terdeteksi! Mengirim rekap presensi terperinci (Murid, Guru, Staf) secara otomatis!");
       dispatchComprehensive15WitaReport(false);
     }
   }

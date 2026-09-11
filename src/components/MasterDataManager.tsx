@@ -39,11 +39,13 @@ import {
   ChevronRight,
   GraduationCap,
   UserPlus,
-  QrCode
+  QrCode,
+  CloudUpload
 } from "lucide-react";
 import { Student, Teacher, TeachingSchedule } from "../types";
 import { compressImageFile } from "../lib/imageCompressor";
 import { MOCK_STUDENTS, MOCK_TEACHERS } from "../mockData";
+import { getAllTeachers, saveTeacherRecord, subscribeTeacherRecords, getTeacherPhoto, cleanTeacherName } from "../services/teacherService";
 import { OFFICIAL_CLASSES } from "../data/classCaptains";
 import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
 import { OFFICIAL_SMK2_SCHEDULES } from "../data/translatedSchedules";
@@ -79,8 +81,19 @@ const OFFICIAL_SUBJECTS = [
   "Mata Pelajaran Pilihan"
 ];
 
+export const PRODUCTIVE_TEACHER_ROLES = [
+  "Guru Produktif Kendaraan Ringan",
+  "Guru Produktif Sepeda Motor",
+  "Guru Produktif Bangunan",
+  "Guru Produktif Audio Video",
+  "Guru Produktif Komunikasi Visual"
+];
+
 // Hardcoded initial list of subjects/mapel to populate if empty
 const DEFAULT_SUBJECTS = [
+  ...PRODUCTIVE_TEACHER_ROLES,
+  "Guru Mata Pelajaran",
+  "Bimbingan Konseling (BK)",
   ...OFFICIAL_SUBJECTS
 ];
 
@@ -193,9 +206,9 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     };
   }, []);
 
-  const [activeSubTab, setActiveSubTab] = useState<"siswa" | "guru" | "guru_wali" | "mapel" | "kelas" | "jadwal" | "gps">("siswa");
+  const [activeSubTab, setActiveSubTab] = useState<"murid" | "guru" | "guru_wali" | "mapel" | "kelas" | "jadwal" | "gps">("murid");
 
-  // Master Data Guru Wali & Bimbingan Siswa State
+  // Master Data Guru Wali & Bimbingan Murid State
   const [guruWaliList, setGuruWaliList] = useState<GuruWaliMasterItem[]>(() => {
     return getMasterGuruWaliData();
   });
@@ -260,7 +273,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   const [selectedClassForModal, setSelectedClassForModal] = useState<string | null>(null);
   const [classModalSearch, setClassModalSearch] = useState<string>("");
 
-  // Helper untuk mendapatkan daftar siswa per kelas
+  // Helper untuk mendapatkan daftar murid per kelas
   const getClassStudents = (kelasName: string) => {
     if (!kelasName) return [];
     const target = kelasName.trim().toLowerCase();
@@ -274,32 +287,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   };
 
   const [teachers, setTeachers] = useState<Teacher[]>(() => {
-    const saved = localStorage.getItem("simpati_teachers_list");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          const hasOld = parsed.some((t: any) => t.name && (t.name.includes("Budi Santoso") || t.name.includes("Sri Rahayu")));
-          const hasNew = parsed.some((t: any) => t.name && (t.name.includes("Muslimin") || t.name.includes("Haerul")));
-          const hasSaktinani = parsed.some((t: any) => t.name && t.name.includes("SAKTINANI"));
-          if (!hasOld && hasNew && hasSaktinani) {
-            const enriched = parsed.map((p: any) => {
-              if (!p.qrCode) {
-                const match = MOCK_TEACHERS.find(m => m.id === p.id || m.name === p.name || m.nip === p.nip);
-                if (match && match.qrCode) {
-                  return { ...p, qrCode: match.qrCode };
-                }
-              }
-              return p;
-            });
-            localStorage.setItem("simpati_teachers_list", JSON.stringify(enriched));
-            return enriched;
-          }
-        }
-      } catch (e) { console.error(e); }
-    }
-    localStorage.setItem("simpati_teachers_list", JSON.stringify(MOCK_TEACHERS));
-    return MOCK_TEACHERS;
+    return getAllTeachers();
   });
 
   const [classes, setClasses] = useState<string[]>(() => {
@@ -320,7 +308,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   });
 
   const [subjects, setSubjects] = useState<string[]>(() => {
-    let list = DEFAULT_SUBJECTS;
+    let list = [...DEFAULT_SUBJECTS];
     const saved = localStorage.getItem("simpati_subjects_list");
     if (saved) {
       try {
@@ -330,9 +318,33 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         }
       } catch (e) { console.error(e); }
     }
-    // Filter out non-subject roles (jabatan)
-    const nonSubjectRoles = ["Admin Utama", "Administrator Utama", "Guru Mapel", "Guru Mata Pelajaran", "Guru Piket", "Guru Wali", "Wali Kelas"];
-    list = list.filter(item => !nonSubjectRoles.some(role => role.toLowerCase() === item.trim().toLowerCase()));
+    // Items to filter out completely as per school request
+    const bannedItems = [
+      "guru mapel",
+      "teknik kendaraan ringan",
+      "teknik kendaraan ringan (otomotif)",
+      "teknik kendaraan ringan otomotif",
+      "teknik sepeda motor",
+      "teknik sepeda motor (produktif)",
+      "teknik sepeda motor (produktif, )",
+      "mesin otomotif",
+      "mesin otomotif & k3",
+      "mesin otomotif &k3",
+      "bahasa inggris teknik",
+      "admin utama",
+      "administrator utama"
+    ];
+    list = list.filter(item => {
+      const s = item.trim().toLowerCase();
+      return !bannedItems.some(banned => s === banned || s.startsWith(banned) || s.includes(banned));
+    });
+
+    // Ensure all productive teacher roles are present
+    PRODUCTIVE_TEACHER_ROLES.forEach(role => {
+      if (!list.some(item => item.toLowerCase() === role.toLowerCase())) {
+        list.unshift(role);
+      }
+    });
 
     // Ensure all official SMK Negeri 2 Konawe subjects are present
     OFFICIAL_SUBJECTS.forEach(sub => {
@@ -340,6 +352,11 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         list.push(sub);
       }
     });
+
+    try {
+      localStorage.setItem("simpati_subjects_list", JSON.stringify(list));
+    } catch (e) {}
+
     return list;
   });
 
@@ -358,10 +375,10 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [pdfModalType, setPdfModalType] = useState<"guru" | "siswa" | "mapel">("guru");
+  const [pdfModalType, setPdfModalType] = useState<"guru" | "murid" | "mapel">("guru");
   const [isStudentQrModalOpen, setIsStudentQrModalOpen] = useState(false);
   const [studentQrModalClass, setStudentQrModalClass] = useState<string>("ALL");
-  const [editType, setEditType] = useState<"siswa" | "guru" | "mapel" | "kelas" | "jadwal">("siswa");
+  const [editType, setEditType] = useState<"murid" | "guru" | "mapel" | "kelas" | "jadwal">("murid");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Guru Wali Modals & Form states
@@ -489,7 +506,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
       localStorage.setItem("simpati_students_list", JSON.stringify(updated));
       return updated;
     });
-    setStatusMessage({ type: "success", text: `Berhasil menambahkan ${newStudents.length} data siswa baru dari dokumen PDF!` });
+    setStatusMessage({ type: "success", text: `Berhasil menambahkan ${newStudents.length} data murid baru dari dokumen PDF!` });
   };
 
   const handlePdfImportSubjects = (newSubjects: string[]) => {
@@ -502,7 +519,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     setStatusMessage({ type: "success", text: `Berhasil menambahkan ${newSubjects.length} mata pelajaran baru dari dokumen PDF!` });
   };
 
-  // Form states - Siswa
+  // Form states - Murid
   const [siswaForm, setSiswaForm] = useState({
     name: "",
     nis: "",
@@ -574,8 +591,16 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     });
   };
 
-  // Listen for updates from other components (e.g. student profile updates, photo uploads, etc.)
+  // Listen for updates from other components and Firebase Firestore
   useEffect(() => {
+    // 1. Subscribe to teacher records (Firebase Firestore & localStorage realtime updates)
+    const unsubTeachers = subscribeTeacherRecords((updatedTeachers) => {
+      if (updatedTeachers && updatedTeachers.length > 0) {
+        setTeachers(updatedTeachers);
+      }
+    });
+
+    // 2. Student updates listener
     const handleStorageUpdate = () => {
       const savedStudents = localStorage.getItem("simpati_students_list") || localStorage.getItem("sihadir_master_students");
       if (savedStudents) {
@@ -588,30 +613,19 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
           console.error(e);
         }
       }
-
-      const savedTeachers = localStorage.getItem("simpati_teachers_list") || localStorage.getItem("sihadir_master_teachers");
-      if (savedTeachers) {
-        try {
-          const parsed = JSON.parse(savedTeachers);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setTeachers(parsed);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
     };
 
     window.addEventListener("storage", handleStorageUpdate);
     window.addEventListener("sihadir_data_updated", handleStorageUpdate);
     return () => {
+      unsubTeachers();
       window.removeEventListener("storage", handleStorageUpdate);
       window.removeEventListener("sihadir_data_updated", handleStorageUpdate);
     };
   }, []);
 
   // PDF Export Handler
-  const handleExportPDF = (type: "siswa" | "guru" | "guru_wali" | "mapel" | "jadwal") => {
+  const handleExportPDF = (type: "murid" | "guru" | "guru_wali" | "mapel" | "jadwal") => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert("Gagal membuka jendela cetak. Izinkan pop-up di browser Anda.");
@@ -633,15 +647,15 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     let headersHTML = "";
     let rowsHTML = "";
 
-    if (type === "siswa") {
-      title = "REKAPITULASI DATA MASTER SISWA SMK NEGERI 2 KONAWE";
+    if (type === "murid") {
+      title = "REKAPITULASI DATA MASTER MURID SMK NEGERI 2 KONAWE";
       headersHTML = `
         <th>No</th>
         <th>NISN / NIS</th>
-        <th>Nama Lengkap Siswa</th>
+        <th>Nama Lengkap Murid</th>
         <th>L/P</th>
         <th>Kelas</th>
-        <th>Kontak Siswa</th>
+        <th>Kontak Murid</th>
         <th>Nama Orang Tua / Wali</th>
         <th>Kontak Ortu</th>
         <th>Status Profil</th>
@@ -662,7 +676,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </tr>
       `).join("");
     } else if (type === "guru_wali") {
-      title = "DAFTAR NAMA GURU WALI & BIMBINGAN SISWA SMK NEGERI 2 KONAWE (PELAJARAN 2026 / 2027)";
+      title = "DAFTAR NAMA GURU WALI & BIMBINGAN MURID SMK NEGERI 2 KONAWE (PELAJARAN 2026 / 2027)";
       headersHTML = `
         <th style="width: 40px">No</th>
         <th style="width: 220px">Nama Guru Wali</th>
@@ -781,7 +795,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </div>
         <div class="meta-info">
           <span>Jumlah Total: ${
-            type === "siswa" ? filteredStudents.length :
+            type === "murid" ? filteredStudents.length :
             type === "guru" ? filteredTeachers.length :
             type === "mapel" ? filteredSubjectsList.length : filteredSchedulesList.length
           } Record</span>
@@ -862,6 +876,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
   useEffect(() => {
     try {
       localStorage.setItem("simpati_teachers_list", JSON.stringify(teachers));
+      localStorage.setItem("sihadir_master_teachers", JSON.stringify(teachers));
     } catch (e) {
       console.warn("Could not sync teachers to localStorage:", e);
     }
@@ -897,6 +912,25 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     setTimeout(() => {
       setStatusMessage(null);
     }, 3000);
+  };
+
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+
+  const handleSyncCloud = async () => {
+    setIsSyncingCloud(true);
+    showStatus("Menyinkronkan data guru & profil ke Cloud Firestore...", "success");
+    try {
+      let count = 0;
+      for (const t of teachers) {
+        await saveTeacherRecord(t);
+        count++;
+      }
+      showStatus(`Sukses! ${count} data guru & profil telah tersinkronisasi ke Cloud Firestore.`, "success");
+    } catch (e: any) {
+      showStatus("Gagal sinkronisasi ke cloud: " + (e?.message || "Koneksi offline"), "error");
+    } finally {
+      setIsSyncingCloud(false);
+    }
   };
 
   // Reset helper
@@ -941,7 +975,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
 
   // Student CRUD Operations
   const handleOpenAddSiswa = (targetClass?: string) => {
-    setEditType("siswa");
+    setEditType("murid");
     setEditingId(null);
     setSiswaForm({
       name: "",
@@ -967,29 +1001,29 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     setIsEditorOpen(true);
   };
 
-  const handleOpenEditSiswa = (siswa: Student) => {
-    setEditType("siswa");
-    setEditingId(siswa.id);
+  const handleOpenEditSiswa = (murid: Student) => {
+    setEditType("murid");
+    setEditingId(murid.id);
     setSiswaForm({
-      name: siswa.name,
-      nis: siswa.nis,
-      nisn: siswa.nisn,
-      className: siswa.className,
-      major: siswa.major || "Teknik Kendaraan Ringan (TKR)",
-      gender: siswa.gender || "Laki-laki",
-      birthPlace: siswa.birthPlace || "",
-      birthDate: siswa.birthDate || "",
-      religion: siswa.religion || "Islam",
-      address: siswa.address || "",
-      fatherName: siswa.fatherName || "",
-      motherName: siswa.motherName || "",
-      fatherOccupation: siswa.fatherOccupation || "",
-      motherOccupation: siswa.motherOccupation || "",
-      statusActive: siswa.statusActive || "Aktif",
-      parentName: siswa.parentName || "",
-      whatsApp: siswa.whatsApp || "",
-      parentWhatsApp: siswa.parentWhatsApp || "",
-      photoUrl: siswa.photoUrl || ""
+      name: murid.name,
+      nis: murid.nis,
+      nisn: murid.nisn,
+      className: murid.className,
+      major: murid.major || "Teknik Kendaraan Ringan (TKR)",
+      gender: murid.gender || "Laki-laki",
+      birthPlace: murid.birthPlace || "",
+      birthDate: murid.birthDate || "",
+      religion: murid.religion || "Islam",
+      address: murid.address || "",
+      fatherName: murid.fatherName || "",
+      motherName: murid.motherName || "",
+      fatherOccupation: murid.fatherOccupation || "",
+      motherOccupation: murid.motherOccupation || "",
+      statusActive: murid.statusActive || "Aktif",
+      parentName: murid.parentName || "",
+      whatsApp: murid.whatsApp || "",
+      parentWhatsApp: murid.parentWhatsApp || "",
+      photoUrl: murid.photoUrl || ""
     });
     setIsEditorOpen(true);
   };
@@ -1001,7 +1035,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
       name: "",
       nip: `198${Math.floor(0 + Math.random() * 9)}${Math.floor(10 + Math.random() * 89)} ${Math.floor(100000 + Math.random() * 900000)} 1 00${teachers.length + 1}`,
       nuptk: `${Math.floor(1000000000000000 + Math.random() * 9000000000000000)}`,
-      subject: subjects[0] || "Pemeliharaan Mesin Kendaraan Ringan",
+      subject: "Guru Produktif Kendaraan Ringan",
       classes: ["XI TKR A"],
       role: "Guru Mata Pelajaran",
       whatsApp: "0812" + Math.floor(1000000 + Math.random() * 9000000),
@@ -1018,16 +1052,34 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     setEditingId(teacher.id);
     const place = teacher.birthPlace || (teacher.birthInfo ? teacher.birthInfo.split(",")[0].trim() : "Konawe");
     const date = teacher.birthDate || "1985-05-05";
+    
+    const isArham = teacher.id === "T06" || cleanTeacherName(teacher.name).includes("arham");
+    const arhamPhoto = getTeacherPhoto("T06") || "";
+    let resolvedPhoto = teacher.photoUrl || getTeacherPhoto(teacher.id) || "";
+    if (!isArham && arhamPhoto && resolvedPhoto === arhamPhoto) {
+      resolvedPhoto = "";
+    }
+
+    let cleanSub = teacher.subject || "Guru Produktif Kendaraan Ringan";
+    const sLower = cleanSub.toLowerCase();
+    if (sLower === "guru mapel") cleanSub = "Guru Mata Pelajaran";
+    else if (sLower.includes("kendaraan ringan") || sLower.includes("mesin otomotif") || sLower.includes("tkr")) cleanSub = "Guru Produktif Kendaraan Ringan";
+    else if (sLower.includes("sepeda motor") || sLower.includes("tsm")) cleanSub = "Guru Produktif Sepeda Motor";
+    else if (sLower.includes("bangunan") || sLower.includes("dpib")) cleanSub = "Guru Produktif Bangunan";
+    else if (sLower.includes("audio video") || sLower.includes("tav")) cleanSub = "Guru Produktif Audio Video";
+    else if (sLower.includes("komunikasi visual") || sLower.includes("dkv")) cleanSub = "Guru Produktif Komunikasi Visual";
+    else if (sLower.includes("bahasa inggris teknik")) cleanSub = "Bahasa Inggris";
+
     setGuruForm({
       name: teacher.name,
       nip: teacher.nip || "",
       nuptk: teacher.nuptk || "",
-      subject: teacher.subject || "",
+      subject: cleanSub,
       classes: teacher.classes || [],
       role: teacher.role || "Guru Mata Pelajaran",
       whatsApp: teacher.whatsApp || "",
       email: teacher.email || "",
-      photoUrl: teacher.photoUrl || "",
+      photoUrl: resolvedPhoto,
       birthPlace: place,
       birthDate: date
     });
@@ -1075,11 +1127,11 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
 
   const handleDeleteSiswa = (id: string, name: string) => {
     triggerConfirm(
-      "Hapus Data Siswa",
-      `Apakah Anda yakin ingin menghapus siswa '${name}' dari master data?`,
+      "Hapus Data Murid",
+      `Apakah Anda yakin ingin menghapus murid '${name}' dari master data?`,
       () => {
         setStudents(prev => prev.filter(s => s.id !== id));
-        showStatus(`Siswa ${name} berhasil dihapus dari master data.`);
+        showStatus(`Murid ${name} berhasil dihapus dari master data.`);
       }
     );
   };
@@ -1089,7 +1141,12 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
       "Hapus Data Guru",
       `Apakah Anda yakin ingin menghapus guru '${name}' dari master data?`,
       () => {
-        setTeachers(prev => prev.filter(t => t.id !== id));
+        setTeachers(prev => {
+          const filtered = prev.filter(t => t.id !== id);
+          localStorage.setItem("simpati_teachers_list", JSON.stringify(filtered));
+          localStorage.setItem("sihadir_master_teachers", JSON.stringify(filtered));
+          return filtered;
+        });
         showStatus(`Guru ${name} berhasil dihapus dari master data.`);
       }
     );
@@ -1102,7 +1159,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
     if (editingId) {
       // Edit
       setStudents(prev => prev.map(s => s.id === editingId ? { ...s, ...siswaForm } : s));
-      showStatus(`Sukses memperbarui data siswa: ${siswaForm.name}`);
+      showStatus(`Sukses memperbarui data murid: ${siswaForm.name}`);
     } else {
       // Add
       const newStudent: Student = {
@@ -1110,26 +1167,31 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         ...siswaForm
       };
       setStudents(prev => [newStudent, ...prev]);
-      showStatus(`Siswa baru berhasil didaftarkan: ${siswaForm.name}`);
+      showStatus(`Murid baru berhasil didaftarkan: ${siswaForm.name}`);
     }
     setIsEditorOpen(false);
   };
 
-  const handleSaveGuru = (e: React.FormEvent) => {
+  const handleSaveGuru = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guruForm.name.trim()) return;
 
+    const teacherId = editingId || `T${Date.now()}`;
+    const targetTeacher: Teacher = {
+      id: teacherId,
+      ...guruForm
+    };
+
     if (editingId) {
-      setTeachers(prev => prev.map(t => t.id === editingId ? { ...t, ...guruForm } : t));
+      setTeachers(prev => prev.map(t => t.id === editingId ? targetTeacher : t));
       showStatus(`Sukses memperbarui data guru: ${guruForm.name}`);
     } else {
-      const newTeacher: Teacher = {
-        id: `T${Date.now()}`,
-        ...guruForm
-      };
-      setTeachers(prev => [...prev, newTeacher]);
+      setTeachers(prev => [...prev, targetTeacher]);
       showStatus(`Guru baru berhasil didaftarkan: ${guruForm.name}`);
     }
+
+    // Persist to both localStorage and Firebase Cloud Firestore
+    await saveTeacherRecord(targetTeacher);
     setIsEditorOpen(false);
   };
 
@@ -1242,7 +1304,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
           </div>
           <p className="text-xs text-slate-500 mt-1">
             {isReadOnly 
-              ? `Akses Khusus ${tuRoleTitle}: Hanya untuk meninjau data master siswa, guru, kelas, dan jadwal.` 
+              ? `Akses Khusus ${tuRoleTitle}: Hanya untuk meninjau data master murid, guru, kelas, dan jadwal.` 
               : "Menu khusus Admin Utama & Waka Kurikulum untuk mengatur seluruh entitas pendidikan sekolah. Klik untuk mengedit langsung!"}
           </p>
         </div>
@@ -1272,7 +1334,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
               <span className="text-xs font-bold text-amber-800 font-mono">Akun {tuRoleTitle}</span>
             </div>
             <p className="text-xs font-semibold leading-relaxed">
-              Sebagai {tuRoleTitle}, Anda berhak meninjau dan melihat seluruh Data Master Siswa, Guru, Mata Pelajaran, Kelas, dan Jadwal Mengajar SMK Negeri 2 Konawe. 
+              Sebagai {tuRoleTitle}, Anda berhak meninjau dan melihat seluruh Data Master Murid, Guru, Mata Pelajaran, Kelas, dan Jadwal Mengajar SMK Negeri 2 Konawe. 
               <strong className="font-extrabold text-rose-800 ml-1">
                 Akses untuk Menambah, Mengedit, dan Menghapus Data Master dinonaktifkan
               </strong> dan hanya dipegang oleh Administrator Utama.
@@ -1293,13 +1355,13 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
       {/* Tabs */}
       <div className="px-5 border-b border-gray-100 bg-slate-50/50 flex flex-wrap gap-1">
         <button
-          onClick={() => { setActiveSubTab("siswa"); setSearchQuery(""); }}
+          onClick={() => { setActiveSubTab("murid"); setSearchQuery(""); }}
           className={`px-4 py-3 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
             activeSubTab === "siswa" ? "border-indigo-600 text-indigo-700 font-extrabold" : "border-transparent text-slate-500 hover:text-slate-800"
           }`}
         >
           <Users className="h-4 w-4" />
-          Siswa terdaftar ({students.length})
+          Murid terdaftar ({students.length})
         </button>
         
         <button
@@ -1396,7 +1458,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
                   >
                     <QrCode className="h-4 w-4" />
-                    Cetak Kartu QR Siswa
+                    Cetak Kartu QR Murid
                   </button>
                 )}
               </div>
@@ -1412,28 +1474,28 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       <QrCode className="h-4 w-4" />
-                      Cetak Kartu QR Siswa
+                      Cetak Kartu QR Murid
                     </button>
                     <button
-                      onClick={() => handleExportPDF("siswa")}
+                      onClick={() => handleExportPDF("murid")}
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-700 hover:bg-sky-800 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       <Printer className="h-4 w-4" />
-                      Cetak / Ekspor PDF Siswa
+                      Cetak / Ekspor PDF Murid
                     </button>
                     <button
-                      onClick={() => { setPdfModalType("siswa"); setIsPdfModalOpen(true); }}
+                      onClick={() => { setPdfModalType("murid"); setIsPdfModalOpen(true); }}
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       <FileText className="h-4 w-4" />
-                      Impor PDF Dokumen Siswa
+                      Impor PDF Dokumen Murid
                     </button>
                     <button
                       onClick={handleOpenAddSiswa}
                       className="flex items-center gap-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
                     >
                       <Plus className="h-4 w-4" />
-                      Tambah Siswa Baru
+                      Tambah Murid Baru
                     </button>
                   </div>
                 )}
@@ -1453,6 +1515,15 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     >
                       <FileText className="h-4 w-4" />
                       Impor PDF Dokumen Guru
+                    </button>
+                    <button
+                      onClick={handleSyncCloud}
+                      disabled={isSyncingCloud}
+                      title="Sinkronkan seluruh data guru & foto profil ke Firebase Cloud Firestore agar langsung tersinkron di semua perangkat"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                    >
+                      <CloudUpload className={`h-4 w-4 ${isSyncingCloud ? "animate-spin" : ""}`} />
+                      {isSyncingCloud ? "Menyinkronkan..." : "Sinkron Cloud"}
                     </button>
                     <button
                       onClick={handleOpenAddGuru}
@@ -1572,13 +1643,13 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
         </div>
         )}
 
-        {/* Tab Contents: SISWA */}
+        {/* Tab Contents: MURID */}
         {activeSubTab === "siswa" && (
           <div className="overflow-x-auto border border-slate-100 rounded-xl">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-[10px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                  <th className="py-3 px-4">Nama Siswa</th>
+                  <th className="py-3 px-4">Nama Murid</th>
                   <th className="py-3 px-4">NIS / NISN</th>
                   <th className="py-3 px-4">Kelas</th>
                   <th className="py-3 px-4">Jurusan</th>
@@ -1591,35 +1662,35 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 {filteredStudents.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
-                      Tidak ada siswa ditemukan. Saring pencarian lain atau buat baru!
+                      Tidak ada murid ditemukan. Saring pencarian lain atau buat baru!
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((siswa) => (
-                    <tr key={siswa.id} className="hover:bg-slate-55/60 transition-colors">
+                  filteredStudents.map((murid) => (
+                    <tr key={murid.id} className="hover:bg-slate-55/60 transition-colors">
                       <td className="py-3.5 px-4 font-bold text-slate-900 flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-full bg-indigo-50 border border-indigo-200 overflow-hidden flex items-center justify-center text-indigo-700 font-extrabold text-[10px] uppercase shrink-0">
-                          {siswa.photoUrl ? (
-                            <img src={siswa.photoUrl} alt={siswa.name} className="w-full h-full object-cover" />
+                          {murid.photoUrl ? (
+                            <img src={murid.photoUrl} alt={murid.name} className="w-full h-full object-cover" />
                           ) : (
-                            siswa.name.substring(0, 2)
+                            murid.name.substring(0, 2)
                           )}
                         </div>
-                        <span>{siswa.name}</span>
+                        <span>{murid.name}</span>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-500">{siswa.nis} / {siswa.nisn}</td>
+                      <td className="py-3.5 px-4 font-mono text-slate-500">{murid.nis} / {murid.nisn}</td>
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-extrabold rounded text-[10px] uppercase border border-indigo-100">
-                          {siswa.className}
+                          {murid.className}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-500 text-[11px] font-medium">{siswa.major || "TKR"}</td>
-                      <td className="py-3.5 px-4 text-slate-800 font-medium">{siswa.parentName || "-"}</td>
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px] font-medium">{murid.major || "TKR"}</td>
+                      <td className="py-3.5 px-4 text-slate-800 font-medium">{murid.parentName || "-"}</td>
                       <td className="py-3.5 px-4 font-mono text-slate-600">
-                        {siswa.parentWhatsApp ? (
+                        {murid.parentWhatsApp ? (
                           <span className="flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            {siswa.parentWhatsApp}
+                            {murid.parentWhatsApp}
                           </span>
                         ) : "-"}
                       </td>
@@ -1631,15 +1702,15 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                         ) : (
                           <div className="flex items-center justify-end gap-1 px-1">
                             <button
-                              onClick={() => handleOpenEditSiswa(siswa)}
+                              onClick={() => handleOpenEditSiswa(murid)}
                               className="p-1 px-2 hover:bg-indigo-50 hover:text-indigo-700 text-slate-400 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
-                              title="Edit Data Siswa"
+                              title="Edit Data Murid"
                             >
                               <Edit3 className="h-3 w-3" />
                               <span className="text-[10px] font-bold">Edit</span>
                             </button>
                             <button
-                              onClick={() => handleDeleteSiswa(siswa.id, siswa.name)}
+                              onClick={() => handleDeleteSiswa(murid.id, murid.name)}
                               className="p-1 px-2 hover:bg-red-50 hover:text-red-700 text-slate-400 rounded-lg transition-all cursor-pointer flex items-center gap-0.5"
                               title="Hapus"
                             >
@@ -1714,7 +1785,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-500 text-[11px] font-bold">{teacher.role || "Guru Mapel"}</td>
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px] font-bold">{teacher.role || "Guru Mata Pelajaran"}</td>
                       <td className="py-3.5 px-4 font-mono text-slate-600 font-medium">{teacher.whatsApp || "-"}</td>
                       <td className="py-3.5 px-4 text-right">
                         {isReadOnly ? (
@@ -1747,7 +1818,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
           </div>
         )}
 
-        {/* Tab Contents: GURU WALI & BIMBINGAN SISWA */}
+        {/* Tab Contents: GURU WALI & BIMBINGAN MURID */}
         {activeSubTab === "guru_wali" && (
           <div className="space-y-5">
             {/* SK Header Banner */}
@@ -1761,10 +1832,10 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 </div>
                 <h3 className="text-base font-black text-white flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-amber-400" />
-                  DATA MASTER GURU WALI & SISWA PEMBIMBINGAN
+                  DATA MASTER GURU WALI & MURID PEMBIMBINGAN
                 </h3>
                 <p className="text-xs text-amber-100/80 font-medium">
-                  Penetapan 35 Guru Wali Bimbingan Siswa untuk pemantauan karakter, ketertiban, absensi, dan akademik.
+                  Penetapan 35 Guru Wali Bimbingan Murid untuk pemantauan karakter, ketertiban, absensi, dan akademik.
                 </p>
               </div>
 
@@ -1811,7 +1882,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                             </span>
                           </h4>
                           <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
-                            Pembimbing Siswa • SMK Negeri 2 Konawe
+                            Pembimbing Murid • SMK Negeri 2 Konawe
                           </span>
                         </div>
                       </div>
@@ -1968,7 +2039,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                   Merekam {classes.length} Ruang Kelas Digital
                 </h4>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  Klik pada salah satu kartu kelas di bawah untuk melihat daftar nama siswa lengkap dengan NISN.
+                  Klik pada salah satu kartu kelas di bawah untuk melihat daftar nama murid lengkap dengan NISN.
                 </p>
               </div>
               {!isReadOnly && (
@@ -2030,7 +2101,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       <div>
                         <span className="text-[9px] text-slate-400 font-extrabold block uppercase tracking-wider">Total Murid</span>
                         <span className={`text-base font-black block mt-0.5 ${studentCount > 0 ? "text-indigo-700" : "text-amber-600"}`}>
-                          {studentCount} <span className="text-[10px] font-normal text-slate-400">Siswa</span>
+                          {studentCount} <span className="text-[10px] font-normal text-slate-400">Murid</span>
                         </span>
                       </div>
                       <span className="text-[10px] text-indigo-600 font-bold group-hover:underline flex items-center gap-0.5">
@@ -2338,6 +2409,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                         defaultCenter={{ lat: calibratedLat, lng: calibratedLon }}
                         center={{ lat: calibratedLat, lng: calibratedLon }}
                         defaultZoom={15}
+                        defaultMapTypeId="hybrid"
                         mapId="ADMIN_MAP_ID"
                         internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
                         style={{ width: "100%", height: "100%" }}
@@ -2431,7 +2503,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
 
       </div>
 
-      {/* Editor Modal for Adding / Editing Siswa & Guru */}
+      {/* Editor Modal for Adding / Editing Murid & Guru */}
       <AnimatePresence>
         {isEditorOpen && (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
@@ -2446,7 +2518,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4.5 w-4.5 text-yellow-400" />
                   <h3 className="font-bold text-sm tracking-tight capitalize">
-                    {editingId ? "Edit" : "Daftarkan"} {editType === "siswa" ? "Data Siswa Baru" : editType === "guru" ? "Profil Pendidik Guru" : "Jadwal Mengajar Baru"}
+                    {editingId ? "Edit" : "Daftarkan"} {editType === "siswa" ? "Data Murid Baru" : editType === "guru" ? "Profil Pendidik Guru" : "Jadwal Mengajar Baru"}
                   </h3>
                 </div>
                 <button
@@ -2463,11 +2535,11 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                 <form onSubmit={handleSaveSiswa} className="p-6 space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5 sm:col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <label className="text-[10px] font-black text-indigo-700 uppercase tracking-wider block">Foto Profil Siswa</label>
+                      <label className="text-[10px] font-black text-indigo-700 uppercase tracking-wider block">Foto Profil Murid</label>
                       <div className="flex items-center gap-3">
                         <div className="w-14 h-14 rounded-full bg-white border border-indigo-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
                           {siswaForm.photoUrl ? (
-                            <img src={siswaForm.photoUrl} alt="Foto Siswa" className="w-full h-full object-cover" />
+                            <img src={siswaForm.photoUrl} alt="Foto Murid" className="w-full h-full object-cover" />
                           ) : (
                             <User className="w-7 h-7 text-slate-300" />
                           )}
@@ -2476,7 +2548,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                           <div className="flex flex-wrap gap-2 items-center">
                             <label className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1">
                               <Upload className="w-3.5 h-3.5" />
-                              <span>Unggah Foto Siswa</span>
+                              <span>Unggah Foto Murid</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -2510,7 +2582,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     </div>
 
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Nama Lengkap Siswa</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Nama Lengkap Murid</label>
                       <input
                         type="text"
                         required
@@ -2522,7 +2594,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Nomor Induk Siswa (NIS)</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Nomor Induk Murid (NIS)</label>
                       <input
                         type="text"
                         required
@@ -2567,7 +2639,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     </div>
 
                     <div className="space-y-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
-                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-2">TTL & Kontak Siswa</span>
+                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-2">TTL & Kontak Murid</span>
                       <BirthDateSelector
                         birthPlace={siswaForm.birthPlace}
                         birthDate={siswaForm.birthDate}
@@ -2607,7 +2679,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">No. HP / WhatsApp Siswa</label>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">No. HP / WhatsApp Murid</label>
                       <input
                         type="text"
                         value={siswaForm.whatsApp}
@@ -2634,13 +2706,13 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                         rows={2}
                         value={siswaForm.address}
                         onChange={(e) => setSiswaForm(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Isi alamat tempat tinggal siswa..."
+                        placeholder="Isi alamat tempat tinggal murid..."
                         className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2.5 text-slate-750"
                       />
                     </div>
 
                     <div className="space-y-1.5 sm:col-span-2 border-t border-slate-100 pt-3">
-                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-2">Orang Tua & Wali Siswa</span>
+                      <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-2">Orang Tua & Wali Murid</span>
                     </div>
 
                     <div className="space-y-1.5">
@@ -2818,13 +2890,32 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                         onChange={(e) => setGuruForm(prev => ({ ...prev, subject: e.target.value }))}
                         className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3.5 py-2.5 font-bold text-slate-850 cursor-pointer"
                       >
+                        {/* 5 Peran Guru Produktif Utama */}
+                        <option value="Guru Produktif Kendaraan Ringan">Guru Produktif Kendaraan Ringan</option>
+                        <option value="Guru Produktif Sepeda Motor">Guru Produktif Sepeda Motor</option>
+                        <option value="Guru Produktif Bangunan">Guru Produktif Bangunan</option>
+                        <option value="Guru Produktif Audio Video">Guru Produktif Audio Video</option>
+                        <option value="Guru Produktif Komunikasi Visual">Guru Produktif Komunikasi Visual</option>
+                        <option value="Guru Mata Pelajaran">Guru Mata Pelajaran</option>
+                        <option value="Bimbingan Konseling (BK)">Bimbingan Konseling (BK)</option>
+                        <option value="Guru Piket">Guru Piket</option>
+                        <option value="Guru Wali">Guru Wali</option>
+                        <option value="Wali Kelas">Wali Kelas</option>
                         {subjects.filter(sub => {
-                          const isBk = (guruForm.name || "").toLowerCase().includes("cici") || 
-                                       (guruForm.name || "").toLowerCase().includes("yoga") || 
-                                       (guruForm.role || "").toLowerCase().includes("bk") || 
-                                       (guruForm.subject || "").toLowerCase().includes("bk") || 
-                                       (guruForm.subject || "").toLowerCase().includes("bimbingan");
-                          if (isBk && (sub === "Guru Mapel" || sub === "Guru Mata Pelajaran")) {
+                          const s = sub.trim().toLowerCase();
+                          if (
+                            s === "guru mapel" ||
+                            s === "guru mata pelajaran" ||
+                            s.includes("guru produktif") ||
+                            s.includes("kendaraan ringan") ||
+                            s.includes("sepeda motor") ||
+                            s.includes("mesin otomotif") ||
+                            s.includes("bahasa inggris teknik") ||
+                            s.includes("admin") ||
+                            s.includes("bimbingan") ||
+                            s.includes("piket") ||
+                            s.includes("wali")
+                          ) {
                             return false;
                           }
                           return true;
@@ -3136,13 +3227,13 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-black tracking-tight text-white">Daftar Siswa Kelas {selectedClassForModal}</h3>
+                      <h3 className="text-base font-black tracking-tight text-white">Daftar Murid Kelas {selectedClassForModal}</h3>
                       <span className="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
-                        {getClassStudents(selectedClassForModal).length} Siswa
+                        {getClassStudents(selectedClassForModal).length} Murid
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-medium mt-0.5">
-                      Data Resmi Siswa SMK Negeri 2 Konawe (NISN & Identitas)
+                      Data Resmi Murid SMK Negeri 2 Konawe (NISN & Identitas)
                     </p>
                   </div>
                 </div>
@@ -3175,7 +3266,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      Tambah Siswa
+                      Tambah Murid
                     </button>
                   )}
                   <button
@@ -3213,10 +3304,10 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                       <div className="text-center py-16 text-slate-400 space-y-2">
                         <Users className="h-10 w-10 mx-auto text-slate-300" />
                         <p className="text-sm font-bold text-slate-600">
-                          {classStudents.length === 0 ? `Belum ada siswa terdaftar di kelas ${selectedClassForModal}` : "Tidak ditemukan siswa yang cocok dengan pencarian."}
+                          {classStudents.length === 0 ? `Belum ada murid terdaftar di kelas ${selectedClassForModal}` : "Tidak ditemukan murid yang cocok dengan pencarian."}
                         </p>
                         <p className="text-xs text-slate-400">
-                          {classStudents.length === 0 ? "Klik tombol 'Tambah Siswa' di atas untuk memasukkan siswa ke kelas ini." : "Coba kata kunci pencarian lain."}
+                          {classStudents.length === 0 ? "Klik tombol 'Tambah Murid' di atas untuk memasukkan murid ke kelas ini." : "Coba kata kunci pencarian lain."}
                         </p>
                       </div>
                     );
@@ -3230,7 +3321,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                             <th className="py-3 px-3 text-center w-12 font-black">No</th>
                             <th className="py-3 px-4 font-black">NISN</th>
                             <th className="py-3 px-3 font-black">NIS</th>
-                            <th className="py-3 px-4 font-black">Nama Siswa</th>
+                            <th className="py-3 px-4 font-black">Nama Murid</th>
                             <th className="py-3 px-3 text-center font-black">L/P</th>
                             <th className="py-3 px-4 font-black">Kontak WA</th>
                             {!isReadOnly && <th className="py-3 px-4 text-right font-black">Aksi</th>}
@@ -3265,14 +3356,14 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
                                         handleOpenEditSiswa(student);
                                       }}
                                       className="p-1.5 hover:bg-indigo-50 hover:text-indigo-700 text-slate-400 rounded-lg transition-all cursor-pointer"
-                                      title="Edit Siswa"
+                                      title="Edit Murid"
                                     >
                                       <Edit3 className="h-3.5 w-3.5" />
                                     </button>
                                     <button
                                       onClick={() => handleDeleteSiswa(student.id, student.name)}
                                       className="p-1.5 hover:bg-red-50 hover:text-red-700 text-slate-400 rounded-lg transition-all cursor-pointer"
-                                      title="Hapus Siswa"
+                                      title="Hapus Murid"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </button>
@@ -3291,7 +3382,7 @@ export function MasterDataManager({ currentRole, username }: MasterDataManagerPr
               {/* Modal Footer */}
               <div className="p-4 px-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
                 <span>
-                  Total {getClassStudents(selectedClassForModal).length} siswa di kelas <strong>{selectedClassForModal}</strong>
+                  Total {getClassStudents(selectedClassForModal).length} murid di kelas <strong>{selectedClassForModal}</strong>
                 </span>
                 <button
                   onClick={() => setSelectedClassForModal(null)}

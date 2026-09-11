@@ -9,7 +9,7 @@ import {
   Users, CheckCircle2, AlertTriangle, Award, RefreshCw, 
   FileSpreadsheet, Filter, Check, Copy, Share2, Sparkles
 } from "lucide-react";
-import { MOCK_STUDENTS } from "../mockData";
+import { MOCK_STUDENTS, MOCK_TEACHERS } from "../mockData";
 import { MatchedScheduleItem } from "../utils/scheduleHelper";
 
 export interface TeacherSubjectGradebookModalProps {
@@ -79,6 +79,61 @@ export function TeacherSubjectGradebookModal({
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>("");
   const [shareSuccessMsg, setShareSuccessMsg] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Resolve Teacher NIP automatically with fallback and local persistence
+  const resolvedTeacherNip = useMemo(() => {
+    // 1. Check user profile in localStorage
+    try {
+      const rawProfile = localStorage.getItem("simpati_user_profile");
+      if (rawProfile) {
+        const p = JSON.parse(rawProfile);
+        if (p.nip && (
+          (p.fullName && p.fullName.toLowerCase().includes(teacherName.toLowerCase())) ||
+          (p.name && p.name.toLowerCase().includes(teacherName.toLowerCase())) ||
+          teacherName.toLowerCase().includes((p.fullName || "").toLowerCase())
+        )) {
+          return p.nip;
+        }
+      }
+    } catch (e) {}
+
+    // 2. Check teachers list in localStorage
+    try {
+      const rawList = localStorage.getItem("simpati_teachers_list");
+      if (rawList) {
+        const list = JSON.parse(rawList);
+        if (Array.isArray(list)) {
+          const found = list.find((t: any) => {
+            if (!t || !t.name) return false;
+            const tNorm = t.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const searchNorm = teacherName.toLowerCase().replace(/[^a-z0-9]/g, "");
+            return tNorm.includes(searchNorm) || searchNorm.includes(tNorm);
+          });
+          if (found && found.nip) return found.nip;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Match from MOCK_TEACHERS
+    const searchNorm = teacherName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const foundTeacher = MOCK_TEACHERS.find(t => {
+      const tNorm = t.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      return tNorm.includes(searchNorm) || searchNorm.includes(tNorm);
+    });
+    if (foundTeacher && foundTeacher.nip) {
+      return foundTeacher.nip;
+    }
+
+    return "19820315 200801 1 005";
+  }, [teacherName]);
+
+  const [teacherNipInput, setTeacherNipInput] = useState<string>("");
+
+  useEffect(() => {
+    if (resolvedTeacherNip) {
+      setTeacherNipInput(resolvedTeacherNip);
+    }
+  }, [resolvedTeacherNip]);
 
   // 1. Load students for this class
   const students: StudentGradeRecord[] = useMemo(() => {
@@ -335,6 +390,8 @@ export function TeacherSubjectGradebookModal({
       year: "numeric"
     });
 
+    const teacherNipPrint = (teacherNipInput || resolvedTeacherNip || "19820315 200801 1 005").trim();
+
     let tableRows = "";
     students.forEach((st, idx) => {
       // Formatif meeting 1, 2, 3, 4
@@ -395,7 +452,23 @@ export function TeacherSubjectGradebookModal({
               margin-bottom: 12px;
               display: flex;
               align-items: center;
-              gap: 16px;
+              justify-content: space-between;
+              gap: 14px;
+            }
+            .kop-logo {
+              width: 80px;
+              height: 80px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+            }
+            .kop-logo img {
+              max-height: 80px;
+              max-width: 80px;
+              width: auto;
+              height: auto;
+              object-fit: contain;
             }
             .kop-text {
               flex: 1;
@@ -404,24 +477,25 @@ export function TeacherSubjectGradebookModal({
             .kop-text h4 {
               margin: 0;
               font-size: 11pt;
-              font-weight: normal;
-              letter-spacing: 1px;
+              font-weight: bold;
+              letter-spacing: 0.5px;
             }
             .kop-text h2 {
               margin: 2px 0;
-              font-size: 14pt;
+              font-size: 13pt;
               font-weight: 900;
-              letter-spacing: 1px;
+              letter-spacing: 0.5px;
             }
             .kop-text h1 {
               margin: 2px 0;
-              font-size: 15pt;
+              font-size: 16pt;
               font-weight: 900;
               color: #1e3a8a;
+              letter-spacing: 1px;
             }
             .kop-text p {
-              margin: 0;
-              font-size: 8pt;
+              margin: 2px 0 0 0;
+              font-size: 8.5pt;
               font-style: italic;
             }
             .title-section {
@@ -517,11 +591,25 @@ export function TeacherSubjectGradebookModal({
           </div>
 
           <div class="kop">
+            <div class="kop-logo" title="Logo Provinsi Sulawesi Tenggara">
+              <img 
+                src="https://i.ibb.co/kgCmjh0j/kdio.gif" 
+                alt="Logo Provinsi Sulawesi Tenggara" 
+                onerror="this.onerror=null; this.src='https://i.ibb.co.com/kgCmjh0j/kdio.gif';"
+              />
+            </div>
             <div class="kop-text">
               <h4>PEMERINTAH PROVINSI SULAWESI TENGGARA</h4>
               <h2>DINAS PENDIDIKAN DAN KEBUDAYAAN</h2>
               <h1>SMK NEGERI 2 KONAWE</h1>
-              <p>Jalan Poros Kendari-Kolaka, Kab. Konawe, Sulawesi Tenggara | NPSN: 40402431</p>
+              <p>Jalan Poros Kendari-Kolaka, Kab. Konawe, Sulawesi Tenggara | NPSN: 40402871</p>
+            </div>
+            <div class="kop-logo" title="Logo SMK Negeri 2 Konawe">
+              <img 
+                src="https://i.ibb.co.com/TMkWkNY4/LOGO-SMKN-2-KONAWE-BARU.png" 
+                alt="Logo SMK Negeri 2 Konawe" 
+                onerror="this.onerror=null; this.src='https://i.ibb.co/TMkWkNY4/LOGO-SMKN-2-KONAWE-BARU.png';"
+              />
             </div>
           </div>
 
@@ -537,7 +625,7 @@ export function TeacherSubjectGradebookModal({
               <div class="meta-item"><span class="meta-label">Alokasi Waktu Jam Efektif:</span> <span>${effectiveHoursDefault} JP per Minggu</span></div>
             </div>
             <div>
-              <div class="meta-item"><span class="meta-label">Guru Pengampu:</span> <span>${teacherName}</span></div>
+              <div class="meta-item"><span class="meta-label">Guru Pengampu:</span> <span>${teacherName} (NIP. ${teacherNipPrint})</span></div>
               <div class="meta-item"><span class="meta-label">Tahun Pelajaran:</span> <span>2026/2027</span></div>
               <div class="meta-item"><span class="meta-label">Semester / Fase:</span> <span>Ganjil / Fase F</span></div>
             </div>
@@ -594,7 +682,7 @@ export function TeacherSubjectGradebookModal({
               <p>Guru Mata Pelajaran,</p>
               <div class="sign-space"></div>
               <p><strong><u>${teacherName}</u></strong></p>
-              <p>Guru Mata Pelajaran ${subjectName}</p>
+              <p>NIP. ${teacherNipPrint}</p>
             </div>
           </div>
         </body>
@@ -631,8 +719,17 @@ export function TeacherSubjectGradebookModal({
                   {className}
                 </span>
               </h2>
-              <p className="text-xs text-slate-300 font-medium">
-                Pengampu: <strong className="text-white">{teacherName}</strong> | Jadwal: {schedule.day}, {schedule.period}
+              <p className="text-xs text-slate-300 font-medium flex items-center gap-2 flex-wrap mt-0.5">
+                <span>Pengampu: <strong className="text-white">{teacherName}</strong></span>
+                <span className="text-indigo-200 font-mono text-[11px] bg-indigo-900/60 px-2 py-0.5 rounded border border-indigo-700/50">
+                  NIP. {teacherNipInput || resolvedTeacherNip}
+                </span>
+                <span className="text-slate-400">|</span>
+                <span className="text-emerald-300 text-[11px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-700/50">
+                  NPSN: <strong>40402871</strong>
+                </span>
+                <span className="text-slate-400">|</span>
+                <span>Jadwal: {schedule.day}, {schedule.period}</span>
               </p>
             </div>
           </div>

@@ -15,7 +15,7 @@ interface ChatMessage {
 }
 
 // -----------------------------------------------------------------------------
-// Component 1: Siswa AI Tutor Chat (Refuses Direct Answers, Encourages Thought)
+// Component 1: Murid AI Tutor Chat (Refuses Direct Answers, Encourages Thought)
 // -----------------------------------------------------------------------------
 export function SiswaChat({ isAutomotive }: { isAutomotive: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -47,12 +47,12 @@ export function SiswaChat({ isAutomotive }: { isAutomotive: boolean }) {
     setLoading(true);
 
     const systemInstruction = 
-      "Anda adalah Tutor AI Pembelajaran Mandiri untuk siswa SMK.\n" +
+      "Anda adalah Tutor AI Pembelajaran Mandiri untuk murid SMK.\n" +
       "Aturan Penting:\n" +
-      "1. JANGAN PERNAH memberikan jawaban langsung atau kunci jawaban untuk penugasan/PR siswa!\n" +
+      "1. JANGAN PERNAH memberikan jawaban langsung atau kunci jawaban untuk penugasan/PR murid!\n" +
       "2. Selalu gunakan penjelasan konseptual yang sederhana.\n" +
       "3. Berikan analogi dunia nyata (jika otomotif: gunakan analogi aliran air untuk listrik aki/volt, analogi suntikan untuk tekanan kompresi, dsb).\n" +
-      "4. Berikan pertanyaan pemicu kritis di akhir jawaban Anda untuk melatih penalaran mandiri siswa.";
+      "4. Berikan pertanyaan pemicu kritis di akhir jawaban Anda untuk melatih penalaran mandiri murid.";
 
     try {
       const res = await fetch("/api/gemini/generate", {
@@ -105,13 +105,13 @@ export function SiswaChat({ isAutomotive }: { isAutomotive: boolean }) {
   }, [messages]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px]" id="siswa-chat-box">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[520px]" id="murid-chat-box">
       
       {/* Header bar */}
       <div className="bg-slate-900 text-white px-4 py-3 text-xs font-bold rounded-t-2xl flex items-center justify-between border-b">
         <span className="flex items-center gap-1.5 font-sans uppercase">
           <GraduationCap className="h-4 w-4 text-emerald-400" />
-          <span>Tutor AI Siswa (Panduan Belajar Mandiri)</span>
+          <span>Tutor AI Murid (Panduan Belajar Mandiri)</span>
         </span>
         <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded font-mono font-bold">Kritis & Analitik</span>
       </div>
@@ -131,7 +131,7 @@ export function SiswaChat({ isAutomotive }: { isAutomotive: boolean }) {
               }`}
             >
               <div className="text-[9px] text-slate-400 font-extrabold pb-0.5 uppercase mb-1 border-b border-slate-150/40">
-                {m.sender === "user" ? "Kamu (Siswa)" : "Tutor AI Pembina"}
+                {m.sender === "user" ? "Kamu (Murid)" : "Tutor AI Pembina"}
               </div>
               <p>{m.text}</p>
             </div>
@@ -179,7 +179,7 @@ export function GuruChat({ isAutomotive }: { isAutomotive: boolean }) {
     {
       id: "mg01",
       sender: "ai",
-      text: "Selamat datang Bapak/Ibu Pendidik! Saya adalah Asisten Profesional Guru SIMPATI AI. Saya siap membantu menyusun kurikulum, memberikan sanksi pembiasaan positif berdiferensiasi bagi siswa yang bandel, mencarikan contoh alat peraga inovatif, menyusun format modul ajar tercepat, hingga troubleshooting bengkel. Ada administrasi mengajar apa yang bisa saya ringankan hari ini?",
+      text: "Selamat datang Bapak/Ibu Pendidik! Saya adalah Asisten Profesional Guru SIMPATI AI. Saya siap membantu menyusun kurikulum, memberikan sanksi pembiasaan positif berdiferensiasi bagi murid yang bandel, mencarikan contoh alat peraga inovatif, menyusun format modul ajar tercepat, hingga troubleshooting bengkel. Ada administrasi mengajar apa yang bisa saya ringankan hari ini?",
       createdAt: new Date().toISOString()
     }
   ]);
@@ -235,7 +235,7 @@ export function GuruChat({ isAutomotive }: { isAutomotive: boolean }) {
       // Fallback
       let fallbackText = "Koneksi ke pangkalan data AI mengalami antrean server, namun mari kita rumuskan sarannya dari SOP Merdeka Belajar. ";
       if (inputToQuery.toLowerCase().includes("remedial") || inputToQuery.toLowerCase().includes("nilai")) {
-        fallbackText += "Untuk remedial kelas TKR, salah satu metode inovatif terbaik adalah melakukan 'Peer Tutoring' (Tutor Sebaya). Mintalah siswa yang lulus di atas KKTP (misalnya Dedi) mendampingi Bagus dalam praktikum perakitan multimeter harian. Ini melatih gotong royong sekaligus memotong beban waktu membimbing guru.";
+        fallbackText += "Untuk remedial kelas TKR, salah satu metode inovatif terbaik adalah melakukan 'Peer Tutoring' (Tutor Sebaya). Mintalah murid yang lulus di atas KKTP (misalnya Dedi) mendampingi Bagus dalam praktikum perakitan multimeter harian. Ini melatih gotong royong sekaligus memotong beban waktu membimbing guru.";
       } else {
         fallbackText += "Cobalah menerapkan pembelajaran berbasis asessmen diagnostik non-kognitif, berikan pengelompokan berdasarkan gaya belajar visual, kinestetik, dan auditor-teoritis.";
       }

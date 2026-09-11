@@ -468,7 +468,7 @@ export const KelasBimbinganManager: React.FC<KelasBimbinganManagerProps> = ({
               className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 animate-pulse"
             >
               <QrCode className="w-4 h-4 text-slate-950" />
-              <span>Scan QR Code Siswa BK</span>
+              <span>Scan QR Code Murid BK</span>
             </button>
             <button
               onClick={() => setShowAddModal(true)}
