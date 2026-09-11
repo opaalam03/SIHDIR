@@ -875,7 +875,14 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
           <div className={`mt-6 pt-4 border-t flex justify-between items-center text-[12px] transition-colors duration-300 ${style.footerText}`}>
             <span className="font-medium text-[12px]">Butuh Bantuan? Hubungi Admin Utama</span>
-            <span className={`font-mono px-2 py-0.5 rounded border transition-all duration-300 ${style.footerBadge}`}>v1.2-Stable</span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              title="Klik untuk segarkan pembaruan aplikasi"
+              className={`font-mono px-2 py-0.5 rounded border transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${style.footerBadge}`}
+            >
+              v1.3-Terbaru 🔄
+            </button>
           </div>
 
         </div>
